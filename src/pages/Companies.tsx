@@ -133,6 +133,7 @@ const Companies = () => {
       filtered = filtered.filter(company => 
         company.company_name?.toLowerCase().includes(search) ||
         company.website_url?.toLowerCase().includes(search) ||
+        company.city?.toLowerCase().includes(search) ||
         company.primary_phone?.toLowerCase().includes(search) ||
         company.nest_pro_partner_id?.toLowerCase().includes(search) ||
         company.linkedin_company_url?.toLowerCase().includes(search)
