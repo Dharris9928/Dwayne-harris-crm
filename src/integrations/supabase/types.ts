@@ -16,9 +16,11 @@ export type Database = {
     Tables: {
       companies: {
         Row: {
+          address_line1: string | null
           annual_revenue_range:
             | Database["public"]["Enums"]["revenue_range"]
             | null
+          annual_volume: number | null
           builder_segment: Database["public"]["Enums"]["builder_segment"] | null
           city: string | null
           company_name: string
@@ -38,22 +40,27 @@ export type Database = {
           notes: string | null
           owner_name: string | null
           parent_company_id: string | null
+          primary_email: string | null
           primary_phone: string | null
           priority_tier: Database["public"]["Enums"]["priority_tier"] | null
           score_calculated_at: string | null
           segment_confidence:
             | Database["public"]["Enums"]["segment_confidence"]
             | null
+          state: string | null
           status: Database["public"]["Enums"]["company_status"] | null
           total_employees: number | null
           updated_at: string | null
           website_url: string | null
           years_in_business: number | null
+          zip: string | null
         }
         Insert: {
+          address_line1?: string | null
           annual_revenue_range?:
             | Database["public"]["Enums"]["revenue_range"]
             | null
+          annual_volume?: number | null
           builder_segment?:
             | Database["public"]["Enums"]["builder_segment"]
             | null
@@ -75,22 +82,27 @@ export type Database = {
           notes?: string | null
           owner_name?: string | null
           parent_company_id?: string | null
+          primary_email?: string | null
           primary_phone?: string | null
           priority_tier?: Database["public"]["Enums"]["priority_tier"] | null
           score_calculated_at?: string | null
           segment_confidence?:
             | Database["public"]["Enums"]["segment_confidence"]
             | null
+          state?: string | null
           status?: Database["public"]["Enums"]["company_status"] | null
           total_employees?: number | null
           updated_at?: string | null
           website_url?: string | null
           years_in_business?: number | null
+          zip?: string | null
         }
         Update: {
+          address_line1?: string | null
           annual_revenue_range?:
             | Database["public"]["Enums"]["revenue_range"]
             | null
+          annual_volume?: number | null
           builder_segment?:
             | Database["public"]["Enums"]["builder_segment"]
             | null
@@ -112,17 +124,20 @@ export type Database = {
           notes?: string | null
           owner_name?: string | null
           parent_company_id?: string | null
+          primary_email?: string | null
           primary_phone?: string | null
           priority_tier?: Database["public"]["Enums"]["priority_tier"] | null
           score_calculated_at?: string | null
           segment_confidence?:
             | Database["public"]["Enums"]["segment_confidence"]
             | null
+          state?: string | null
           status?: Database["public"]["Enums"]["company_status"] | null
           total_employees?: number | null
           updated_at?: string | null
           website_url?: string | null
           years_in_business?: number | null
+          zip?: string | null
         }
         Relationships: [
           {
