@@ -1,24 +1,46 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, X, Search, Settings, Download, Upload, ChevronLeft } from "lucide-react";
 import { CompanyTable } from "@/components/companies/CompanyTable";
 import { AddCompanyDialog } from "@/components/companies/AddCompanyDialog";
 import { EditCompanyDialog } from "@/components/companies/EditCompanyDialog";
+import { CompaniesFilterSidebar } from "@/components/companies/CompaniesFilterSidebar";
 import { useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useDebounce } from "@/hooks/useDebounce";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Companies = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [sortBy, setSortBy] = useState(() => {
+    return localStorage.getItem("companies-sort") || "lead_score_desc";
+  });
+
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   const statusFilter = searchParams.get("status");
   const priorityFilter = searchParams.get("priority");
   const builderSegmentFilter = searchParams.get("builder_segment");
   const contractorSegmentFilter = searchParams.get("contractor_segment");
+
+  // Persist sort selection
+  useEffect(() => {
+    localStorage.setItem("companies-sort", sortBy);
+  }, [sortBy]);
 
   const { data: companies, isLoading, refetch } = useQuery({
     queryKey: ["companies"],
@@ -32,118 +54,219 @@ const Companies = () => {
     },
   });
 
-  const filteredCompanies = useMemo(() => {
+  const filteredAndSortedCompanies = useMemo(() => {
     if (!companies) return [];
     
     let filtered = [...companies];
     
+    // Apply search filter
+    if (debouncedSearch) {
+      const search = debouncedSearch.toLowerCase();
+      filtered = filtered.filter(company => 
+        company.company_name?.toLowerCase().includes(search) ||
+        company.website_url?.toLowerCase().includes(search) ||
+        company.primary_phone?.toLowerCase().includes(search)
+      );
+    }
+    
+    // Apply status filter
     if (statusFilter) {
       filtered = filtered.filter(company => company.status === statusFilter);
     }
     
+    // Apply priority filter
     if (priorityFilter) {
       filtered = filtered.filter(company => company.priority_tier === priorityFilter);
     }
 
+    // Apply builder segment filter
     if (builderSegmentFilter) {
       filtered = filtered.filter(company => company.builder_segment === builderSegmentFilter);
     }
 
+    // Apply contractor segment filter
     if (contractorSegmentFilter) {
       filtered = filtered.filter(company => company.contractor_segment === contractorSegmentFilter);
     }
     
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "lead_score_desc":
+          return (b.lead_score || 0) - (a.lead_score || 0);
+        case "lead_score_asc":
+          return (a.lead_score || 0) - (b.lead_score || 0);
+        case "name_asc":
+          return a.company_name.localeCompare(b.company_name);
+        case "name_desc":
+          return b.company_name.localeCompare(a.company_name);
+        case "created_desc":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "created_asc":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        default:
+          return 0;
+      }
+    });
+    
     return filtered;
-  }, [companies, statusFilter, priorityFilter, builderSegmentFilter, contractorSegmentFilter]);
+  }, [companies, debouncedSearch, statusFilter, priorityFilter, builderSegmentFilter, contractorSegmentFilter, sortBy]);
 
   const clearFilters = () => {
     setSearchParams({});
+    setSearchQuery("");
+  };
+
+  const activeFilters = [
+    statusFilter && { type: "Status", value: statusFilter, key: "status" },
+    priorityFilter && { type: "Priority", value: priorityFilter.split(":")[0], key: "priority" },
+    builderSegmentFilter && { type: "Builder", value: builderSegmentFilter, key: "builder_segment" },
+    contractorSegmentFilter && { type: "Contractor", value: contractorSegmentFilter, key: "contractor_segment" },
+  ].filter(Boolean);
+
+  const removeFilter = (key: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete(key);
+    setSearchParams(newParams);
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Companies</h1>
-          <p className="text-muted-foreground">
-            Manage your builder and contractor accounts
-          </p>
+    <div className="flex flex-col h-screen">
+      {/* Top Bar */}
+      <div className="border-b border-border bg-card px-6 py-4 space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          {/* Search */}
+          <div className="relative w-[400px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search companies, websites, cities..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                onClick={() => setSearchQuery("")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Sort by:</span>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[220px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="lead_score_desc">Lead Score (High to Low)</SelectItem>
+                <SelectItem value="lead_score_asc">Lead Score (Low to High)</SelectItem>
+                <SelectItem value="name_asc">Company Name (A-Z)</SelectItem>
+                <SelectItem value="name_desc">Company Name (Z-A)</SelectItem>
+                <SelectItem value="created_desc">Created Date (Newest)</SelectItem>
+                <SelectItem value="created_asc">Created Date (Oldest)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Columns
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Show All Columns</DropdownMenuItem>
+                <DropdownMenuItem>Hide Optional Columns</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                <DropdownMenuItem>Export as Excel</DropdownMenuItem>
+                <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Import from CSV</DropdownMenuItem>
+                <DropdownMenuItem>Import from Excel</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button onClick={() => setIsAddDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Company
+            </Button>
+          </div>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Company
-        </Button>
+
+        {/* Active Filters */}
+        {activeFilters.length > 0 && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-muted-foreground">Active filters:</span>
+            {activeFilters.map((filter: any) => (
+              <Badge 
+                key={filter.key} 
+                variant="secondary" 
+                className="gap-1 cursor-pointer hover:bg-muted"
+              >
+                {filter.type}: {filter.value}
+                <X 
+                  className="h-3 w-3 hover:text-destructive" 
+                  onClick={() => removeFilter(filter.key)}
+                />
+              </Badge>
+            ))}
+            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-7">
+              Clear all
+            </Button>
+          </div>
+        )}
       </div>
 
-      {(statusFilter || priorityFilter || builderSegmentFilter || contractorSegmentFilter) && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-muted-foreground">Active filters:</span>
-          {statusFilter && (
-            <Badge variant="secondary" className="gap-1">
-              Status: {statusFilter}
-              <X 
-                className="h-3 w-3 cursor-pointer hover:text-destructive" 
-                onClick={() => {
-                  const newParams = new URLSearchParams(searchParams);
-                  newParams.delete("status");
-                  setSearchParams(newParams);
-                }}
-              />
-            </Badge>
-          )}
-          {priorityFilter && (
-            <Badge variant="secondary" className="gap-1">
-              Priority: {priorityFilter.split(":")[0]}
-              <X 
-                className="h-3 w-3 cursor-pointer hover:text-destructive" 
-                onClick={() => {
-                  const newParams = new URLSearchParams(searchParams);
-                  newParams.delete("priority");
-                  setSearchParams(newParams);
-                }}
-              />
-            </Badge>
-          )}
-          {builderSegmentFilter && (
-            <Badge variant="secondary" className="gap-1">
-              Builder: {builderSegmentFilter}
-              <X 
-                className="h-3 w-3 cursor-pointer hover:text-destructive" 
-                onClick={() => {
-                  const newParams = new URLSearchParams(searchParams);
-                  newParams.delete("builder_segment");
-                  setSearchParams(newParams);
-                }}
-              />
-            </Badge>
-          )}
-          {contractorSegmentFilter && (
-            <Badge variant="secondary" className="gap-1">
-              Contractor: {contractorSegmentFilter}
-              <X 
-                className="h-3 w-3 cursor-pointer hover:text-destructive" 
-                onClick={() => {
-                  const newParams = new URLSearchParams(searchParams);
-                  newParams.delete("contractor_segment");
-                  setSearchParams(newParams);
-                }}
-              />
-            </Badge>
-          )}
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            Clear all
-          </Button>
-        </div>
-      )}
+      {/* Main Content Area */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Collapsible Sidebar */}
+        <CompaniesFilterSidebar
+          isCollapsed={isSidebarCollapsed}
+          onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        />
 
-      <CompanyTable
-        companies={filteredCompanies}
-        isLoading={isLoading}
-        onEdit={(company) => {
-          setSelectedCompany(company);
-          setIsEditDialogOpen(true);
-        }}
-      />
+        {/* Table Area */}
+        <div className="flex-1 overflow-auto p-6">
+          <CompanyTable
+            companies={filteredAndSortedCompanies}
+            isLoading={isLoading}
+            onEdit={(company) => {
+              setSelectedCompany(company);
+              setIsEditDialogOpen(true);
+            }}
+          />
+        </div>
+      </div>
 
       <AddCompanyDialog
         open={isAddDialogOpen}
