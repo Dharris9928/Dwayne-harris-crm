@@ -26,7 +26,9 @@ const Companies = () => {
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(() => {
+    return searchParams.get("search") || "";
+  });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -84,6 +86,17 @@ const Companies = () => {
     };
   }, []);
 
+  // Persist search in URL
+  useEffect(() => {
+    const newParams = new URLSearchParams(searchParams);
+    if (debouncedSearch) {
+      newParams.set("search", debouncedSearch);
+    } else {
+      newParams.delete("search");
+    }
+    setSearchParams(newParams, { replace: true });
+  }, [debouncedSearch]);
+
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
@@ -107,13 +120,15 @@ const Companies = () => {
     
     let filtered = [...companies];
     
-    // Apply search filter
-    if (debouncedSearch) {
+    // Apply search filter (minimum 2 characters)
+    if (debouncedSearch && debouncedSearch.length >= 2) {
       const search = debouncedSearch.toLowerCase();
       filtered = filtered.filter(company => 
         company.company_name?.toLowerCase().includes(search) ||
         company.website_url?.toLowerCase().includes(search) ||
-        company.primary_phone?.toLowerCase().includes(search)
+        company.primary_phone?.toLowerCase().includes(search) ||
+        company.nest_pro_partner_id?.toLowerCase().includes(search) ||
+        company.linkedin_company_url?.toLowerCase().includes(search)
       );
     }
     
@@ -170,8 +185,11 @@ const Companies = () => {
   const totalPages = Math.ceil(filteredAndSortedCompanies.length / itemsPerPage);
 
   const clearFilters = () => {
-    setSearchParams({});
-    setSearchQuery("");
+    const newParams = new URLSearchParams();
+    if (debouncedSearch) {
+      newParams.set("search", debouncedSearch);
+    }
+    setSearchParams(newParams);
   };
 
   const applyFilters = (filters: any) => {
@@ -211,7 +229,7 @@ const Companies = () => {
         <div className="flex items-center justify-between gap-4">
           {/* Search */}
           <div className="relative w-[400px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
               placeholder="Search companies, websites, cities..."
               value={searchQuery}
@@ -227,6 +245,11 @@ const Companies = () => {
               >
                 <X className="h-4 w-4" />
               </Button>
+            )}
+            {searchQuery.length > 0 && searchQuery.length < 2 && (
+              <p className="absolute left-0 top-full mt-1 text-xs text-muted-foreground">
+                Type at least 2 characters to search
+              </p>
             )}
           </div>
 
@@ -319,6 +342,19 @@ const Companies = () => {
 
         {/* Table Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Result Count */}
+          <div className="px-6 py-3 border-b border-border bg-muted/30">
+            <p className="text-sm text-muted-foreground">
+              Showing <span className="font-medium text-foreground">{paginatedCompanies.length}</span> of{" "}
+              <span className="font-medium text-foreground">{filteredAndSortedCompanies.length}</span> companies
+              {debouncedSearch && debouncedSearch.length >= 2 && (
+                <span className="ml-2">
+                  matching "<span className="font-medium text-foreground">{debouncedSearch}</span>"
+                </span>
+              )}
+            </p>
+          </div>
+
           {/* Bulk Action Bar */}
           {selectedRows.length > 0 && (
             <BulkActionBar
