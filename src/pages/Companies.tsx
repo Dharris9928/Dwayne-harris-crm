@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, X, Search, Settings, Download, Upload } from "lucide-react";
+import { Plus, X, Search, Download, Upload } from "lucide-react";
 import { CompanyTable } from "@/components/companies/CompanyTable";
 import { AddCompanyDialog } from "@/components/companies/AddCompanyDialog";
 import { EditCompanyDialog } from "@/components/companies/EditCompanyDialog";
@@ -12,16 +12,12 @@ import { BulkActionBar } from "@/components/companies/BulkActionBar";
 import { TablePagination } from "@/components/companies/TablePagination";
 import { ExportDialog } from "@/components/companies/ExportDialog";
 import { ImportDialog } from "@/components/companies/ImportDialog";
+import { ColumnCustomization, type ColumnVisibility } from "@/components/companies/ColumnCustomization";
+import { SavedFilters } from "@/components/companies/SavedFilters";
 import { useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDebounce } from "@/hooks/useDebounce";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 const Companies = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -38,8 +34,27 @@ const Companies = () => {
   const [sortBy, setSortBy] = useState(() => {
     return localStorage.getItem("companies-sort") || "lead_score_desc";
   });
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>(() => {
+    const saved = localStorage.getItem("companies-column-visibility");
+    return saved ? JSON.parse(saved) : {
+      companyName: true,
+      type: true,
+      segment: true,
+      status: true,
+      score: true,
+      priority: true,
+      phone: false,
+      website: false,
+      franchise: false,
+    };
+  });
 
   const debouncedSearch = useDebounce(searchQuery, 300);
+
+  // Persist column visibility
+  useEffect(() => {
+    localStorage.setItem("companies-column-visibility", JSON.stringify(columnVisibility));
+  }, [columnVisibility]);
 
   const statusFilter = searchParams.get("status");
   const priorityFilter = searchParams.get("priority");
@@ -159,6 +174,23 @@ const Companies = () => {
     setSearchQuery("");
   };
 
+  const applyFilters = (filters: any) => {
+    const newParams = new URLSearchParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key]) {
+        newParams.set(key, filters[key]);
+      }
+    });
+    setSearchParams(newParams);
+  };
+
+  const currentFilters = {
+    status: statusFilter,
+    priority: priorityFilter,
+    builder_segment: builderSegmentFilter,
+    contractor_segment: contractorSegmentFilter,
+  };
+
   const activeFilters = [
     statusFilter && { type: "Status", value: statusFilter, key: "status" },
     priorityFilter && { type: "Priority", value: priorityFilter.split(":")[0], key: "priority" },
@@ -218,18 +250,15 @@ const Companies = () => {
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Columns
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Show All Columns</DropdownMenuItem>
-                <DropdownMenuItem>Hide Optional Columns</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <SavedFilters
+              currentFilters={currentFilters}
+              onApplyFilter={applyFilters}
+            />
+
+            <ColumnCustomization
+              visibility={columnVisibility}
+              onChange={setColumnVisibility}
+            />
 
             <Button 
               variant="outline" 
@@ -314,6 +343,8 @@ const Companies = () => {
               }}
               selectedRows={selectedRows}
               onSelectionChange={setSelectedRows}
+              onCompanyUpdate={refetch}
+              columnVisibility={columnVisibility}
             />
           </div>
 

@@ -2,6 +2,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Edit } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { QuickActionsMenu } from "./QuickActionsMenu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -10,6 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { ColumnVisibility } from "./ColumnCustomization";
 
 interface Company {
   id: string;
@@ -32,9 +44,21 @@ interface CompanyTableProps {
   onEdit: (company: Company) => void;
   selectedRows: string[];
   onSelectionChange: (selectedIds: string[]) => void;
+  onCompanyUpdate: () => void;
+  columnVisibility: ColumnVisibility;
 }
 
-export function CompanyTable({ companies, isLoading, onEdit, selectedRows, onSelectionChange }: CompanyTableProps) {
+export function CompanyTable({ 
+  companies, 
+  isLoading, 
+  onEdit, 
+  selectedRows, 
+  onSelectionChange,
+  onCompanyUpdate,
+  columnVisibility 
+}: CompanyTableProps) {
+  const [editingStatus, setEditingStatus] = useState<string | null>(null);
+  const { toast } = useToast();
   const allSelected = companies.length > 0 && selectedRows.length === companies.length;
   const someSelected = selectedRows.length > 0 && selectedRows.length < companies.length;
 
@@ -51,6 +75,32 @@ export function CompanyTable({ companies, isLoading, onEdit, selectedRows, onSel
       onSelectionChange(selectedRows.filter(id => id !== companyId));
     } else {
       onSelectionChange([...selectedRows, companyId]);
+    }
+  };
+
+  const handleStatusChange = async (companyId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("companies")
+        .update({ status: newStatus } as any)
+        .eq("id", companyId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Status Updated",
+        description: "Company status has been updated",
+      });
+
+      onCompanyUpdate();
+      setEditingStatus(null);
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update status",
+        variant: "destructive",
+      });
     }
   };
   const getPriorityColor = (tier: string | null) => {
@@ -101,13 +151,16 @@ export function CompanyTable({ companies, isLoading, onEdit, selectedRows, onSel
                 onCheckedChange={handleSelectAll}
               />
             </TableHead>
-            <TableHead>Company Name</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Segment</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Score</TableHead>
-            <TableHead>Priority</TableHead>
-            <TableHead>Actions</TableHead>
+            {columnVisibility.companyName && <TableHead>Company Name</TableHead>}
+            {columnVisibility.type && <TableHead>Type</TableHead>}
+            {columnVisibility.segment && <TableHead>Segment</TableHead>}
+            {columnVisibility.status && <TableHead>Status</TableHead>}
+            {columnVisibility.score && <TableHead>Score</TableHead>}
+            {columnVisibility.priority && <TableHead>Priority</TableHead>}
+            {columnVisibility.phone && <TableHead>Phone</TableHead>}
+            {columnVisibility.website && <TableHead>Website</TableHead>}
+            {columnVisibility.franchise && <TableHead>Franchise</TableHead>}
+            <TableHead className="w-12">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -119,49 +172,110 @@ export function CompanyTable({ companies, isLoading, onEdit, selectedRows, onSel
                   onCheckedChange={() => handleSelectRow(company.id)}
                 />
               </TableCell>
-              <TableCell className="font-medium">{company.company_name}</TableCell>
-              <TableCell>
-                <Badge variant="outline">{company.industry_type}</Badge>
-              </TableCell>
-              <TableCell className="text-sm">
-                {company.builder_segment || company.contractor_segment}
-              </TableCell>
-              <TableCell>
-                <Badge className={getStatusColor(company.status)}>
-                  {company.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary"
-                      style={{ width: `${company.lead_score}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-medium">{company.lead_score}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                {company.priority_tier && (
-                  <Badge className={getPriorityColor(company.priority_tier)}>
-                    {company.priority_tier.split(":")[0]}
-                  </Badge>
-                )}
-              </TableCell>
-              <TableCell>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm" onClick={() => onEdit(company)}>
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  {company.website_url && (
-                    <Button variant="ghost" size="sm" asChild>
-                      <a href={company.website_url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </Button>
+              
+              {columnVisibility.companyName && (
+                <TableCell className="font-medium">{company.company_name}</TableCell>
+              )}
+              
+              {columnVisibility.type && (
+                <TableCell>
+                  <Badge variant="outline">{company.industry_type}</Badge>
+                </TableCell>
+              )}
+              
+              {columnVisibility.segment && (
+                <TableCell className="text-sm">
+                  {company.builder_segment || company.contractor_segment}
+                </TableCell>
+              )}
+              
+              {columnVisibility.status && (
+                <TableCell>
+                  {editingStatus === company.id ? (
+                    <Select
+                      defaultValue={company.status}
+                      onValueChange={(value) => handleStatusChange(company.id, value)}
+                    >
+                      <SelectTrigger className="w-32 h-7">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Lead">Lead</SelectItem>
+                        <SelectItem value="Contacted">Contacted</SelectItem>
+                        <SelectItem value="Engaged">Engaged</SelectItem>
+                        <SelectItem value="Pilot">Pilot</SelectItem>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Inactive">Inactive</SelectItem>
+                        <SelectItem value="Lost">Lost</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Badge 
+                      className={`${getStatusColor(company.status)} cursor-pointer`}
+                      onClick={() => setEditingStatus(company.id)}
+                    >
+                      {company.status}
+                    </Badge>
                   )}
-                </div>
+                </TableCell>
+              )}
+              {columnVisibility.score && (
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-primary"
+                        style={{ width: `${company.lead_score}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium">{company.lead_score}</span>
+                  </div>
+                </TableCell>
+              )}
+              
+              {columnVisibility.priority && (
+                <TableCell>
+                  {company.priority_tier && (
+                    <Badge className={getPriorityColor(company.priority_tier)}>
+                      {company.priority_tier.split(":")[0]}
+                    </Badge>
+                  )}
+                </TableCell>
+              )}
+
+              {columnVisibility.phone && (
+                <TableCell className="text-sm">{company.primary_phone || "-"}</TableCell>
+              )}
+
+              {columnVisibility.website && (
+                <TableCell>
+                  {company.website_url ? (
+                    <a 
+                      href={company.website_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Visit
+                    </a>
+                  ) : "-"}
+                </TableCell>
+              )}
+
+              {columnVisibility.franchise && (
+                <TableCell>
+                  {company.is_franchise ? (
+                    <Badge variant="secondary" className="text-xs">Franchise</Badge>
+                  ) : "-"}
+                </TableCell>
+              )}
+              
+              <TableCell>
+                <QuickActionsMenu
+                  company={company}
+                  onEdit={() => onEdit(company)}
+                  onDelete={onCompanyUpdate}
+                />
               </TableCell>
             </TableRow>
           ))}
