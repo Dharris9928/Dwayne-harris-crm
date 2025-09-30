@@ -185,6 +185,54 @@ export type Database = {
           },
         ]
       }
+      company_partner_matches: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          introduction_date: string | null
+          match_reason: string | null
+          match_score: number | null
+          partner_id: string
+          relationship_status: Database["public"]["Enums"]["relationship_status"]
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          introduction_date?: string | null
+          match_reason?: string | null
+          match_score?: number | null
+          partner_id: string
+          relationship_status?: Database["public"]["Enums"]["relationship_status"]
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          introduction_date?: string | null
+          match_reason?: string | null
+          match_score?: number | null
+          partner_id?: string
+          relationship_status?: Database["public"]["Enums"]["relationship_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_partner_matches_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_partner_matches_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "nest_pro_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           branch_id: string | null
@@ -265,6 +313,99 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      installation_history: {
+        Row: {
+          branch_id: string | null
+          company_id: string
+          created_at: string
+          id: string
+          installation_date: string
+          notes: string | null
+          pro_id_reference: string | null
+          product_type: Database["public"]["Enums"]["product_type"]
+          project_name: string | null
+          quantity: number
+        }
+        Insert: {
+          branch_id?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          installation_date: string
+          notes?: string | null
+          pro_id_reference?: string | null
+          product_type: Database["public"]["Enums"]["product_type"]
+          project_name?: string | null
+          quantity?: number
+        }
+        Update: {
+          branch_id?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          installation_date?: string
+          notes?: string | null
+          pro_id_reference?: string | null
+          product_type?: Database["public"]["Enums"]["product_type"]
+          project_name?: string | null
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installation_history_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "company_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "installation_history_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nest_pro_partners: {
+        Row: {
+          builder_capacity: boolean | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          contractor_capacity: boolean | null
+          created_at: string
+          id: string
+          partner_name: string
+          service_areas: string[] | null
+          specializations: string[] | null
+        }
+        Insert: {
+          builder_capacity?: boolean | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contractor_capacity?: boolean | null
+          created_at?: string
+          id?: string
+          partner_name: string
+          service_areas?: string[] | null
+          specializations?: string[] | null
+        }
+        Update: {
+          builder_capacity?: boolean | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          contractor_capacity?: boolean | null
+          created_at?: string
+          id?: string
+          partner_name?: string
+          service_areas?: string[] | null
+          specializations?: string[] | null
+        }
+        Relationships: []
       }
       outreach_activities: {
         Row: {
@@ -352,6 +493,72 @@ export type Database = {
           },
         ]
       }
+      pilot_programs: {
+        Row: {
+          actual_installations: number | null
+          branch_id: string | null
+          company_id: string
+          created_at: string
+          end_date: string | null
+          id: string
+          notes: string | null
+          program_type: Database["public"]["Enums"]["program_type"]
+          roi_data: Json | null
+          start_date: string | null
+          status: Database["public"]["Enums"]["program_status"]
+          success_metrics: Json | null
+          target_installations: number | null
+          updated_at: string
+        }
+        Insert: {
+          actual_installations?: number | null
+          branch_id?: string | null
+          company_id: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          program_type: Database["public"]["Enums"]["program_type"]
+          roi_data?: Json | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["program_status"]
+          success_metrics?: Json | null
+          target_installations?: number | null
+          updated_at?: string
+        }
+        Update: {
+          actual_installations?: number | null
+          branch_id?: string | null
+          company_id?: string
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          notes?: string | null
+          program_type?: Database["public"]["Enums"]["program_type"]
+          roi_data?: Json | null
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["program_status"]
+          success_metrics?: Json | null
+          target_installations?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pilot_programs_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "company_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pilot_programs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -378,6 +585,131 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      segmentation_scores: {
+        Row: {
+          builder_geographic_score: number | null
+          builder_price_point_score: number | null
+          builder_stability_score: number | null
+          builder_volume_score: number | null
+          calculated_at: string
+          company_id: string
+          contractor_emergency_score: number | null
+          contractor_growth_score: number | null
+          contractor_premium_score: number | null
+          contractor_technology_score: number | null
+          contractor_volume_score: number | null
+          id: string
+          social_media_score: number | null
+          technology_adoption_score: number | null
+          total_score: number | null
+          website_quality_score: number | null
+        }
+        Insert: {
+          builder_geographic_score?: number | null
+          builder_price_point_score?: number | null
+          builder_stability_score?: number | null
+          builder_volume_score?: number | null
+          calculated_at?: string
+          company_id: string
+          contractor_emergency_score?: number | null
+          contractor_growth_score?: number | null
+          contractor_premium_score?: number | null
+          contractor_technology_score?: number | null
+          contractor_volume_score?: number | null
+          id?: string
+          social_media_score?: number | null
+          technology_adoption_score?: number | null
+          total_score?: number | null
+          website_quality_score?: number | null
+        }
+        Update: {
+          builder_geographic_score?: number | null
+          builder_price_point_score?: number | null
+          builder_stability_score?: number | null
+          builder_volume_score?: number | null
+          calculated_at?: string
+          company_id?: string
+          contractor_emergency_score?: number | null
+          contractor_growth_score?: number | null
+          contractor_premium_score?: number | null
+          contractor_technology_score?: number | null
+          contractor_volume_score?: number | null
+          id?: string
+          social_media_score?: number | null
+          technology_adoption_score?: number | null
+          total_score?: number | null
+          website_quality_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "segmentation_scores_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_certifications: {
+        Row: {
+          certification_issued: boolean | null
+          certification_number: string | null
+          company_id: string
+          completed_date: string | null
+          contact_id: string
+          created_at: string
+          expiration_date: string | null
+          id: string
+          notes: string | null
+          scheduled_date: string | null
+          score: number | null
+          training_type: Database["public"]["Enums"]["training_type"]
+        }
+        Insert: {
+          certification_issued?: boolean | null
+          certification_number?: string | null
+          company_id: string
+          completed_date?: string | null
+          contact_id: string
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          notes?: string | null
+          scheduled_date?: string | null
+          score?: number | null
+          training_type: Database["public"]["Enums"]["training_type"]
+        }
+        Update: {
+          certification_issued?: boolean | null
+          certification_number?: string | null
+          company_id?: string
+          completed_date?: string | null
+          contact_id?: string
+          created_at?: string
+          expiration_date?: string | null
+          id?: string
+          notes?: string | null
+          scheduled_date?: string | null
+          score?: number | null
+          training_type?: Database["public"]["Enums"]["training_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_certifications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_certifications_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -434,6 +766,27 @@ export type Database = {
       decision_tier: "Primary" | "Secondary" | "Influencer"
       industry_type: "Builder" | "Contractor"
       priority_tier: "P1: 80-100" | "P2: 60-79" | "P3: 40-59"
+      product_type:
+        | "Thermostat NT"
+        | "Thermostat NLT4"
+        | "Doorbell Wired"
+        | "Doorbell Wireless"
+        | "Camera Indoor"
+        | "Camera Outdoor Wired"
+        | "Camera Outdoor Wireless"
+        | "Camera Floodlight"
+        | "Nest Hub"
+      program_status:
+        | "Proposed"
+        | "Approved"
+        | "Active"
+        | "Completed"
+        | "Cancelled"
+      program_type:
+        | "HVAC Monitoring"
+        | "Smart Home Ecosystem"
+        | "Builder Integration"
+      relationship_status: "Matched" | "Introduced" | "Active" | "Inactive"
       revenue_range:
         | "<$500K"
         | "$500K-$999K"
@@ -442,6 +795,11 @@ export type Database = {
         | "$6M-$10M"
         | "$10M+"
       segment_confidence: "High 90%+" | "Medium 70-89%" | "Low <70%"
+      training_type:
+        | "Touch 1: Business Benefits"
+        | "Touch 2: Product Training"
+        | "Touch 3: Sales Training"
+        | "HVAC Monitoring Certification"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -621,6 +979,30 @@ export const Constants = {
       decision_tier: ["Primary", "Secondary", "Influencer"],
       industry_type: ["Builder", "Contractor"],
       priority_tier: ["P1: 80-100", "P2: 60-79", "P3: 40-59"],
+      product_type: [
+        "Thermostat NT",
+        "Thermostat NLT4",
+        "Doorbell Wired",
+        "Doorbell Wireless",
+        "Camera Indoor",
+        "Camera Outdoor Wired",
+        "Camera Outdoor Wireless",
+        "Camera Floodlight",
+        "Nest Hub",
+      ],
+      program_status: [
+        "Proposed",
+        "Approved",
+        "Active",
+        "Completed",
+        "Cancelled",
+      ],
+      program_type: [
+        "HVAC Monitoring",
+        "Smart Home Ecosystem",
+        "Builder Integration",
+      ],
+      relationship_status: ["Matched", "Introduced", "Active", "Inactive"],
       revenue_range: [
         "<$500K",
         "$500K-$999K",
@@ -630,6 +1012,12 @@ export const Constants = {
         "$10M+",
       ],
       segment_confidence: ["High 90%+", "Medium 70-89%", "Low <70%"],
+      training_type: [
+        "Touch 1: Business Benefits",
+        "Touch 2: Product Training",
+        "Touch 3: Sales Training",
+        "HVAC Monitoring Certification",
+      ],
     },
   },
 } as const
