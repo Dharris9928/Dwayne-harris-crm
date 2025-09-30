@@ -1,16 +1,27 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Activity, TrendingUp, Target, Mail, Phone, Linkedin, Info } from "lucide-react";
+import { Building2, Users, Activity, TrendingUp, Target, Mail, Phone, Linkedin, Info, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { AddCompanyDialog } from "@/components/companies/AddCompanyDialog";
+import { AddActivityDialog } from "@/components/activities/AddActivityDialog";
 
 const Dashboard = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [isAddCompanyOpen, setIsAddCompanyOpen] = useState(false);
+  const [isAddActivityOpen, setIsAddActivityOpen] = useState(false);
 
   // Real-time subscription for dashboard updates
   useEffect(() => {
@@ -276,11 +287,35 @@ const Dashboard = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Overview of your Google Nest Pro channel management
-        </p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Overview of your Google Nest Pro channel management
+          </p>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Quick Actions
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={() => setIsAddCompanyOpen(true)}>
+              <Building2 className="h-4 w-4 mr-2" />
+              Add Company
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setIsAddActivityOpen(true)}>
+              <Activity className="h-4 w-4 mr-2" />
+              Log Activity
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate('/contacts')}>
+              <Users className="h-4 w-4 mr-2" />
+              Add Contact
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -555,6 +590,28 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      <AddCompanyDialog
+        open={isAddCompanyOpen}
+        onOpenChange={setIsAddCompanyOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["companies-count"] });
+          queryClient.invalidateQueries({ queryKey: ["companies-by-status"] });
+          queryClient.invalidateQueries({ queryKey: ["companies-by-priority"] });
+          queryClient.invalidateQueries({ queryKey: ["recent-companies"] });
+          queryClient.invalidateQueries({ queryKey: ["pipeline-value"] });
+          setIsAddCompanyOpen(false);
+        }}
+      />
+
+      <AddActivityDialog
+        open={isAddActivityOpen}
+        onOpenChange={setIsAddActivityOpen}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["monthly-activities"] });
+          setIsAddActivityOpen(false);
+        }}
+      />
     </div>
   );
 };
