@@ -1,8 +1,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Activity, TrendingUp, Target, Mail, Phone, Linkedin, Info, Plus } from "lucide-react";
+import { Building2, Users, Activity, TrendingUp, Target, Mail, Phone, Linkedin, Info, Plus, AlertCircle, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Progress } from "@/components/ui/progress";
@@ -65,7 +67,7 @@ const Dashboard = () => {
     };
   }, [queryClient]);
 
-  const { data: companiesCount } = useQuery({
+  const companiesCount = useQuery({
     queryKey: ["companies-count"],
     queryFn: async () => {
       const { count, error } = await supabase
@@ -76,7 +78,7 @@ const Dashboard = () => {
     },
   });
 
-  const { data: contactsCount } = useQuery({
+  const contactsCount = useQuery({
     queryKey: ["contacts-count"],
     queryFn: async () => {
       const { count, error } = await supabase
@@ -87,7 +89,7 @@ const Dashboard = () => {
     },
   });
 
-  const { data: monthlyActivities } = useQuery({
+  const monthlyActivitiesQuery = useQuery({
     queryKey: ["monthly-activities"],
     queryFn: async () => {
       const now = new Date();
@@ -103,6 +105,8 @@ const Dashboard = () => {
       return data || [];
     },
   });
+
+  const monthlyActivities = monthlyActivitiesQuery.data;
 
   const activityStats = useMemo(() => {
     if (!monthlyActivities) return {
@@ -151,7 +155,7 @@ const Dashboard = () => {
     });
   }, []);
 
-  const { data: pilotProgramsCount } = useQuery({
+  const pilotProgramsCount = useQuery({
     queryKey: ["pilot-programs-count"],
     queryFn: async () => {
       const { count, error } = await supabase
@@ -163,7 +167,7 @@ const Dashboard = () => {
     },
   });
 
-  const { data: pipelineData } = useQuery({
+  const pipelineData = useQuery({
     queryKey: ["pipeline-value"],
     queryFn: async () => {
       const OPEN_STATUSES: Array<'Lead' | 'Contacted' | 'Engaged' | 'Pilot'> = ['Lead', 'Contacted', 'Engaged', 'Pilot'];
@@ -228,10 +232,10 @@ const Dashboard = () => {
     },
   });
 
-  const pipelineValue = pipelineData?.totalValue || 0;
-  const pipelineByStatus = pipelineData?.byStatus || {};
+  const pipelineValue = pipelineData.data?.totalValue || 0;
+  const pipelineByStatus = pipelineData.data?.byStatus || {};
 
-  const { data: companiesByStatus } = useQuery({
+  const companiesByStatus = useQuery({
     queryKey: ["companies-by-status"],
     queryFn: async () => {
       const statuses: Array<'Lead' | 'Contacted' | 'Engaged' | 'Pilot' | 'Active'> = ['Lead', 'Contacted', 'Engaged', 'Pilot', 'Active'];
@@ -249,7 +253,7 @@ const Dashboard = () => {
     },
   });
 
-  const { data: companiesByPriority } = useQuery({
+  const companiesByPriority = useQuery({
     queryKey: ["companies-by-priority"],
     queryFn: async () => {
       const priorities: Array<'P1: 80-100' | 'P2: 60-79' | 'P3: 40-59'> = ['P1: 80-100', 'P2: 60-79', 'P3: 40-59'];
@@ -267,7 +271,7 @@ const Dashboard = () => {
     },
   });
 
-  const { data: recentCompanies } = useQuery({
+  const recentCompaniesQuery = useQuery({
     queryKey: ["recent-companies"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -279,6 +283,8 @@ const Dashboard = () => {
       return data;
     },
   });
+
+  const recentCompanies = recentCompaniesQuery.data;
 
   const getPriorityColor = (tier: string) => {
     if (tier?.includes("P1")) return "bg-priority-p1 text-priority-p1-foreground";
@@ -323,7 +329,7 @@ const Dashboard = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Pipeline Summary Card */}
         <Card 
-          className="cursor-pointer hover:shadow-lg transition-shadow"
+          className="cursor-pointer hover:shadow-lg hover:bg-accent/50 transition-all duration-200"
           onClick={() => navigate('/companies')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -331,28 +337,56 @@ const Dashboard = () => {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{companiesCount} Companies</div>
-            <div className="mt-4 space-y-2">
-              {companiesByStatus?.map((item) => (
-                <div
-                  key={item.status}
-                  className="flex justify-between cursor-pointer hover:bg-accent/50 p-2 rounded transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/companies?status=${item.status}`);
-                  }}
-                >
-                  <span className="text-sm text-muted-foreground">{item.status}</span>
-                  <span className="text-sm font-semibold">{item.count}</span>
+            {companiesCount.isLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ) : companiesCount.isError ? (
+              <div className="space-y-2">
+                <Alert variant="destructive" className="py-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">Failed to load companies</AlertDescription>
+                </Alert>
+                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); companiesCount.refetch(); }}>
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Retry
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold animate-in fade-in duration-300">{companiesCount.data} Companies</div>
+                <div className="mt-4 space-y-2">
+                  {companiesByStatus.isLoading ? (
+                    <>
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                    </>
+                  ) : (
+                    companiesByStatus.data?.map((item) => (
+                      <div
+                        key={item.status}
+                        className="flex justify-between cursor-pointer hover:bg-accent/50 p-2 rounded transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/companies?status=${item.status}`);
+                        }}
+                      >
+                        <span className="text-sm text-muted-foreground">{item.status}</span>
+                        <span className="text-sm font-semibold">{item.count}</span>
+                      </div>
+                    ))
+                  )}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
         {/* Priority Distribution Card */}
         <Card 
-          className="cursor-pointer hover:shadow-lg transition-shadow"
+          className="cursor-pointer hover:shadow-lg hover:bg-accent/50 transition-all duration-200"
           onClick={() => navigate('/companies')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -360,30 +394,51 @@ const Dashboard = () => {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {companiesByPriority?.reduce((sum, item) => sum + item.count, 0) || 0} Total
-            </div>
-            <div className="mt-4 space-y-2">
-              {companiesByPriority?.map((item) => (
-                <div
-                  key={item.priority}
-                  className="flex justify-between cursor-pointer hover:bg-accent/50 p-2 rounded transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/companies?priority=${item.priority}`);
-                  }}
-                >
-                  <span className="text-sm text-muted-foreground">{item.priority.split(":")[0]}</span>
-                  <span className="text-sm font-semibold">{item.count}</span>
+            {companiesByPriority.isLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ) : companiesByPriority.isError ? (
+              <div className="space-y-2">
+                <Alert variant="destructive" className="py-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">Failed to load priorities</AlertDescription>
+                </Alert>
+                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); companiesByPriority.refetch(); }}>
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Retry
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold animate-in fade-in duration-300">
+                  {companiesByPriority.data?.reduce((sum, item) => sum + item.count, 0) || 0} Total
                 </div>
-              ))}
-            </div>
+                <div className="mt-4 space-y-2">
+                  {companiesByPriority.data?.map((item) => (
+                    <div
+                      key={item.priority}
+                      className="flex justify-between cursor-pointer hover:bg-accent/50 p-2 rounded transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/companies?priority=${item.priority}`);
+                      }}
+                    >
+                      <span className="text-sm text-muted-foreground">{item.priority.split(":")[0]}</span>
+                      <span className="text-sm font-semibold">{item.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
         {/* This Month's Activities Card */}
         <Card 
-          className="cursor-pointer hover:shadow-lg transition-shadow col-span-2"
+          className="cursor-pointer hover:shadow-lg hover:bg-accent/50 transition-all duration-200 col-span-1 lg:col-span-2"
           onClick={() => navigate('/activities')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -449,7 +504,7 @@ const Dashboard = () => {
 
         {/* Pipeline Value & Pilot Programs Card */}
         <Card 
-          className="cursor-pointer hover:shadow-lg transition-shadow col-span-2"
+          className="cursor-pointer hover:shadow-lg hover:bg-accent/50 transition-all duration-200 col-span-1 lg:col-span-2"
           onClick={() => navigate('/reports')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -460,69 +515,89 @@ const Dashboard = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <div className="flex items-center gap-1">
-                    <p className="text-2xl font-bold">
-                      ${pipelineValue.toLocaleString()}
-                    </p>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="h-4 w-4 text-muted-foreground cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <p className="text-xs">
-                            Pipeline value includes estimated revenue from all companies in 
-                            Lead, Contacted, Engaged, and Pilot status. Active companies 
-                            (closed won) and Lost/Inactive companies (closed lost) are not included.
-                          </p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Pipeline Value</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{pilotProgramsCount}</p>
-                  <p className="text-xs text-muted-foreground">Active Pilots</p>
-                </div>
-              </div>
-              
+            {pipelineData.isLoading ? (
               <div className="space-y-2">
-                <p className="text-sm font-medium">Breakdown by Status:</p>
-                <div className="space-y-1">
-                  {Object.entries(pipelineByStatus).map(([status, value]) => {
-                    const percentage = pipelineValue > 0 
-                      ? Math.round((value / pipelineValue) * 100) 
-                      : 0;
-                    return (
-                      <div
-                        key={status}
-                        className="flex items-center justify-between text-sm cursor-pointer hover:bg-accent/50 p-2 rounded transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/companies?status=${status}`);
-                        }}
-                      >
-                        <span className="text-muted-foreground">{status}</span>
-                        <span className="font-semibold">
-                          ${value.toLocaleString()} ({percentage}%)
-                        </span>
-                      </div>
-                    );
-                  })}
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+              </div>
+            ) : pipelineData.isError ? (
+              <div className="space-y-2">
+                <Alert variant="destructive" className="py-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">Failed to load pipeline data</AlertDescription>
+                </Alert>
+                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); pipelineData.refetch(); }}>
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Retry
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="flex items-center gap-1">
+                      <p className="text-2xl font-bold animate-in fade-in duration-300">
+                        ${pipelineValue.toLocaleString()}
+                      </p>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-xs">
+                            <p className="text-xs">
+                              Pipeline value includes estimated revenue from all companies in 
+                              Lead, Contacted, Engaged, and Pilot status. Active companies 
+                              (closed won) and Lost/Inactive companies (closed lost) are not included.
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Pipeline Value</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold animate-in fade-in duration-300">{pilotProgramsCount.data}</p>
+                    <p className="text-xs text-muted-foreground">Active Pilots</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Breakdown by Status:</p>
+                  <div className="space-y-1">
+                    {Object.entries(pipelineByStatus).map(([status, value]) => {
+                      const percentage = pipelineValue > 0 
+                        ? Math.round((value / pipelineValue) * 100) 
+                        : 0;
+                      return (
+                        <div
+                          key={status}
+                          className="flex items-center justify-between text-sm cursor-pointer hover:bg-accent/50 p-2 rounded transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/companies?status=${status}`);
+                          }}
+                        >
+                          <span className="text-muted-foreground">{status}</span>
+                          <span className="font-semibold">
+                            ${value.toLocaleString()} ({percentage}%)
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-border">
+                  <p className="text-xs text-muted-foreground">
+                    💡 Includes: Lead, Contacted, Engaged, Pilot statuses. 
+                    Excludes: Active (won), Lost/Inactive (closed).
+                  </p>
                 </div>
               </div>
-
-              <div className="pt-2 border-t border-border">
-                <p className="text-xs text-muted-foreground">
-                  💡 Includes: Lead, Contacted, Engaged, Pilot statuses. 
-                  Excludes: Active (won), Lost/Inactive (closed).
-                </p>
-              </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -530,7 +605,7 @@ const Dashboard = () => {
       <div className="grid gap-4 md:grid-cols-2">
         {/* Total Contacts Card */}
         <Card 
-          className="cursor-pointer hover:shadow-lg transition-shadow"
+          className="cursor-pointer hover:shadow-lg hover:bg-accent/50 transition-all duration-200"
           onClick={() => navigate('/contacts')}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -538,8 +613,19 @@ const Dashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{contactsCount}</div>
-            <p className="text-xs text-muted-foreground mt-2">Decision makers tracked</p>
+            {contactsCount.isLoading ? (
+              <Skeleton className="h-8 w-24" />
+            ) : contactsCount.isError ? (
+              <Alert variant="destructive" className="py-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs">Failed to load contacts</AlertDescription>
+              </Alert>
+            ) : (
+              <>
+                <div className="text-2xl font-bold animate-in fade-in duration-300">{contactsCount.data}</div>
+                <p className="text-xs text-muted-foreground mt-2">Decision makers tracked</p>
+              </>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -547,17 +633,29 @@ const Dashboard = () => {
             <CardTitle>Recent Companies</CardTitle>
           </CardHeader>
           <CardContent>
-            {!recentCompanies || recentCompanies.length === 0 ? (
+            {recentCompaniesQuery.isLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            ) : recentCompaniesQuery.isError ? (
+              <Alert variant="destructive" className="py-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs">Failed to load recent companies</AlertDescription>
+              </Alert>
+            ) : !recentCompanies || recentCompanies.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground">
                 <Building2 className="h-12 w-12 mx-auto mb-2 opacity-50" />
                 <p>No companies yet. Add your first company to get started!</p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 animate-in fade-in duration-300">
                 {recentCompanies.map((company) => (
                   <div
                     key={company.id}
-                    className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-accent/50 transition-colors"
+                    className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-accent/50 cursor-pointer transition-all duration-200"
+                    onClick={() => navigate(`/companies`)}
                   >
                     <div className="flex-1">
                       <p className="font-medium text-foreground">{company.company_name}</p>
