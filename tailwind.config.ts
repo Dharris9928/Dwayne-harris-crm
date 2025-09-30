@@ -57,6 +57,23 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        priority: {
+          p1: "hsl(var(--priority-p1))",
+          "p1-foreground": "hsl(var(--priority-p1-foreground))",
+          p2: "hsl(var(--priority-p2))",
+          "p2-foreground": "hsl(var(--priority-p2-foreground))",
+          p3: "hsl(var(--priority-p3))",
+          "p3-foreground": "hsl(var(--priority-p3-foreground))",
+        },
+        status: {
+          lead: "hsl(var(--status-lead))",
+          contacted: "hsl(var(--status-contacted))",
+          engaged: "hsl(var(--status-engaged))",
+          pilot: "hsl(var(--status-pilot))",
+          active: "hsl(var(--status-active))",
+          inactive: "hsl(var(--status-inactive))",
+          lost: "hsl(var(--status-lost))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
