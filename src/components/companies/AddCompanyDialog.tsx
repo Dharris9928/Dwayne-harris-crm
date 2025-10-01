@@ -63,6 +63,15 @@ export function AddCompanyDialog({ open, onClose, onOpenChange, onSuccess }: Add
   // Other
   const [notes, setNotes] = useState('');
 
+  // Builder-specific fields
+  const [averageHomePrice, setAverageHomePrice] = useState('');
+  const [priceCategoryState, setPriceCategoryState] = useState('');
+
+  // Contractor-specific fields
+  const [serviceAreaType, setServiceAreaType] = useState('');
+  const [maintenancePercentage, setMaintenancePercentage] = useState('');
+  const [emergencyPercentage, setEmergencyPercentage] = useState('');
+
   // Load parent companies when dialog opens
   useEffect(() => {
     if (open) {
@@ -115,9 +124,28 @@ export function AddCompanyDialog({ open, onClose, onOpenChange, onSuccess }: Add
         website_url: websiteUrl || undefined,
         linkedin_company_url: linkedinCompanyUrl || undefined,
         
+        // Builder-specific
+        average_home_price: industryType === 'Builder' && averageHomePrice 
+          ? parseInt(averageHomePrice) 
+          : undefined,
+        price_point_category: industryType === 'Builder' 
+          ? priceCategoryState || undefined 
+          : undefined,
+        
+        // Contractor-specific
+        service_area_type: industryType === 'Contractor' 
+          ? serviceAreaType || undefined 
+          : undefined,
+        maintenance_contract_percentage: industryType === 'Contractor' && maintenancePercentage
+          ? parseInt(maintenancePercentage)
+          : undefined,
+        emergency_service_percentage: industryType === 'Contractor' && emergencyPercentage
+          ? parseInt(emergencyPercentage)
+          : undefined,
+        
         // Other
         notes: notes || undefined
-      };
+      } as any;
 
       // Add segment based on industry type
       if (industryType === 'Builder') {
@@ -173,6 +201,11 @@ export function AddCompanyDialog({ open, onClose, onOpenChange, onSuccess }: Add
     setWebsiteUrl('');
     setLinkedinCompanyUrl('');
     setNotes('');
+    setAverageHomePrice('');
+    setPriceCategoryState('');
+    setServiceAreaType('');
+    setMaintenancePercentage('');
+    setEmergencyPercentage('');
   };
 
   const BUILDER_SEGMENTS = [

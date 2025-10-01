@@ -66,6 +66,15 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
   // Other
   const [notes, setNotes] = useState('');
 
+  // Builder-specific fields
+  const [averageHomePrice, setAverageHomePrice] = useState('');
+  const [priceCategoryState, setPriceCategoryState] = useState('');
+
+  // Contractor-specific fields
+  const [serviceAreaType, setServiceAreaType] = useState('');
+  const [maintenancePercentage, setMaintenancePercentage] = useState('');
+  const [emergencyPercentage, setEmergencyPercentage] = useState('');
+
   useEffect(() => {
     if (open && companyId) {
       loadCompanyData();
@@ -133,6 +142,16 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
       setWebsiteUrl(company.website_url || '');
       setLinkedinCompanyUrl(company.linkedin_company_url || '');
       setNotes(company.notes || '');
+      
+      // Builder-specific fields
+      const companyAny = company as any;
+      setAverageHomePrice(companyAny.average_home_price?.toString() || '');
+      setPriceCategoryState(companyAny.price_point_category || '');
+      
+      // Contractor-specific fields
+      setServiceAreaType(companyAny.service_area_type || '');
+      setMaintenancePercentage(companyAny.maintenance_contract_percentage?.toString() || '');
+      setEmergencyPercentage(companyAny.emergency_service_percentage?.toString() || '');
     } catch (error: any) {
       console.error('Error loading company:', error);
       toast({
@@ -183,9 +202,28 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
         website_url: websiteUrl || undefined,
         linkedin_company_url: linkedinCompanyUrl || undefined,
         
+        // Builder-specific
+        average_home_price: industryType === 'Builder' && averageHomePrice 
+          ? parseInt(averageHomePrice) 
+          : undefined,
+        price_point_category: industryType === 'Builder' 
+          ? priceCategoryState || undefined 
+          : undefined,
+        
+        // Contractor-specific
+        service_area_type: industryType === 'Contractor' 
+          ? serviceAreaType || undefined 
+          : undefined,
+        maintenance_contract_percentage: industryType === 'Contractor' && maintenancePercentage
+          ? parseInt(maintenancePercentage)
+          : undefined,
+        emergency_service_percentage: industryType === 'Contractor' && emergencyPercentage
+          ? parseInt(emergencyPercentage)
+          : undefined,
+        
         // Other
         notes: notes || undefined
-      };
+      } as any;
 
       // Add segment based on industry type
       if (industryType === 'Builder') {
