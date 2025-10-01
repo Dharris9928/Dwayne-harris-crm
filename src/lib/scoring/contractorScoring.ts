@@ -54,6 +54,12 @@ export async function calculateContractorScore(companyId: string): Promise<Contr
     throw new Error(`Company not found: ${companyId}`);
   }
 
+  console.log('Contractor scoring - Company data:', {
+    companyName: company.company_name,
+    contactCount: company.contacts?.length || 0,
+    installationCount: company.installations?.length || 0
+  });
+
   const scoring: ContractorScoringBreakdown = {
     volumeScore: 0,
     revenueScore: 0,
@@ -122,8 +128,13 @@ export async function calculateContractorScore(companyId: string): Promise<Contr
   // CONTACT (20 points)
   // ============================================
 
+  console.log('Contractor scoring - Contacts:', company.contacts);
   scoring.decisionAuthorityScore = calculateDecisionAuthorityScore(company.contacts || []);
   scoring.linkedinProfessionalScore = calculateLinkedInScore(company.contacts || []);
+  console.log('Contractor scoring - Contact scores:', {
+    decisionAuthorityScore: scoring.decisionAuthorityScore,
+    linkedinProfessionalScore: scoring.linkedinProfessionalScore
+  });
 
   scoring.contactTotal = 
     scoring.decisionAuthorityScore +
