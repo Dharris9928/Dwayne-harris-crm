@@ -85,7 +85,9 @@ export async function calculateBuilderScore(companyId: string): Promise<BuilderS
   scoring.volumeScore = calculateBuilderVolumeScore(company.annual_volume);
 
   // 2. Price Point Score (0-10 points) - AVERAGE HOME PRICE
+  console.log('Builder scoring - Average home price:', company.average_home_price);
   scoring.pricePointScore = calculateBuilderPriceScore(company.average_home_price);
+  console.log('Builder scoring - Price point score:', scoring.pricePointScore);
 
   // 3. Geographic Score (0-10 points)
   scoring.geographicScore = calculateGeographicScore(company.state);
@@ -101,6 +103,14 @@ export async function calculateBuilderScore(companyId: string): Promise<BuilderS
     scoring.pricePointScore +
     scoring.geographicScore +
     scoring.stabilityScore;
+
+  console.log('Builder scoring - Firmographic breakdown:', {
+    volumeScore: scoring.volumeScore,
+    pricePointScore: scoring.pricePointScore,
+    geographicScore: scoring.geographicScore,
+    stabilityScore: scoring.stabilityScore,
+    firmographicTotal: scoring.firmographicTotal
+  });
 
   // ============================================
   // DIGITAL ENGAGEMENT (30 points)
