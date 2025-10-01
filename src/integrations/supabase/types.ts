@@ -930,7 +930,14 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_elevated_access: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       activity_outcome:
