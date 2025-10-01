@@ -96,18 +96,16 @@ export type Database = {
             | null
           annual_volume: number | null
           average_home_price: number | null
-          builder_segment: string | null
           city: string | null
           company_name: string
           company_type: string | null
-          contractor_segment: string | null
           contractor_specialty: string | null
           created_at: string | null
           created_by: string | null
           emergency_service_percentage: number | null
           franchise_name: string | null
           id: string
-          industry_type: Database["public"]["Enums"]["industry_type"]
+          industry_type: string
           is_franchise: boolean | null
           is_parent_company: boolean | null
           last_contact_date: string | null
@@ -126,12 +124,13 @@ export type Database = {
           price_point_category: string | null
           primary_email: string | null
           primary_phone: string | null
-          priority_tier: Database["public"]["Enums"]["priority_tier"] | null
+          priority_tier: string | null
           score_calculated_at: string | null
+          segment: string | null
           segment_confidence: string | null
           service_area_type: string | null
           state: string | null
-          status: Database["public"]["Enums"]["company_status"] | null
+          status: string | null
           total_employees: number | null
           updated_at: string | null
           website_url: string | null
@@ -145,18 +144,16 @@ export type Database = {
             | null
           annual_volume?: number | null
           average_home_price?: number | null
-          builder_segment?: string | null
           city?: string | null
           company_name: string
           company_type?: string | null
-          contractor_segment?: string | null
           contractor_specialty?: string | null
           created_at?: string | null
           created_by?: string | null
           emergency_service_percentage?: number | null
           franchise_name?: string | null
           id?: string
-          industry_type: Database["public"]["Enums"]["industry_type"]
+          industry_type: string
           is_franchise?: boolean | null
           is_parent_company?: boolean | null
           last_contact_date?: string | null
@@ -175,12 +172,13 @@ export type Database = {
           price_point_category?: string | null
           primary_email?: string | null
           primary_phone?: string | null
-          priority_tier?: Database["public"]["Enums"]["priority_tier"] | null
+          priority_tier?: string | null
           score_calculated_at?: string | null
+          segment?: string | null
           segment_confidence?: string | null
           service_area_type?: string | null
           state?: string | null
-          status?: Database["public"]["Enums"]["company_status"] | null
+          status?: string | null
           total_employees?: number | null
           updated_at?: string | null
           website_url?: string | null
@@ -194,18 +192,16 @@ export type Database = {
             | null
           annual_volume?: number | null
           average_home_price?: number | null
-          builder_segment?: string | null
           city?: string | null
           company_name?: string
           company_type?: string | null
-          contractor_segment?: string | null
           contractor_specialty?: string | null
           created_at?: string | null
           created_by?: string | null
           emergency_service_percentage?: number | null
           franchise_name?: string | null
           id?: string
-          industry_type?: Database["public"]["Enums"]["industry_type"]
+          industry_type?: string
           is_franchise?: boolean | null
           is_parent_company?: boolean | null
           last_contact_date?: string | null
@@ -224,12 +220,13 @@ export type Database = {
           price_point_category?: string | null
           primary_email?: string | null
           primary_phone?: string | null
-          priority_tier?: Database["public"]["Enums"]["priority_tier"] | null
+          priority_tier?: string | null
           score_calculated_at?: string | null
+          segment?: string | null
           segment_confidence?: string | null
           service_area_type?: string | null
           state?: string | null
-          status?: Database["public"]["Enums"]["company_status"] | null
+          status?: string | null
           total_employees?: number | null
           updated_at?: string | null
           website_url?: string | null
@@ -960,18 +957,8 @@ export type Database = {
         | "Demo"
         | "Training"
       app_role: "admin" | "sales_manager" | "sales_rep" | "read_only"
-      company_status:
-        | "Lead"
-        | "Contacted"
-        | "Engaged"
-        | "Pilot"
-        | "Active"
-        | "Inactive"
-        | "Lost"
       contact_method: "Email" | "Phone" | "LinkedIn" | "Text"
       decision_tier: "Primary" | "Secondary" | "Influencer"
-      industry_type: "Builder" | "Contractor"
-      priority_tier: "P1: 80-100" | "P2: 60-79" | "P3: 40-59"
       product_type:
         | "Thermostat NT"
         | "Thermostat NLT4"
@@ -1152,19 +1139,8 @@ export const Constants = {
         "Training",
       ],
       app_role: ["admin", "sales_manager", "sales_rep", "read_only"],
-      company_status: [
-        "Lead",
-        "Contacted",
-        "Engaged",
-        "Pilot",
-        "Active",
-        "Inactive",
-        "Lost",
-      ],
       contact_method: ["Email", "Phone", "LinkedIn", "Text"],
       decision_tier: ["Primary", "Secondary", "Influencer"],
-      industry_type: ["Builder", "Contractor"],
-      priority_tier: ["P1: 80-100", "P2: 60-79", "P3: 40-59"],
       product_type: [
         "Thermostat NT",
         "Thermostat NLT4",
