@@ -33,8 +33,7 @@ interface Company {
   id: string;
   company_name: string;
   industry_type: string;
-  builder_segment: string | null;
-  contractor_segment: string | null;
+  segment: string | null;
   status: string;
   lead_score: number;
   priority_tier: string | null;
@@ -264,7 +263,7 @@ export function CompanyTable({
               
               {columnVisibility.segment && (
                 <TableCell className="text-sm">
-                  {company.builder_segment || company.contractor_segment}
+                  {company.segment}
                 </TableCell>
               )}
               

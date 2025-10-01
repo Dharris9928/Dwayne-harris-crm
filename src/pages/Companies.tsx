@@ -65,8 +65,7 @@ const Companies = () => {
 
   const statusFilter = searchParams.get("status");
   const priorityFilter = searchParams.get("priority");
-  const builderSegmentFilter = searchParams.get("builder_segment");
-  const contractorSegmentFilter = searchParams.get("contractor_segment");
+  const segmentFilter = searchParams.get("segment");
   const industryTypeFilter = searchParams.get("industry_type");
   const stateFilter = searchParams.get("state");
   const cityFilter = searchParams.get("city");
@@ -113,7 +112,7 @@ const Companies = () => {
   useEffect(() => {
     setCurrentPage(1);
     setSelectedRows([]);
-  }, [debouncedSearch, statusFilter, priorityFilter, builderSegmentFilter, contractorSegmentFilter, industryTypeFilter, stateFilter, cityFilter]);
+  }, [debouncedSearch, statusFilter, priorityFilter, segmentFilter, industryTypeFilter, stateFilter, cityFilter]);
 
   const { data: companies, isLoading, refetch } = useQuery({
     queryKey: ["companies"],
@@ -163,14 +162,9 @@ const Companies = () => {
       filtered = filtered.filter(company => company.priority_tier === priorityFilter);
     }
 
-    // Apply builder segment filter
-    if (builderSegmentFilter) {
-      filtered = filtered.filter(company => company.builder_segment === builderSegmentFilter);
-    }
-
-    // Apply contractor segment filter
-    if (contractorSegmentFilter) {
-      filtered = filtered.filter(company => company.contractor_segment === contractorSegmentFilter);
+    // Apply segment filter (unified for both Builder and Contractor)
+    if (segmentFilter) {
+      filtered = filtered.filter(company => company.segment === segmentFilter);
     }
     
     // Note: State and city filters require company_branches data
@@ -210,7 +204,7 @@ const Companies = () => {
     });
     
     return filtered;
-  }, [companies, debouncedSearch, statusFilter, priorityFilter, builderSegmentFilter, contractorSegmentFilter, industryTypeFilter, hasWebsiteFilter, hasLinkedinFilter, hasPartnerFilter, sortBy]);
+  }, [companies, debouncedSearch, statusFilter, priorityFilter, segmentFilter, industryTypeFilter, hasWebsiteFilter, hasLinkedinFilter, hasPartnerFilter, sortBy]);
 
   // Paginated companies
   const paginatedCompanies = useMemo(() => {
@@ -242,8 +236,7 @@ const Companies = () => {
   const currentFilters = {
     status: statusFilter,
     priority: priorityFilter,
-    builder_segment: builderSegmentFilter,
-    contractor_segment: contractorSegmentFilter,
+    segment: segmentFilter,
     industry_type: industryTypeFilter,
     state: stateFilter,
     city: cityFilter,
@@ -253,8 +246,7 @@ const Companies = () => {
     industryTypeFilter && { type: "Industry", value: industryTypeFilter, key: "industry_type" },
     statusFilter && { type: "Status", value: statusFilter, key: "status" },
     priorityFilter && { type: "Priority", value: priorityFilter.split(":")[0], key: "priority" },
-    builderSegmentFilter && { type: "Builder", value: builderSegmentFilter, key: "builder_segment" },
-    contractorSegmentFilter && { type: "Contractor", value: contractorSegmentFilter, key: "contractor_segment" },
+    segmentFilter && { type: "Segment", value: segmentFilter, key: "segment" },
     stateFilter && { type: "State", value: stateFilter, key: "state" },
     cityFilter && { type: "City", value: cityFilter, key: "city" },
     hasWebsiteFilter === "true" && { type: "Filter", value: "Has Website", key: "has_website" },
@@ -476,8 +468,7 @@ const Companies = () => {
         filters={{
           status: statusFilter,
           priority: priorityFilter,
-          builder_segment: builderSegmentFilter,
-          contractor_segment: contractorSegmentFilter,
+          segment: segmentFilter,
         }}
         totalCount={filteredAndSortedCompanies.length}
       />

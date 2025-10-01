@@ -13,7 +13,7 @@ export function SegmentPerformanceGrid() {
     queryFn: async () => {
       const { data: companies, error } = await supabase
         .from("companies")
-        .select("builder_segment, contractor_segment, lead_score, status, industry_type");
+        .select("segment, lead_score, status, industry_type");
 
       if (error) throw error;
       if (!companies) return {};
@@ -28,7 +28,7 @@ export function SegmentPerformanceGrid() {
       }> = {};
 
       companies.forEach((company) => {
-        const segment = company.builder_segment || company.contractor_segment;
+        const segment = company.segment;
         if (!segment) return;
 
         if (!segments[segment]) {
@@ -102,10 +102,7 @@ export function SegmentPerformanceGrid() {
                 key={segment}
                 className="p-4 border border-border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
                 onClick={() => {
-                  const filterKey = data.industry === "Builder" 
-                    ? "builder_segment" 
-                    : "contractor_segment";
-                  navigate(`/companies?${filterKey}=${segment}`);
+                  navigate(`/companies?segment=${segment}`);
                 }}
               >
                 <div className="flex items-start justify-between mb-3">

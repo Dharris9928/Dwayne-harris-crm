@@ -91,9 +91,7 @@ export type Database = {
       companies: {
         Row: {
           address_line1: string | null
-          annual_revenue_range:
-            | Database["public"]["Enums"]["revenue_range"]
-            | null
+          annual_revenue_range: string | null
           annual_volume: number | null
           average_home_price: number | null
           city: string | null
@@ -139,9 +137,7 @@ export type Database = {
         }
         Insert: {
           address_line1?: string | null
-          annual_revenue_range?:
-            | Database["public"]["Enums"]["revenue_range"]
-            | null
+          annual_revenue_range?: string | null
           annual_volume?: number | null
           average_home_price?: number | null
           city?: string | null
@@ -187,9 +183,7 @@ export type Database = {
         }
         Update: {
           address_line1?: string | null
-          annual_revenue_range?:
-            | Database["public"]["Enums"]["revenue_range"]
-            | null
+          annual_revenue_range?: string | null
           annual_volume?: number | null
           average_home_price?: number | null
           city?: string | null
@@ -980,13 +974,6 @@ export type Database = {
         | "Smart Home Ecosystem"
         | "Builder Integration"
       relationship_status: "Matched" | "Introduced" | "Active" | "Inactive"
-      revenue_range:
-        | "<$500K"
-        | "$500K-$999K"
-        | "$1M-$2.9M"
-        | "$3M-$5.9M"
-        | "$6M-$10M"
-        | "$10M+"
       training_type:
         | "Touch 1: Business Benefits"
         | "Touch 2: Product Training"
@@ -1165,14 +1152,6 @@ export const Constants = {
         "Builder Integration",
       ],
       relationship_status: ["Matched", "Introduced", "Active", "Inactive"],
-      revenue_range: [
-        "<$500K",
-        "$500K-$999K",
-        "$1M-$2.9M",
-        "$3M-$5.9M",
-        "$6M-$10M",
-        "$10M+",
-      ],
       training_type: [
         "Touch 1: Business Benefits",
         "Touch 2: Product Training",

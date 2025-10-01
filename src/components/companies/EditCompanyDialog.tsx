@@ -111,14 +111,10 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
 
       // Populate all form fields with existing data
       setCompanyName(company.company_name || '');
-      setIndustryType(company.industry_type || 'Builder');
+      setIndustryType(company.industry_type as 'Builder' | 'Contractor' || 'Builder');
       
-      // Get segment from appropriate field
-      if (company.industry_type === 'Builder') {
-        setSegment(company.builder_segment || '');
-      } else {
-        setSegment(company.contractor_segment || '');
-      }
+      // Get segment (unified field)
+      setSegment(company.segment || '');
       
       setStatus(company.status || 'Lead');
       
@@ -225,14 +221,8 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
         notes: notes || undefined
       } as any;
 
-      // Add segment based on industry type
-      if (industryType === 'Builder') {
-        companyData.builder_segment = segment || undefined;
-        companyData.contractor_segment = null;
-      } else {
-        companyData.contractor_segment = segment || undefined;
-        companyData.builder_segment = null;
-      }
+      // Add segment (unified for both Builder and Contractor)
+      companyData.segment = segment || undefined;
 
       await updateCompany(companyId, companyData);
 

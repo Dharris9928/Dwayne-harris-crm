@@ -220,8 +220,8 @@ export function CompaniesFilterSidebar({ isCollapsed, onToggle }: CompaniesFilte
                 <div key={segment.value} className="flex items-center space-x-2">
                   <Checkbox
                     id={`builder-${segment.value}`}
-                    checked={isActiveFilter("builder_segment", segment.value)}
-                    onCheckedChange={() => handleFilterClick("builder_segment", segment.value)}
+                    checked={isActiveFilter("segment", segment.value)}
+                    onCheckedChange={() => handleFilterClick("segment", segment.value)}
                   />
                   <Label
                     htmlFor={`builder-${segment.value}`}
@@ -247,8 +247,8 @@ export function CompaniesFilterSidebar({ isCollapsed, onToggle }: CompaniesFilte
                 <div key={segment.value} className="flex items-center space-x-2">
                   <Checkbox
                     id={`contractor-${segment.value}`}
-                    checked={isActiveFilter("contractor_segment", segment.value)}
-                    onCheckedChange={() => handleFilterClick("contractor_segment", segment.value)}
+                    checked={isActiveFilter("segment", segment.value)}
+                    onCheckedChange={() => handleFilterClick("segment", segment.value)}
                   />
                   <Label
                     htmlFor={`contractor-${segment.value}`}

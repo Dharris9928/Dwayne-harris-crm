@@ -147,12 +147,8 @@ export function AddCompanyDialog({ open, onClose, onOpenChange, onSuccess }: Add
         notes: notes || undefined
       } as any;
 
-      // Add segment based on industry type
-      if (industryType === 'Builder') {
-        companyData.builder_segment = segment || undefined;
-      } else {
-        companyData.contractor_segment = segment || undefined;
-      }
+      // Add segment (unified for both Builder and Contractor)
+      companyData.segment = segment || undefined;
 
       await createCompany(companyData);
 

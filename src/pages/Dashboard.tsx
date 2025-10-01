@@ -612,7 +612,7 @@ const Dashboard = () => {
                     <div className="flex-1">
                       <p className="font-medium text-foreground">{company.company_name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {company.builder_segment || company.contractor_segment}
+                        {company.segment}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
