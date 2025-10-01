@@ -7,15 +7,28 @@ type Company = Database['public']['Tables']['companies']['Insert'];
 
 export async function createCompany(companyData: Partial<Company>) {
   try {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('User must be authenticated to create a company');
+    }
+
     // Validate company data
     const validation = validateCompanyData(companyData);
     if (!validation.valid) {
       throw new Error(`Validation failed: ${validation.errors.join(', ')}`);
     }
+
+    // Set created_by to current user
+    const dataToInsert = {
+      ...companyData,
+      created_by: user.id
+    };
+
     // 1. Insert company
     const { data: company, error } = await supabase
       .from('companies')
-      .insert(companyData as Company)
+      .insert(dataToInsert as Company)
       .select()
       .single();
 
