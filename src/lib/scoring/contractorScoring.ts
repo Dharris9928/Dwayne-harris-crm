@@ -44,7 +44,7 @@ export async function calculateContractorScore(companyId: string): Promise<Contr
     .from('companies')
     .select(`
       *,
-      contacts:contacts(id, title, linkedin_url, linkedin_connections),
+      contacts:contacts(id, title, linkedin_url, linkedin_connections, linkedin_activity_score),
       installations:installation_history(product_type, installation_date)
     `)
     .eq('id', companyId)
