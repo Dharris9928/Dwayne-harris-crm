@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ScoringBreakdownReport } from '@/components/reports/ScoringBreakdownReport';
 import { ContactsScoringReport } from '@/components/reports/ContactsScoringReport';
 import { RecalculateAllScoresButton } from '@/components/reports/RecalculateAllScoresButton';
+import { RecalculateContractorScoresButton } from '@/components/reports/RecalculateContractorScoresButton';
 
 const Reports = () => {
   const [refreshKey, setRefreshKey] = useState(0);
@@ -18,7 +19,10 @@ const Reports = () => {
           <h1 className="text-3xl font-bold text-foreground">Reports</h1>
           <p className="text-muted-foreground mt-2">Analytics and reporting</p>
         </div>
-        <RecalculateAllScoresButton onComplete={handleRecalculateComplete} />
+        <div className="flex gap-2">
+          <RecalculateContractorScoresButton onComplete={handleRecalculateComplete} />
+          <RecalculateAllScoresButton onComplete={handleRecalculateComplete} />
+        </div>
       </div>
       
       <ScoringBreakdownReport key={`scoring-${refreshKey}`} />
