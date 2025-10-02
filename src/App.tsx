@@ -10,6 +10,7 @@ import Contacts from "./pages/Contacts";
 import Activities from "./pages/Activities";
 import Reports from "./pages/Reports";
 import AIFeatures from "./pages/AIFeatures";
+import ProspectingDashboard from "./pages/ProspectingDashboard";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -69,6 +70,14 @@ const App = () => (
             element={
               <AppLayout>
                 <AIFeatures />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/prospecting"
+            element={
+              <AppLayout>
+                <ProspectingDashboard />
               </AppLayout>
             }
           />
