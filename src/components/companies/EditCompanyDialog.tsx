@@ -11,7 +11,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Building2, Users } from 'lucide-react';
 import { DigitalEngagementSection } from './DigitalEngagementSection';
-import { 
+import { EnrichCompanyButton } from './EnrichCompanyButton';
+import { EnrichmentHistory } from './EnrichmentHistory';
+import { AIInsightsPanel } from './AIInsightsPanel';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
   BUILDER_SEGMENTS, 
   CONTRACTOR_SEGMENTS, 
   STATUSES, 
@@ -304,10 +308,24 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Company</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle>Edit Company</DialogTitle>
+            <EnrichCompanyButton 
+              companyId={companyId} 
+              onComplete={() => loadCompanyData()} 
+            />
+          </div>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <Tabs defaultValue="form" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="form">Company Details</TabsTrigger>
+            <TabsTrigger value="insights">AI Insights</TabsTrigger>
+            <TabsTrigger value="history">Enrichment History</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="form">
+            <form onSubmit={handleSubmit} className="space-y-6">
           {/* SECTION 1: BASIC INFORMATION */}
           <div className="space-y-4">
             <h3 className="font-semibold text-sm uppercase text-muted-foreground border-b pb-2">
@@ -863,6 +881,16 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
             </div>
           </div>
         </form>
+      </TabsContent>
+      
+      <TabsContent value="insights" className="space-y-4">
+        <AIInsightsPanel companyId={companyId} />
+      </TabsContent>
+      
+      <TabsContent value="history" className="space-y-4">
+        <EnrichmentHistory companyId={companyId} />
+      </TabsContent>
+    </Tabs>
       </DialogContent>
     </Dialog>
   );

@@ -1,1 +1,10 @@
 project_id = "fjajupvwitxipzatmmss"
+
+[functions.get-user-emails]
+verify_jwt = true
+
+[functions.recalculate-contractor-scores]
+verify_jwt = true
+
+[functions.enrich-company]
+verify_jwt = true

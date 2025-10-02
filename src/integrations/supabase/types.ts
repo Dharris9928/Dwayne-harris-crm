@@ -356,6 +356,56 @@ export type Database = {
           },
         ]
       }
+      company_ai_insights: {
+        Row: {
+          company_id: string
+          competitive_advantages: string[] | null
+          confidence_level: string | null
+          created_at: string | null
+          enriched_by: string | null
+          growth_indicators: string[] | null
+          id: string
+          last_enriched_at: string | null
+          market_positioning: string | null
+          recommended_approach: string | null
+          smart_home_readiness_score: number | null
+        }
+        Insert: {
+          company_id: string
+          competitive_advantages?: string[] | null
+          confidence_level?: string | null
+          created_at?: string | null
+          enriched_by?: string | null
+          growth_indicators?: string[] | null
+          id?: string
+          last_enriched_at?: string | null
+          market_positioning?: string | null
+          recommended_approach?: string | null
+          smart_home_readiness_score?: number | null
+        }
+        Update: {
+          company_id?: string
+          competitive_advantages?: string[] | null
+          confidence_level?: string | null
+          created_at?: string | null
+          enriched_by?: string | null
+          growth_indicators?: string[] | null
+          id?: string
+          last_enriched_at?: string | null
+          market_positioning?: string | null
+          recommended_approach?: string | null
+          smart_home_readiness_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_ai_insights_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_branches: {
         Row: {
           address_line1: string | null
@@ -710,6 +760,53 @@ export type Database = {
           table_name?: string
         }
         Relationships: []
+      }
+      enrichment_logs: {
+        Row: {
+          company_id: string
+          confidence_score: number | null
+          created_at: string | null
+          created_by: string | null
+          enrichment_type: string
+          error_message: string | null
+          fields_enriched: Json | null
+          id: string
+          provider: string
+          status: string
+        }
+        Insert: {
+          company_id: string
+          confidence_score?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          enrichment_type: string
+          error_message?: string | null
+          fields_enriched?: Json | null
+          id?: string
+          provider: string
+          status: string
+        }
+        Update: {
+          company_id?: string
+          confidence_score?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          enrichment_type?: string
+          error_message?: string | null
+          fields_enriched?: Json | null
+          id?: string
+          provider?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrichment_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       installation_history: {
         Row: {
