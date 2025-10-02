@@ -17,3 +17,12 @@ verify_jwt = true
 
 [functions.force-apply-enrichment]
 verify_jwt = true
+
+[functions.ai-prioritize-leads]
+verify_jwt = true
+
+[functions.ai-outreach-strategy]
+verify_jwt = true
+
+[functions.ai-score-contacts]
+verify_jwt = true
