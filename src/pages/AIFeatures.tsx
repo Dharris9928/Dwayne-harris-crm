@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Target, MessageSquare, Users, Sparkles } from "lucide-react";
+import { Brain, Target, MessageSquare, Users, Sparkles, Building2 } from "lucide-react";
 import { AILeadPrioritization } from "@/components/companies/AILeadPrioritization";
 import { AIOutreachStrategy } from "@/components/companies/AIOutreachStrategy";
 import { AIContactScoring } from "@/components/companies/AIContactScoring";
 import { ApolloContactRecommendations } from "@/components/companies/ApolloContactRecommendations";
+import { ApolloCompanyProspecting } from "@/components/companies/ApolloCompanyProspecting";
 import { SmartEnrichmentRecommendations } from "@/components/companies/SmartEnrichmentRecommendations";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -73,7 +74,7 @@ const AIFeatures = () => {
       {/* Main Content */}
       <div className="flex-1 overflow-auto p-6">
         <Tabs defaultValue="prioritization" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="prioritization">
               <Target className="h-4 w-4 mr-2" />
               Lead Priority
@@ -89,6 +90,10 @@ const AIFeatures = () => {
             <TabsTrigger value="discovery">
               <Users className="h-4 w-4 mr-2" />
               Contact Discovery
+            </TabsTrigger>
+            <TabsTrigger value="prospecting">
+              <Building2 className="h-4 w-4 mr-2" />
+              Company Prospecting
             </TabsTrigger>
             <TabsTrigger value="enrichment">
               <Sparkles className="h-4 w-4 mr-2" />
@@ -343,6 +348,60 @@ const AIFeatures = () => {
                 websiteUrl={selectedCompany.website_url}
               />
             )}
+          </TabsContent>
+
+          {/* Company Prospecting */}
+          <TabsContent value="prospecting" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  How Company Prospecting Works
+                </CardTitle>
+                <CardDescription>
+                  Find and import new companies from Apollo's B2B database
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4">
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                      1
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-1">Define Your ICP</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Set search criteria: industry keywords, company size, revenue, location, and technology stack
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                      2
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-1">Search Apollo Database</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Query Apollo's 275M+ company database to find prospects matching your criteria
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                      3
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-1">Review & Import</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Review results with company details, select prospects, and import them directly into your CRM as leads
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <ApolloCompanyProspecting />
           </TabsContent>
 
           {/* Smart Enrichment */}
