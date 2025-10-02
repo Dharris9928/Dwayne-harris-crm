@@ -65,6 +65,30 @@ export const ANNUAL_REVENUE_RANGES = [
   { value: '$10M+', label: '$10M+' }
 ];
 
+export const REVENUE_GROWTH_TRENDS = [
+  { value: 'High Growth 20%+', label: 'High Growth (20%+ annually)' },
+  { value: 'Moderate Growth 10-20%', label: 'Moderate Growth (10-20% annually)' },
+  { value: 'Stable 0-10%', label: 'Stable (0-10% annually)' },
+  { value: 'Declining', label: 'Declining' },
+  { value: 'Unknown', label: 'Unknown' }
+];
+
+export const PROFITABILITY_LEVELS = [
+  { value: 'Highly Profitable', label: 'Highly Profitable (15%+ margin)' },
+  { value: 'Profitable', label: 'Profitable (5-15% margin)' },
+  { value: 'Break-even', label: 'Break-even (0-5% margin)' },
+  { value: 'Struggling', label: 'Struggling (negative margin)' },
+  { value: 'Unknown', label: 'Unknown' }
+];
+
+export const FINANCIAL_HEALTH_RATINGS = [
+  { value: 'Excellent', label: 'Excellent (Strong financials, low debt)' },
+  { value: 'Good', label: 'Good (Healthy financials)' },
+  { value: 'Fair', label: 'Fair (Manageable debt, stable)' },
+  { value: 'At Risk', label: 'At Risk (High debt, cash flow issues)' },
+  { value: 'Unknown', label: 'Unknown' }
+];
+
 export const PARTNER_RELATIONSHIP_STATUSES = [
   { value: 'Matched', label: 'Matched' },
   { value: 'Introduced', label: 'Introduced' },

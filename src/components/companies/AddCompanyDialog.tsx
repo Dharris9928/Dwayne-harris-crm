@@ -18,7 +18,10 @@ import {
   US_STATES,
   ANNUAL_REVENUE_RANGES,
   PRICE_POINT_CATEGORIES,
-  SERVICE_AREA_TYPES
+  SERVICE_AREA_TYPES,
+  REVENUE_GROWTH_TRENDS,
+  PROFITABILITY_LEVELS,
+  FINANCIAL_HEALTH_RATINGS
 } from './formOptions';
 
 interface AddCompanyDialogProps {
@@ -92,6 +95,11 @@ export function AddCompanyDialog({ open, onClose, onOpenChange, onSuccess }: Add
   const [serviceAreaType, setServiceAreaType] = useState('');
   const [maintenancePercentage, setMaintenancePercentage] = useState('');
   const [emergencyPercentage, setEmergencyPercentage] = useState('');
+
+  // Financial Stability Indicators
+  const [revenueGrowthTrend, setRevenueGrowthTrend] = useState('');
+  const [profitabilityLevel, setProfitabilityLevel] = useState('');
+  const [financialHealthRating, setFinancialHealthRating] = useState('');
 
   // Load parent companies when dialog opens
   useEffect(() => {
@@ -175,6 +183,11 @@ export function AddCompanyDialog({ open, onClose, onOpenChange, onSuccess }: Add
           ? parseInt(emergencyPercentage)
           : undefined,
         
+        // Financial Stability Indicators
+        revenue_growth_trend: revenueGrowthTrend || undefined,
+        profitability_level: profitabilityLevel || undefined,
+        financial_health_rating: financialHealthRating || undefined,
+        
         // Other
         notes: notes || undefined
       } as any;
@@ -241,6 +254,9 @@ export function AddCompanyDialog({ open, onClose, onOpenChange, onSuccess }: Add
     setServiceAreaType('');
     setMaintenancePercentage('');
     setEmergencyPercentage('');
+    setRevenueGrowthTrend('');
+    setProfitabilityLevel('');
+    setFinancialHealthRating('');
   };
 
 
@@ -546,6 +562,64 @@ export function AddCompanyDialog({ open, onClose, onOpenChange, onSuccess }: Add
                 <p className="text-xs text-blue-600 mt-1">
                   📈 Part of stability score (20+ years = max points)
                 </p>
+              </div>
+            </div>
+
+            {/* FINANCIAL STABILITY INDICATORS */}
+            <div className="mt-4 pt-4 border-t border-blue-300 space-y-4">
+              <h4 className="font-medium text-sm text-blue-800 dark:text-blue-300 flex items-center gap-2">
+                💰 Financial Stability Indicators
+                <span className="text-xs font-normal text-blue-600 dark:text-blue-500">(Affects stability score)</span>
+              </h4>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="revenue_growth">Revenue Growth Trend</Label>
+                  <Select value={revenueGrowthTrend} onValueChange={setRevenueGrowthTrend}>
+                    <SelectTrigger id="revenue_growth">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {REVENUE_GROWTH_TRENDS.map(trend => (
+                        <SelectItem key={trend.value} value={trend.value}>
+                          {trend.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="profitability">Profitability Level</Label>
+                  <Select value={profitabilityLevel} onValueChange={setProfitabilityLevel}>
+                    <SelectTrigger id="profitability">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROFITABILITY_LEVELS.map(level => (
+                        <SelectItem key={level.value} value={level.value}>
+                          {level.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="financial_health">Financial Health Rating</Label>
+                  <Select value={financialHealthRating} onValueChange={setFinancialHealthRating}>
+                    <SelectTrigger id="financial_health">
+                      <SelectValue placeholder="Select..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FINANCIAL_HEALTH_RATINGS.map(rating => (
+                        <SelectItem key={rating.value} value={rating.value}>
+                          {rating.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 

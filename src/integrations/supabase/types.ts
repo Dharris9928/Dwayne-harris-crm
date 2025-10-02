@@ -146,6 +146,7 @@ export type Database = {
           current_smart_home_offerings: string[] | null
           emergency_service_percentage: number | null
           facebook_url: string | null
+          financial_health_rating: string | null
           franchise_name: string | null
           has_google_business_profile: boolean | null
           id: string
@@ -179,6 +180,8 @@ export type Database = {
           primary_email: string | null
           primary_phone: string | null
           priority_tier: string | null
+          profitability_level: string | null
+          revenue_growth_trend: string | null
           score_calculated_at: string | null
           segment: string | null
           segment_confidence: string | null
@@ -216,6 +219,7 @@ export type Database = {
           current_smart_home_offerings?: string[] | null
           emergency_service_percentage?: number | null
           facebook_url?: string | null
+          financial_health_rating?: string | null
           franchise_name?: string | null
           has_google_business_profile?: boolean | null
           id?: string
@@ -249,6 +253,8 @@ export type Database = {
           primary_email?: string | null
           primary_phone?: string | null
           priority_tier?: string | null
+          profitability_level?: string | null
+          revenue_growth_trend?: string | null
           score_calculated_at?: string | null
           segment?: string | null
           segment_confidence?: string | null
@@ -286,6 +292,7 @@ export type Database = {
           current_smart_home_offerings?: string[] | null
           emergency_service_percentage?: number | null
           facebook_url?: string | null
+          financial_health_rating?: string | null
           franchise_name?: string | null
           has_google_business_profile?: boolean | null
           id?: string
@@ -319,6 +326,8 @@ export type Database = {
           primary_email?: string | null
           primary_phone?: string | null
           priority_tier?: string | null
+          profitability_level?: string | null
+          revenue_growth_trend?: string | null
           score_calculated_at?: string | null
           segment?: string | null
           segment_confidence?: string | null
