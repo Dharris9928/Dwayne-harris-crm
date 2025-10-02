@@ -23,6 +23,7 @@ interface EnrichmentHistoryProps {
 export function EnrichmentHistory({ companyId }: EnrichmentHistoryProps) {
   const [logs, setLogs] = useState<EnrichmentLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [companyBefore, setCompanyBefore] = useState<Record<string, any>>({});
 
   useEffect(() => {
     loadHistory();
@@ -30,6 +31,7 @@ export function EnrichmentHistory({ companyId }: EnrichmentHistoryProps) {
 
   const loadHistory = async () => {
     try {
+      // Get enrichment logs
       const { data, error } = await supabase
         .from('enrichment_logs')
         .select('*')
@@ -38,6 +40,18 @@ export function EnrichmentHistory({ companyId }: EnrichmentHistoryProps) {
         .limit(5);
 
       if (error) throw error;
+      
+      // Get current company data to show changes
+      const { data: company } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', companyId)
+        .single();
+      
+      if (company) {
+        setCompanyBefore(company);
+      }
+      
       setLogs(data || []);
     } catch (error) {
       console.error('Failed to load enrichment history:', error);
@@ -88,37 +102,64 @@ export function EnrichmentHistory({ companyId }: EnrichmentHistoryProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {logs.map((log) => (
-          <div key={log.id} className="flex items-start gap-3 p-2 rounded-lg bg-muted/50">
-            <div className="mt-0.5">{getStatusIcon(log.status)}</div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <Badge variant={log.enrichment_type === 'deep' ? 'default' : 'secondary'}>
-                  {log.enrichment_type}
-                </Badge>
-                <Badge variant="outline">
-                  {log.provider === 'lovable_ai' ? 'Gemini' : 'Claude'}
-                </Badge>
-                {log.confidence_score && (
-                  <span className="text-xs text-muted-foreground">
-                    {log.confidence_score}% confidence
-                  </span>
+        {logs.map((log) => {
+          const fieldsArray = Array.isArray(log.fields_enriched) ? log.fields_enriched : [];
+          const fieldCount = fieldsArray.length;
+          
+          return (
+            <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+              <div className="mt-0.5">{getStatusIcon(log.status)}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <Badge variant={log.enrichment_type === 'deep' ? 'default' : 'secondary'}>
+                    {log.enrichment_type}
+                  </Badge>
+                  <Badge variant="outline">
+                    {log.provider === 'lovable_ai' ? 'Gemini' : log.provider === 'claude' ? 'Claude' : log.provider}
+                  </Badge>
+                  {log.confidence_score && (
+                    <Badge variant="outline" className="text-xs">
+                      {log.confidence_score}% confidence
+                    </Badge>
+                  )}
+                </div>
+                
+                {log.status === 'success' && (
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                      ✓ Successfully enriched {fieldCount} field{fieldCount !== 1 ? 's' : ''}
+                    </p>
+                    {fieldCount > 0 && (
+                      <details className="text-xs text-muted-foreground">
+                        <summary className="cursor-pointer hover:text-foreground">
+                          View updated fields
+                        </summary>
+                        <div className="mt-2 pl-4 space-y-1">
+                          {fieldsArray.map((field: string, idx: number) => (
+                            <div key={idx} className="flex items-start gap-2">
+                              <span className="text-primary">•</span>
+                              <span className="capitalize">
+                                {field.replace(/_/g, ' ')}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                  </div>
                 )}
-              </div>
-              {log.fields_enriched && Array.isArray(log.fields_enriched) && (
-                <p className="text-xs text-muted-foreground mb-1">
-                  Updated {log.fields_enriched.length} fields
+                
+                {log.error_message && (
+                  <p className="text-xs text-red-500 mt-1">{log.error_message}</p>
+                )}
+                
+                <p className="text-xs text-muted-foreground mt-2">
+                  {format(new Date(log.created_at), 'MMM d, yyyy h:mm a')}
                 </p>
-              )}
-              {log.error_message && (
-                <p className="text-xs text-red-500">{log.error_message}</p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {format(new Date(log.created_at), 'MMM d, yyyy h:mm a')}
-              </p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </CardContent>
     </Card>
   );

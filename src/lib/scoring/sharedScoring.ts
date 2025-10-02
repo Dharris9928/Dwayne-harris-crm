@@ -145,6 +145,18 @@ export function calculateConfidence(company: any): 'High' | 'Medium' | 'Low' {
   return 'Low';
 }
 
+// Map simple confidence to database format
+export function mapConfidenceToDbFormat(confidence: 'High' | 'Medium' | 'Low'): 'High 90%+' | 'Medium 70-89%' | 'Low <70%' {
+  switch (confidence) {
+    case 'High':
+      return 'High 90%+';
+    case 'Medium':
+      return 'Medium 70-89%';
+    case 'Low':
+      return 'Low <70%';
+  }
+}
+
 // ============================================
 // GEOGRAPHIC SCORING
 // ============================================

@@ -3,7 +3,8 @@ import { getScoreForRange } from './rangeScoringEngine';
 import {
   calculateGeographicScore,
   assignPriorityTier,
-  calculateConfidence
+  calculateConfidence,
+  mapConfidenceToDbFormat
 } from './sharedScoring';
 
 export interface BuilderScoringBreakdown {
@@ -277,7 +278,7 @@ async function saveBuilderScore(companyId: string, scoring: BuilderScoringBreakd
         contact_total: scoring.contactTotal,
         total_score: scoring.totalScore,
         priority_tier: scoring.priorityTier,
-        confidence: scoring.confidence,
+        confidence: mapConfidenceToDbFormat(scoring.confidence),
         calculated_at: new Date().toISOString()
       },
       { onConflict: 'company_id' }

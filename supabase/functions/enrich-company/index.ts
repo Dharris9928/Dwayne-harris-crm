@@ -310,30 +310,30 @@ Research the company thoroughly using the website and LinkedIn URLs provided. Be
               years_in_business: { type: 'integer', description: 'Years company has been operating' },
               years_in_business_range: { type: 'string', enum: ['<5', '5-10', '11-20', '21-30', '30+'] },
               annual_volume: { type: 'integer', description: 'Annual installation/project volume' },
-              annual_volume_range: { type: 'string', enum: ['<50', '50-100', '101-250', '251-500', '500+'] },
+              annual_volume_range: { type: 'string', enum: ['<100', '100-249', '250-499', '500-749', '750-999', '1,000-1,499', '1,500-1,999', '2,000-2,999', '3,000-4,999', '5,000-9,999', '10,000+'] },
               average_home_price: { type: 'integer', description: 'Average project/home price in dollars' },
-              average_home_price_range: { type: 'string', enum: ['<$250K', '$250K-$500K', '$500K-$750K', '$750K-$1M', '$1M+'] },
+              average_home_price_range: { type: 'string', enum: ['<$150K', '$150K-$199K', '$200K-$249K', '$250K-$299K', '$300K-$399K', '$400K-$499K', '$500K-$599K', '$600K-$799K', '$800K-$999K', '$1M-$1.49M', '$1.5M-$1.99M', '$2M-$2.99M', '$3M+'] },
               price_point_category: { type: 'string', enum: ['economy', 'mid-market', 'premium', 'luxury'] },
               
               // Digital Engagement
               website_url: { type: 'string', description: 'Company website if found' },
-              website_quality: { type: 'string', enum: ['Poor', 'Basic', 'Good', 'Professional', 'Excellent'] },
+              website_quality: { type: 'string', enum: ['None', 'Poor', 'Basic', 'Good', 'Professional'] },
               website_has_smart_home_content: { type: 'boolean', description: 'Does website mention smart home/technology' },
               website_last_updated: { type: 'string', enum: ['Recently', 'Within 6 months', 'Within 1 year', 'Over 1 year', 'Unknown'] },
               
               linkedin_company_url: { type: 'string', description: 'LinkedIn company page URL if found' },
-              linkedin_followers_range: { type: 'string', enum: ['<100', '100-500', '500-1K', '1K-5K', '5K+'] },
-              linkedin_activity_level: { type: 'string', enum: ['None', 'Low', 'Medium', 'High'] },
+              linkedin_followers_range: { type: 'string', enum: ['No page', '<500', '500-1K', '1K-5K', '5K-10K', '10K+'] },
+              linkedin_activity_level: { type: 'string', enum: ['None', 'Low', 'Moderate', 'Active', 'Very Active'] },
               
               facebook_url: { type: 'string', description: 'Facebook page URL if found' },
               instagram_url: { type: 'string', description: 'Instagram profile URL if found' },
               youtube_url: { type: 'string', description: 'YouTube channel URL if found' },
               social_media_presence: { type: 'string', enum: ['None', 'Limited', 'Moderate', 'Active', 'Very Active'] },
               
-              technology_adoption_level: { type: 'string', enum: ['Low', 'Medium', 'High', 'Very High'] },
+              technology_adoption_level: { type: 'string', enum: ['Laggard', 'Conservative', 'Mainstream', 'Progressive', 'Early Adopter'] },
               has_google_business_profile: { type: 'boolean', description: 'Company has Google Business Profile' },
               online_review_rating: { type: 'number', description: 'Average online review rating (0-5)' },
-              online_review_count_range: { type: 'string', enum: ['<10', '10-50', '50-100', '100-500', '500+'] },
+              online_review_count_range: { type: 'string', enum: ['None', '<10', '10-24', '25-49', '50-99', '100+'] },
               
               // AI Insights
               market_positioning: { type: 'string', description: 'How company positions itself in market' },
@@ -497,30 +497,30 @@ Fill as many fields as possible with accurate data.`;
             years_in_business: { type: 'integer' },
             years_in_business_range: { type: 'string', enum: ['<5', '5-10', '11-20', '21-30', '30+'] },
             annual_volume: { type: 'integer' },
-            annual_volume_range: { type: 'string', enum: ['<50', '50-100', '101-250', '251-500', '500+'] },
+            annual_volume_range: { type: 'string', enum: ['<100', '100-249', '250-499', '500-749', '750-999', '1,000-1,499', '1,500-1,999', '2,000-2,999', '3,000-4,999', '5,000-9,999', '10,000+'] },
             average_home_price: { type: 'integer' },
-            average_home_price_range: { type: 'string', enum: ['<$250K', '$250K-$500K', '$500K-$750K', '$750K-$1M', '$1M+'] },
+            average_home_price_range: { type: 'string', enum: ['<$150K', '$150K-$199K', '$200K-$249K', '$250K-$299K', '$300K-$399K', '$400K-$499K', '$500K-$599K', '$600K-$799K', '$800K-$999K', '$1M-$1.49M', '$1.5M-$1.99M', '$2M-$2.99M', '$3M+'] },
             price_point_category: { type: 'string', enum: ['economy', 'mid-market', 'premium', 'luxury'] },
             
             // Digital Engagement
             website_url: { type: 'string' },
-            website_quality: { type: 'string', enum: ['Poor', 'Basic', 'Good', 'Professional', 'Excellent'] },
+            website_quality: { type: 'string', enum: ['None', 'Poor', 'Basic', 'Good', 'Professional'] },
             website_has_smart_home_content: { type: 'boolean' },
             website_last_updated: { type: 'string', enum: ['Recently', 'Within 6 months', 'Within 1 year', 'Over 1 year', 'Unknown'] },
             
             linkedin_company_url: { type: 'string' },
-            linkedin_followers_range: { type: 'string', enum: ['<100', '100-500', '500-1K', '1K-5K', '5K+'] },
-            linkedin_activity_level: { type: 'string', enum: ['None', 'Low', 'Medium', 'High'] },
+            linkedin_followers_range: { type: 'string', enum: ['No page', '<500', '500-1K', '1K-5K', '5K-10K', '10K+'] },
+            linkedin_activity_level: { type: 'string', enum: ['None', 'Low', 'Moderate', 'Active', 'Very Active'] },
             
             facebook_url: { type: 'string' },
             instagram_url: { type: 'string' },
             youtube_url: { type: 'string' },
             social_media_presence: { type: 'string', enum: ['None', 'Limited', 'Moderate', 'Active', 'Very Active'] },
             
-            technology_adoption_level: { type: 'string', enum: ['Low', 'Medium', 'High', 'Very High'] },
+            technology_adoption_level: { type: 'string', enum: ['Laggard', 'Conservative', 'Mainstream', 'Progressive', 'Early Adopter'] },
             has_google_business_profile: { type: 'boolean' },
             online_review_rating: { type: 'number' },
-            online_review_count_range: { type: 'string', enum: ['<10', '10-50', '50-100', '100-500', '500+'] },
+            online_review_count_range: { type: 'string', enum: ['None', '<10', '10-24', '25-49', '50-99', '100+'] },
             
             // AI Insights
             market_positioning: { type: 'string' },
