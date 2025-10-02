@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
+import { logBulkContactView } from '@/lib/contacts/logContactAccess';
 
 interface ContactScore {
   id: string;
@@ -80,6 +81,11 @@ export function ContactsScoringReport() {
       scoredContacts.sort((a, b) => b.total_contribution - a.total_contribution);
 
       setContactScores(scoredContacts);
+      
+      // Log bulk contact view for audit trail
+      if (scoredContacts.length > 0) {
+        logBulkContactView(scoredContacts.map(c => c.id));
+      }
     } catch (error) {
       console.error('Error fetching contact scores:', error);
     } finally {

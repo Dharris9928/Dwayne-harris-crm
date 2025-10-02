@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { Download, FileText, Table } from "lucide-react";
+import { logContactExport } from "@/lib/contacts/logContactAccess";
 
 interface ExportDialogProps {
   open: boolean;
@@ -156,6 +157,18 @@ export function ExportDialog({ open, onClose, selectedIds, filters, totalCount }
         ws['!cols'] = colWidths;
         
         XLSX.writeFile(wb, `${filename}.xlsx`);
+      }
+
+      // Log contact export if contacts were included
+      if (includeRelated.contacts) {
+        const allContactIds = data
+          .flatMap((company: any) => company.contacts || [])
+          .map((contact: any) => contact.id)
+          .filter(Boolean);
+        
+        if (allContactIds.length > 0) {
+          logContactExport(allContactIds, exportFormat);
+        }
       }
 
       toast({

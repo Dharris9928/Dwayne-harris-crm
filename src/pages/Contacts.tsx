@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import { ContactTable } from "@/components/contacts/ContactTable";
 import { AddContactDialog } from "@/components/contacts/AddContactDialog";
 import { EditContactDialog } from "@/components/contacts/EditContactDialog";
+import { logBulkContactView } from "@/lib/contacts/logContactAccess";
 
 const Contacts = () => {
   const location = useLocation();
@@ -22,6 +23,12 @@ const Contacts = () => {
         .select("*, companies(company_name)")
         .order("created_at", { ascending: false });
       if (error) throw error;
+      
+      // Log bulk contact view for audit trail
+      if (data && data.length > 0) {
+        logBulkContactView(data.map(c => c.id));
+      }
+      
       return data;
     },
   });
