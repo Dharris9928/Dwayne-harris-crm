@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Activity, TrendingUp, Target, Mail, Phone, Linkedin, Info, Plus, AlertCircle, RefreshCw } from "lucide-react";
+import { Building2, Users, Activity, TrendingUp, Target, Mail, Phone, Linkedin, Info, Plus, AlertCircle, RefreshCw, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,6 +20,8 @@ import { AddCompanyDialog } from "@/components/companies/AddCompanyDialog";
 import { AddActivityDialog } from "@/components/activities/AddActivityDialog";
 import { SegmentPerformanceGrid } from "@/components/dashboard/SegmentPerformanceGrid";
 import { PriorityDistributionCard } from "@/components/dashboard/PriorityDistributionCard";
+import { EnrichmentAnalyticsCard } from "@/components/dashboard/EnrichmentAnalyticsCard";
+import { SmartEnrichmentRecommendations } from "@/components/companies/SmartEnrichmentRecommendations";
 
 const Dashboard = () => {
   const queryClient = useQueryClient();
@@ -465,6 +467,12 @@ const Dashboard = () => {
       </div>
 
       <SegmentPerformanceGrid />
+
+      {/* AI Enrichment Section */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <EnrichmentAnalyticsCard />
+        <SmartEnrichmentRecommendations onEnrichCompany={(id) => navigate(`/companies?editCompanyId=${id}`)} />
+      </div>
 
       <AddCompanyDialog
         open={isAddCompanyOpen}

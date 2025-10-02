@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.enrich-company]
 verify_jwt = true
+
+[functions.apollo-contact-search]
+verify_jwt = true

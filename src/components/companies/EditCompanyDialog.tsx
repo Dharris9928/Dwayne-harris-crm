@@ -14,6 +14,8 @@ import { DigitalEngagementSection } from './DigitalEngagementSection';
 import { EnrichCompanyButton } from './EnrichCompanyButton';
 import { EnrichmentHistory } from './EnrichmentHistory';
 import { AIInsightsPanel } from './AIInsightsPanel';
+import { DataQualityIndicator } from './DataQualityIndicator';
+import { ApolloContactRecommendations } from './ApolloContactRecommendations';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BUILDER_SEGMENTS, 
@@ -318,10 +320,12 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
         </DialogHeader>
 
         <Tabs defaultValue="form" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="form">Company Details</TabsTrigger>
+            <TabsTrigger value="quality">Data Quality</TabsTrigger>
             <TabsTrigger value="insights">AI Insights</TabsTrigger>
-            <TabsTrigger value="history">Enrichment History</TabsTrigger>
+            <TabsTrigger value="contacts">Find Contacts</TabsTrigger>
+            <TabsTrigger value="history">Enrichment Log</TabsTrigger>
           </TabsList>
           
           <TabsContent value="form">
@@ -883,8 +887,40 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
         </form>
       </TabsContent>
       
+      <TabsContent value="quality" className="space-y-4">
+        <DataQualityIndicator 
+          company={{
+            company_name: companyName,
+            website_url: websiteUrl,
+            primary_phone: primaryPhone,
+            primary_email: primaryEmail,
+            annual_volume: annualVolumeRange ? parseInt(annualVolumeRange.split('-')[0]) || null : null,
+            annual_revenue_range: annualRevenueRange,
+            average_home_price: averageHomePriceRange ? parseInt(averageHomePriceRange.split('-')[0]) || null : null,
+            linkedin_company_url: linkedinCompanyUrl,
+            industry_type: industryType,
+            segment,
+            status
+          }}
+        />
+      </TabsContent>
+      
       <TabsContent value="insights" className="space-y-4">
         <AIInsightsPanel companyId={companyId} />
+      </TabsContent>
+      
+      <TabsContent value="contacts" className="space-y-4">
+        <ApolloContactRecommendations 
+          companyId={companyId}
+          companyName={companyName}
+          websiteUrl={websiteUrl}
+          onContactAdded={() => {
+            toast({
+              title: 'Contact Added',
+              description: 'The contact has been successfully added to your database',
+            });
+          }}
+        />
       </TabsContent>
       
       <TabsContent value="history" className="space-y-4">
