@@ -66,7 +66,14 @@ export function validateCompanyData(data: any): { valid: boolean; errors: string
   
   // Revenue range validation
   if (data.annual_revenue_range) {
-    const validRanges = ['<$500K', '$500K-$999K', '$1M-$2.9M', '$3M-$5.9M', '$6M-$10M', '$10M+'];
+    const validRanges = [
+      // Legacy/basic
+      '<$500K', '$500K-$999K', '$1M-$2.9M', '$3M-$5.9M', '$6M-$10M', '$10M+',
+      // Contractor ranges
+      '$50M+', '$25M-$49M', '$10M-$24M', '$5M-$9M', '$2M-$4M', '$1M-$1.9M', '<$1M',
+      // Builder ranges
+      '$100M+', '$50M-$99M', '$25M-$49M', '$10M-$24M', '$5M-$9M', '$2M-$4M', '<$2M'
+    ];
     if (!validRanges.includes(data.annual_revenue_range)) {
       errors.push(`Invalid revenue range: ${data.annual_revenue_range}`);
     }
