@@ -17,6 +17,16 @@ const passwordSchema = z.string()
   .regex(/[0-9]/, "Password must contain at least one number")
   .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character");
 
+const ALLOWED_DOMAINS = ['@google.com', '@gfieldsales.com', '@nestprorep.com'];
+const ADMIN_EXCEPTION = 'dharris9928@gmail.com';
+
+const validateEmailDomain = (email: string): boolean => {
+  if (email.toLowerCase() === ADMIN_EXCEPTION.toLowerCase()) {
+    return true;
+  }
+  return ALLOWED_DOMAINS.some(domain => email.toLowerCase().endsWith(domain));
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -51,6 +61,13 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      // Validate email domain
+      if (!validateEmailDomain(email)) {
+        toast.error("Registration is restricted to @google.com, @gfieldsales.com, and @nestprorep.com email addresses");
+        setLoading(false);
+        return;
+      }
+
       // Validate password
       const passwordValidation = passwordSchema.safeParse(password);
       if (!passwordValidation.success) {
