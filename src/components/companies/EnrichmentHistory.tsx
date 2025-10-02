@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Sparkles, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 interface EnrichmentLog {
   id: string;
@@ -24,6 +26,7 @@ export function EnrichmentHistory({ companyId }: EnrichmentHistoryProps) {
   const [logs, setLogs] = useState<EnrichmentLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [companyBefore, setCompanyBefore] = useState<Record<string, any>>({});
+  const [applyingLog, setApplyingLog] = useState<string | null>(null);
 
   useEffect(() => {
     loadHistory();
@@ -80,6 +83,30 @@ export function EnrichmentHistory({ companyId }: EnrichmentHistoryProps) {
     );
   }
 
+  const handleForceApply = async (logId: string) => {
+    setApplyingLog(logId);
+    try {
+      const { data, error } = await supabase.functions.invoke('force-apply-enrichment', {
+        body: { enrichmentLogId: logId }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        toast.error(data.error);
+      } else {
+        toast.success(data.message || 'Enrichment applied successfully');
+        // Reload the history to show the new manual application log
+        await loadHistory();
+      }
+    } catch (error) {
+      console.error('Failed to force-apply enrichment:', error);
+      toast.error('Failed to apply enrichment');
+    } finally {
+      setApplyingLog(null);
+    }
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'success':
@@ -103,19 +130,22 @@ export function EnrichmentHistory({ companyId }: EnrichmentHistoryProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         {logs.map((log) => {
+          const isObject = log.fields_enriched && typeof log.fields_enriched === 'object' && !Array.isArray(log.fields_enriched);
           const fieldsArray = Array.isArray(log.fields_enriched) ? log.fields_enriched : [];
-          const fieldCount = fieldsArray.length;
+          const fieldKeys = isObject ? Object.keys(log.fields_enriched) : fieldsArray;
+          const fieldCount = fieldKeys.length;
+          const canForceApply = isObject && fieldCount > 0 && log.status === 'success' && log.enrichment_type !== 'manual_reapply';
           
           return (
             <div key={log.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-border">
               <div className="mt-0.5">{getStatusIcon(log.status)}</div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <Badge variant={log.enrichment_type === 'deep' ? 'default' : 'secondary'}>
-                    {log.enrichment_type}
+                  <Badge variant={log.enrichment_type === 'deep' ? 'default' : log.enrichment_type === 'manual_reapply' ? 'outline' : 'secondary'}>
+                    {log.enrichment_type === 'manual_reapply' ? 'manual' : log.enrichment_type}
                   </Badge>
                   <Badge variant="outline">
-                    {log.provider === 'lovable_ai' ? 'Gemini' : log.provider === 'claude' ? 'Claude' : log.provider}
+                    {log.provider === 'lovable_ai' ? 'Gemini' : log.provider === 'claude' ? 'Claude' : log.provider.replace('_manual', '')}
                   </Badge>
                   {log.confidence_score && (
                     <Badge variant="outline" className="text-xs">
@@ -125,26 +155,43 @@ export function EnrichmentHistory({ companyId }: EnrichmentHistoryProps) {
                 </div>
                 
                 {log.status === 'success' && (
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                     <p className="text-sm font-medium text-green-600 dark:text-green-400">
                       ✓ Successfully enriched {fieldCount} field{fieldCount !== 1 ? 's' : ''}
                     </p>
                     {fieldCount > 0 && (
                       <details className="text-xs text-muted-foreground">
                         <summary className="cursor-pointer hover:text-foreground">
-                          View updated fields
+                          View updated fields {isObject && '& values'}
                         </summary>
                         <div className="mt-2 pl-4 space-y-1">
-                          {fieldsArray.map((field: string, idx: number) => (
+                          {fieldKeys.map((field: string, idx: number) => (
                             <div key={idx} className="flex items-start gap-2">
                               <span className="text-primary">•</span>
                               <span className="capitalize">
                                 {field.replace(/_/g, ' ')}
+                                {isObject && (
+                                  <span className="text-foreground font-medium ml-2">
+                                    = {JSON.stringify(log.fields_enriched[field])}
+                                  </span>
+                                )}
                               </span>
                             </div>
                           ))}
                         </div>
                       </details>
+                    )}
+                    {canForceApply && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleForceApply(log.id)}
+                        disabled={applyingLog === log.id}
+                        className="mt-2"
+                      >
+                        <RefreshCw className={`h-3 w-3 mr-1 ${applyingLog === log.id ? 'animate-spin' : ''}`} />
+                        Force Apply to Company
+                      </Button>
                     )}
                   </div>
                 )}

@@ -304,14 +304,20 @@ serve(async (req) => {
       return company[key] !== persistedRow[key];
     });
 
-    // Log enrichment with only persisted fields
+    // Store both field names AND values for potential manual re-application
+    const enrichedDataWithValues: Record<string, any> = {};
+    persistedFields.forEach((field) => {
+      enrichedDataWithValues[field] = persistedRow[field];
+    });
+
+    // Log enrichment with persisted fields and their values
     await supabase.from('enrichment_logs').insert({
       company_id: companyId,
       provider,
       enrichment_type: deepEnrich ? 'deep' : 'standard',
       status: 'success',
       confidence_score: enrichmentResult.confidence,
-      fields_enriched: persistedFields,
+      fields_enriched: enrichedDataWithValues,
       created_by: user.id
     });
 
