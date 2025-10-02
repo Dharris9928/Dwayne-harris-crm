@@ -152,6 +152,17 @@ export function EnrichmentHistory({ companyId }: EnrichmentHistoryProps) {
                       {log.confidence_score}% confidence
                     </Badge>
                   )}
+                  {canForceApply && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleForceApply(log.id)}
+                      disabled={applyingLog === log.id}
+                    >
+                      <RefreshCw className={`h-3 w-3 mr-1 ${applyingLog === log.id ? 'animate-spin' : ''}`} />
+                      Force Apply to Company
+                    </Button>
+                  )}
                 </div>
                 
                 {log.status === 'success' && (
@@ -180,18 +191,6 @@ export function EnrichmentHistory({ companyId }: EnrichmentHistoryProps) {
                           ))}
                         </div>
                       </details>
-                    )}
-                    {canForceApply && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleForceApply(log.id)}
-                        disabled={applyingLog === log.id}
-                        className="mt-2"
-                      >
-                        <RefreshCw className={`h-3 w-3 mr-1 ${applyingLog === log.id ? 'animate-spin' : ''}`} />
-                        Force Apply to Company
-                      </Button>
                     )}
                   </div>
                 )}
