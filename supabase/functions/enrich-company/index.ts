@@ -203,21 +203,41 @@ serve(async (req) => {
 async function enrichWithLovableAI(company: any) {
   const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
   
-  const prompt = `Analyze this company and provide enrichment data:
+  const prompt = `Analyze this company and provide COMPREHENSIVE enrichment data with PRIORITY on business metrics and digital engagement:
+
 Company Name: ${company.company_name}
 Industry: ${company.industry_type}
 Website: ${company.website_url || 'Not provided'}
 LinkedIn: ${company.linkedin_company_url || 'Not provided'}
 Current Data: ${JSON.stringify(company, null, 2)}
 
-Provide structured enrichment focusing on:
-1. Missing firmographic data (employees, revenue, years in business)
-2. Website quality assessment
-3. LinkedIn activity level
-4. Social media presence
-5. Technology adoption indicators
-6. Geographic market focus
-7. Smart home readiness for HVAC/Construction industry`;
+CRITICAL PRIORITIES - Fill ALL possible fields:
+
+**BUSINESS METRICS (HIGH PRIORITY):**
+1. Company size (total_employees) - exact number if possible
+2. Annual revenue range - be specific
+3. Years in business - calculate from founding date
+4. Annual installation/project volume
+5. Average project/home price
+6. Price point positioning (economy/mid-market/premium/luxury)
+
+**DIGITAL ENGAGEMENT (HIGH PRIORITY):**
+1. Website quality and professionalism level
+2. Website content about smart home/technology
+3. LinkedIn company page followers and activity
+4. Facebook, Instagram, YouTube presence
+5. Social media activity level across platforms
+6. Technology adoption indicators
+7. Google Business Profile existence
+8. Online review presence and ratings
+
+**ADDITIONAL DATA:**
+- Geographic market coverage
+- Business model and service types
+- Competitive positioning
+- Growth indicators
+
+Research the company thoroughly using the website and LinkedIn URLs provided. Be comprehensive and prioritize filling business and digital fields.`;
 
   const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
     method: 'POST',
@@ -235,21 +255,48 @@ Provide structured enrichment focusing on:
         type: 'function',
         function: {
           name: 'enrich_company_data',
-          description: 'Structure enriched company data',
+          description: 'Structure comprehensive enriched company data with focus on business metrics and digital engagement',
           parameters: {
             type: 'object',
             properties: {
-              total_employees: { type: 'integer', description: 'Estimated number of employees' },
-              annual_revenue_range: { type: 'string', enum: ['<$500K', '$500K-$1M', '$1M-$5M', '$5M-$10M', '$10M-$25M', '$25M+'] },
-              years_in_business: { type: 'integer' },
+              // Business Metrics
+              total_employees: { type: 'integer', description: 'Exact number of employees' },
+              total_employees_range: { type: 'string', enum: ['1-5', '6-10', '11-25', '26-50', '51-100', '101-250', '251-500', '500+'] },
+              annual_revenue_range: { type: 'string', enum: ['<$500K', '$500K-$999K', '$1M-$4.9M', '$5M-$9.9M', '$10M+'] },
+              years_in_business: { type: 'integer', description: 'Years company has been operating' },
+              years_in_business_range: { type: 'string', enum: ['<5', '5-10', '11-20', '21-30', '30+'] },
+              annual_volume: { type: 'integer', description: 'Annual installation/project volume' },
+              annual_volume_range: { type: 'string', enum: ['<50', '50-100', '101-250', '251-500', '500+'] },
+              average_home_price: { type: 'integer', description: 'Average project/home price in dollars' },
+              average_home_price_range: { type: 'string', enum: ['<$250K', '$250K-$500K', '$500K-$750K', '$750K-$1M', '$1M+'] },
+              price_point_category: { type: 'string', enum: ['economy', 'mid-market', 'premium', 'luxury'] },
+              
+              // Digital Engagement
+              website_url: { type: 'string', description: 'Company website if found' },
               website_quality: { type: 'string', enum: ['Poor', 'Basic', 'Good', 'Professional', 'Excellent'] },
+              website_has_smart_home_content: { type: 'boolean', description: 'Does website mention smart home/technology' },
+              website_last_updated: { type: 'string', enum: ['Recently', 'Within 6 months', 'Within 1 year', 'Over 1 year', 'Unknown'] },
+              
+              linkedin_company_url: { type: 'string', description: 'LinkedIn company page URL if found' },
+              linkedin_followers_range: { type: 'string', enum: ['<100', '100-500', '500-1K', '1K-5K', '5K+'] },
               linkedin_activity_level: { type: 'string', enum: ['None', 'Low', 'Medium', 'High'] },
-              technology_adoption_level: { type: 'string', enum: ['Low', 'Medium', 'High', 'Very High'] },
+              
+              facebook_url: { type: 'string', description: 'Facebook page URL if found' },
+              instagram_url: { type: 'string', description: 'Instagram profile URL if found' },
+              youtube_url: { type: 'string', description: 'YouTube channel URL if found' },
               social_media_presence: { type: 'string', enum: ['None', 'Limited', 'Moderate', 'Active', 'Very Active'] },
-              market_positioning: { type: 'string' },
+              
+              technology_adoption_level: { type: 'string', enum: ['Low', 'Medium', 'High', 'Very High'] },
+              has_google_business_profile: { type: 'boolean', description: 'Company has Google Business Profile' },
+              online_review_rating: { type: 'number', description: 'Average online review rating (0-5)' },
+              online_review_count_range: { type: 'string', enum: ['<10', '10-50', '50-100', '100-500', '500+'] },
+              
+              // AI Insights
+              market_positioning: { type: 'string', description: 'How company positions itself in market' },
               competitive_advantages: { type: 'array', items: { type: 'string' } },
               growth_indicators: { type: 'array', items: { type: 'string' } },
               smart_home_readiness_score: { type: 'integer', minimum: 0, maximum: 100 },
+              recommended_approach: { type: 'string', description: 'Recommended sales approach' },
               confidence_level: { type: 'string', enum: ['high', 'medium', 'low'] }
             }
           }
@@ -273,25 +320,53 @@ Provide structured enrichment focusing on:
 
   const enrichedData = JSON.parse(toolCall.function.arguments);
 
+  // Build company updates - only include fields that have values
+  const companyUpdates: any = {};
+  
+  // Business metrics
+  if (enrichedData.total_employees) companyUpdates.total_employees = enrichedData.total_employees;
+  if (enrichedData.total_employees_range) companyUpdates.total_employees_range = enrichedData.total_employees_range;
+  if (enrichedData.annual_revenue_range) companyUpdates.annual_revenue_range = enrichedData.annual_revenue_range;
+  if (enrichedData.years_in_business) companyUpdates.years_in_business = enrichedData.years_in_business;
+  if (enrichedData.years_in_business_range) companyUpdates.years_in_business_range = enrichedData.years_in_business_range;
+  if (enrichedData.annual_volume) companyUpdates.annual_volume = enrichedData.annual_volume;
+  if (enrichedData.annual_volume_range) companyUpdates.annual_volume_range = enrichedData.annual_volume_range;
+  if (enrichedData.average_home_price) companyUpdates.average_home_price = enrichedData.average_home_price;
+  if (enrichedData.average_home_price_range) companyUpdates.average_home_price_range = enrichedData.average_home_price_range;
+  if (enrichedData.price_point_category) companyUpdates.price_point_category = enrichedData.price_point_category;
+  
+  // Digital engagement
+  if (enrichedData.website_url) companyUpdates.website_url = enrichedData.website_url;
+  if (enrichedData.website_quality) companyUpdates.website_quality = enrichedData.website_quality;
+  if (enrichedData.website_has_smart_home_content !== undefined) companyUpdates.website_has_smart_home_content = enrichedData.website_has_smart_home_content;
+  if (enrichedData.website_last_updated) companyUpdates.website_last_updated = enrichedData.website_last_updated;
+  
+  if (enrichedData.linkedin_company_url) companyUpdates.linkedin_company_url = enrichedData.linkedin_company_url;
+  if (enrichedData.linkedin_followers_range) companyUpdates.linkedin_followers_range = enrichedData.linkedin_followers_range;
+  if (enrichedData.linkedin_activity_level) companyUpdates.linkedin_activity_level = enrichedData.linkedin_activity_level;
+  
+  if (enrichedData.facebook_url) companyUpdates.facebook_url = enrichedData.facebook_url;
+  if (enrichedData.instagram_url) companyUpdates.instagram_url = enrichedData.instagram_url;
+  if (enrichedData.youtube_url) companyUpdates.youtube_url = enrichedData.youtube_url;
+  if (enrichedData.social_media_presence) companyUpdates.social_media_presence = enrichedData.social_media_presence;
+  
+  if (enrichedData.technology_adoption_level) companyUpdates.technology_adoption_level = enrichedData.technology_adoption_level;
+  if (enrichedData.has_google_business_profile !== undefined) companyUpdates.has_google_business_profile = enrichedData.has_google_business_profile;
+  if (enrichedData.online_review_rating) companyUpdates.online_review_rating = enrichedData.online_review_rating;
+  if (enrichedData.online_review_count_range) companyUpdates.online_review_count_range = enrichedData.online_review_count_range;
+
   return {
-    companyUpdates: {
-      total_employees: enrichedData.total_employees,
-      annual_revenue_range: enrichedData.annual_revenue_range,
-      years_in_business: enrichedData.years_in_business,
-      website_quality: enrichedData.website_quality,
-      linkedin_activity_level: enrichedData.linkedin_activity_level,
-      technology_adoption_level: enrichedData.technology_adoption_level,
-      social_media_presence: enrichedData.social_media_presence
-    },
+    companyUpdates,
     insights: {
       market_positioning: enrichedData.market_positioning,
       competitive_advantages: enrichedData.competitive_advantages,
       growth_indicators: enrichedData.growth_indicators,
       smart_home_readiness_score: enrichedData.smart_home_readiness_score,
+      recommended_approach: enrichedData.recommended_approach,
       confidence_level: enrichedData.confidence_level
     },
     confidence: enrichedData.confidence_level === 'high' ? 85 : enrichedData.confidence_level === 'medium' ? 70 : 50,
-    fieldsEnriched: Object.keys(enrichedData)
+    fieldsEnriched: Object.keys(companyUpdates)
   };
 }
 
@@ -303,27 +378,57 @@ async function enrichWithClaude(company: any, deepEnrich: boolean) {
   }
   
   const prompt = deepEnrich
-    ? `Perform DEEP analysis of this company with advanced reasoning:
+    ? `Perform DEEP COMPREHENSIVE analysis of this company with PRIORITY on business metrics and digital engagement:
+
 Company: ${company.company_name}
 Industry: ${company.industry_type}
 Website: ${company.website_url || 'Not provided'}
 LinkedIn: ${company.linkedin_company_url || 'Not provided'}
+Current data: ${JSON.stringify(company, null, 2)}
 
-Deep analysis should include:
-1. Executive team identification and decision-maker mapping
-2. Recent company news, growth signals, and market positioning
-3. Competitive landscape analysis
-4. Smart home/technology adoption readiness specific to HVAC/Construction
-5. Parent company relationships and corporate structure
-6. Market trends affecting this company
-7. Strategic partnership opportunities
+CRITICAL PRIORITIES - Research and fill ALL possible fields:
 
-Current data: ${JSON.stringify(company, null, 2)}`
-    : `Analyze and enrich this company data:
+**BUSINESS METRICS (HIGHEST PRIORITY):**
+- Exact employee count and company size
+- Specific annual revenue range
+- Years in business (calculate from founding)
+- Annual installation/project volume
+- Average project/home price
+- Price positioning (economy/mid-market/premium/luxury)
+
+**DIGITAL ENGAGEMENT (HIGHEST PRIORITY):**
+- Website quality, professionalism, content depth
+- Smart home/technology content on website
+- LinkedIn followers, activity, and engagement
+- Facebook, Instagram, YouTube presence and URLs
+- Social media activity patterns
+- Technology adoption indicators
+- Google Business Profile status
+- Online review ratings and volume
+
+**DEEP ANALYSIS:**
+- Executive team and decision-makers
+- Recent news and growth signals
+- Competitive positioning and advantages
+- Market trends and opportunities
+- Partnership potential
+- Strategic recommendations
+
+Research extensively using provided URLs and public information.`
+    : `Analyze and COMPREHENSIVELY enrich this company data with FOCUS on business metrics and digital engagement:
+
 Company: ${company.company_name}
 Industry: ${company.industry_type}
-Provide: employees, revenue, years in business, website quality, tech adoption, social presence.
-Current data: ${JSON.stringify(company, null, 2)}`;
+Website: ${company.website_url || 'Not provided'}
+LinkedIn: ${company.linkedin_company_url || 'Not provided'}
+Current data: ${JSON.stringify(company, null, 2)}
+
+PRIORITIES:
+1. Business metrics: employees, revenue, years in business, volume, pricing
+2. Digital engagement: website quality, social media URLs and activity, LinkedIn presence, online reviews
+3. Technology adoption and smart home readiness
+
+Fill as many fields as possible with accurate data.`;
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -334,20 +439,46 @@ Current data: ${JSON.stringify(company, null, 2)}`;
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
-      max_tokens: 4096,
+      max_tokens: 8000,
       tools: [{
         name: 'enrich_company_data',
-        description: 'Structure enriched company data with deep insights',
+        description: 'Structure comprehensive enriched company data with priority on business metrics and digital engagement',
         input_schema: {
           type: 'object',
           properties: {
-            total_employees: { type: 'integer' },
-            annual_revenue_range: { type: 'string', enum: ['<$500K', '$500K-$1M', '$1M-$5M', '$5M-$10M', '$10M-$25M', '$25M+'] },
+            // Business Metrics
+            total_employees: { type: 'integer', description: 'Exact employee count' },
+            total_employees_range: { type: 'string', enum: ['1-5', '6-10', '11-25', '26-50', '51-100', '101-250', '251-500', '500+'] },
+            annual_revenue_range: { type: 'string', enum: ['<$500K', '$500K-$999K', '$1M-$4.9M', '$5M-$9.9M', '$10M+'] },
             years_in_business: { type: 'integer' },
+            years_in_business_range: { type: 'string', enum: ['<5', '5-10', '11-20', '21-30', '30+'] },
+            annual_volume: { type: 'integer' },
+            annual_volume_range: { type: 'string', enum: ['<50', '50-100', '101-250', '251-500', '500+'] },
+            average_home_price: { type: 'integer' },
+            average_home_price_range: { type: 'string', enum: ['<$250K', '$250K-$500K', '$500K-$750K', '$750K-$1M', '$1M+'] },
+            price_point_category: { type: 'string', enum: ['economy', 'mid-market', 'premium', 'luxury'] },
+            
+            // Digital Engagement
+            website_url: { type: 'string' },
             website_quality: { type: 'string', enum: ['Poor', 'Basic', 'Good', 'Professional', 'Excellent'] },
+            website_has_smart_home_content: { type: 'boolean' },
+            website_last_updated: { type: 'string', enum: ['Recently', 'Within 6 months', 'Within 1 year', 'Over 1 year', 'Unknown'] },
+            
+            linkedin_company_url: { type: 'string' },
+            linkedin_followers_range: { type: 'string', enum: ['<100', '100-500', '500-1K', '1K-5K', '5K+'] },
             linkedin_activity_level: { type: 'string', enum: ['None', 'Low', 'Medium', 'High'] },
-            technology_adoption_level: { type: 'string', enum: ['Low', 'Medium', 'High', 'Very High'] },
+            
+            facebook_url: { type: 'string' },
+            instagram_url: { type: 'string' },
+            youtube_url: { type: 'string' },
             social_media_presence: { type: 'string', enum: ['None', 'Limited', 'Moderate', 'Active', 'Very Active'] },
+            
+            technology_adoption_level: { type: 'string', enum: ['Low', 'Medium', 'High', 'Very High'] },
+            has_google_business_profile: { type: 'boolean' },
+            online_review_rating: { type: 'number' },
+            online_review_count_range: { type: 'string', enum: ['<10', '10-50', '50-100', '100-500', '500+'] },
+            
+            // AI Insights
             market_positioning: { type: 'string' },
             competitive_advantages: { type: 'array', items: { type: 'string' } },
             growth_indicators: { type: 'array', items: { type: 'string' } },
@@ -376,16 +507,43 @@ Current data: ${JSON.stringify(company, null, 2)}`;
 
   const enrichedData = toolUse.input;
 
+  // Build company updates - only include fields that have values
+  const companyUpdates: any = {};
+  
+  // Business metrics
+  if (enrichedData.total_employees) companyUpdates.total_employees = enrichedData.total_employees;
+  if (enrichedData.total_employees_range) companyUpdates.total_employees_range = enrichedData.total_employees_range;
+  if (enrichedData.annual_revenue_range) companyUpdates.annual_revenue_range = enrichedData.annual_revenue_range;
+  if (enrichedData.years_in_business) companyUpdates.years_in_business = enrichedData.years_in_business;
+  if (enrichedData.years_in_business_range) companyUpdates.years_in_business_range = enrichedData.years_in_business_range;
+  if (enrichedData.annual_volume) companyUpdates.annual_volume = enrichedData.annual_volume;
+  if (enrichedData.annual_volume_range) companyUpdates.annual_volume_range = enrichedData.annual_volume_range;
+  if (enrichedData.average_home_price) companyUpdates.average_home_price = enrichedData.average_home_price;
+  if (enrichedData.average_home_price_range) companyUpdates.average_home_price_range = enrichedData.average_home_price_range;
+  if (enrichedData.price_point_category) companyUpdates.price_point_category = enrichedData.price_point_category;
+  
+  // Digital engagement
+  if (enrichedData.website_url) companyUpdates.website_url = enrichedData.website_url;
+  if (enrichedData.website_quality) companyUpdates.website_quality = enrichedData.website_quality;
+  if (enrichedData.website_has_smart_home_content !== undefined) companyUpdates.website_has_smart_home_content = enrichedData.website_has_smart_home_content;
+  if (enrichedData.website_last_updated) companyUpdates.website_last_updated = enrichedData.website_last_updated;
+  
+  if (enrichedData.linkedin_company_url) companyUpdates.linkedin_company_url = enrichedData.linkedin_company_url;
+  if (enrichedData.linkedin_followers_range) companyUpdates.linkedin_followers_range = enrichedData.linkedin_followers_range;
+  if (enrichedData.linkedin_activity_level) companyUpdates.linkedin_activity_level = enrichedData.linkedin_activity_level;
+  
+  if (enrichedData.facebook_url) companyUpdates.facebook_url = enrichedData.facebook_url;
+  if (enrichedData.instagram_url) companyUpdates.instagram_url = enrichedData.instagram_url;
+  if (enrichedData.youtube_url) companyUpdates.youtube_url = enrichedData.youtube_url;
+  if (enrichedData.social_media_presence) companyUpdates.social_media_presence = enrichedData.social_media_presence;
+  
+  if (enrichedData.technology_adoption_level) companyUpdates.technology_adoption_level = enrichedData.technology_adoption_level;
+  if (enrichedData.has_google_business_profile !== undefined) companyUpdates.has_google_business_profile = enrichedData.has_google_business_profile;
+  if (enrichedData.online_review_rating) companyUpdates.online_review_rating = enrichedData.online_review_rating;
+  if (enrichedData.online_review_count_range) companyUpdates.online_review_count_range = enrichedData.online_review_count_range;
+
   return {
-    companyUpdates: {
-      total_employees: enrichedData.total_employees,
-      annual_revenue_range: enrichedData.annual_revenue_range,
-      years_in_business: enrichedData.years_in_business,
-      website_quality: enrichedData.website_quality,
-      linkedin_activity_level: enrichedData.linkedin_activity_level,
-      technology_adoption_level: enrichedData.technology_adoption_level,
-      social_media_presence: enrichedData.social_media_presence
-    },
+    companyUpdates,
     insights: {
       market_positioning: enrichedData.market_positioning,
       competitive_advantages: enrichedData.competitive_advantages,
@@ -395,6 +553,6 @@ Current data: ${JSON.stringify(company, null, 2)}`;
       confidence_level: enrichedData.confidence_level
     },
     confidence: enrichedData.confidence_level === 'high' ? 90 : enrichedData.confidence_level === 'medium' ? 75 : 55,
-    fieldsEnriched: Object.keys(enrichedData)
+    fieldsEnriched: Object.keys(companyUpdates)
   };
 }
