@@ -12,6 +12,7 @@ interface AIInsight {
   recommended_approach: string | null;
   confidence_level: string | null;
   last_enriched_at: string | null;
+  segment_rationale: string | null;
 }
 
 interface AIInsightsPanelProps {
@@ -82,6 +83,16 @@ export function AIInsightsPanel({ companyId }: AIInsightsPanelProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {insights.segment_rationale && (
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Segment Assignment</span>
+            </div>
+            <p className="text-sm text-muted-foreground">{insights.segment_rationale}</p>
+          </div>
+        )}
+
         {insights.smart_home_readiness_score !== null && (
           <div>
             <div className="flex items-center gap-2 mb-2">

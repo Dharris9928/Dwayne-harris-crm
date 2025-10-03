@@ -267,10 +267,12 @@ serve(async (req) => {
     let updates = sanitize(enrichmentResult.companyUpdates);
     
     // Auto-assign segment based on enriched data
-    const autoSegment = determineSegment(company, updates);
-    if (autoSegment) {
-      updates.segment = autoSegment;
-      console.log(`Auto-assigned segment: ${autoSegment}`);
+    const segmentResult = determineSegment(company, updates);
+    let segmentRationale = null;
+    if (segmentResult.segment) {
+      updates.segment = segmentResult.segment;
+      segmentRationale = segmentResult.rationale;
+      console.log(`Auto-assigned segment: ${segmentResult.segment} - ${segmentRationale}`);
     }
 
     // If nothing to update, still log and return success
@@ -399,6 +401,7 @@ serve(async (req) => {
       .upsert({
         company_id: companyId,
         ...enrichmentResult.insights,
+        segment_rationale: segmentRationale,
         enriched_by: user.id,
         last_enriched_at: new Date().toISOString()
       }, {

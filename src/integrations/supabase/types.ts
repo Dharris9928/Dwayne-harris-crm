@@ -431,6 +431,7 @@ export type Database = {
           last_enriched_at: string | null
           market_positioning: string | null
           recommended_approach: string | null
+          segment_rationale: string | null
           smart_home_readiness_score: number | null
         }
         Insert: {
@@ -444,6 +445,7 @@ export type Database = {
           last_enriched_at?: string | null
           market_positioning?: string | null
           recommended_approach?: string | null
+          segment_rationale?: string | null
           smart_home_readiness_score?: number | null
         }
         Update: {
@@ -457,6 +459,7 @@ export type Database = {
           last_enriched_at?: string | null
           market_positioning?: string | null
           recommended_approach?: string | null
+          segment_rationale?: string | null
           smart_home_readiness_score?: number | null
         }
         Relationships: [
