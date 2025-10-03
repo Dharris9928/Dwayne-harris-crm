@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
-import { Upload, Download, AlertCircle, CheckCircle } from "lucide-react";
+import { Upload, Download, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface ImportDialogProps {
@@ -47,6 +47,7 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
   const [importResults, setImportResults] = useState<ImportResult | null>(null);
   const [potentialRelationships, setPotentialRelationships] = useState<PotentialRelationship[]>([]);
   const [currentRelationshipIndex, setCurrentRelationshipIndex] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
 
   const handleFileUpload = async (uploadedFile: File) => {
@@ -206,14 +207,25 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
   };
 
   const handlePreviewToRelationships = async () => {
-    const relationships = await detectPotentialRelationships();
-    
-    if (relationships.length > 0) {
-      setPotentialRelationships(relationships);
-      setCurrentRelationshipIndex(0);
-      setStep('relationships');
-    } else {
-      handleImport();
+    setIsProcessing(true);
+    try {
+      const relationships = await detectPotentialRelationships();
+      
+      if (relationships.length > 0) {
+        setPotentialRelationships(relationships);
+        setCurrentRelationshipIndex(0);
+        setStep('relationships');
+      } else {
+        handleImport();
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error detecting relationships",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -370,6 +382,7 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
     setImportResults(null);
     setPotentialRelationships([]);
     setCurrentRelationshipIndex(0);
+    setIsProcessing(false);
   };
 
   const handleClose = () => {
@@ -538,11 +551,18 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
             </div>
 
             <div className="flex gap-2 pt-4 border-t">
-              <Button variant="outline" onClick={() => setStep('map')}>
+              <Button variant="outline" onClick={() => setStep('map')} disabled={isProcessing}>
                 Back
               </Button>
-              <Button onClick={handlePreviewToRelationships}>
-                Continue
+              <Button onClick={handlePreviewToRelationships} disabled={isProcessing}>
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Continue'
+                )}
               </Button>
             </div>
           </div>
