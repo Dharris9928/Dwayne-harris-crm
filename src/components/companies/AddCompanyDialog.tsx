@@ -57,6 +57,7 @@ export function AddCompanyDialog({ open, onClose, onOpenChange, onSuccess }: Add
   
   // Contractor Specialty (only for contractors)
   const [contractorSpecialty, setContractorSpecialty] = useState('');
+  const [nestProId, setNestProId] = useState('');
   
   // Business Metrics (For Scoring) - NOW USING RANGES
   const [annualVolumeRange, setAnnualVolumeRange] = useState('');
@@ -178,6 +179,10 @@ export function AddCompanyDialog({ open, onClose, onOpenChange, onSuccess }: Add
         // Industry Specialties
         industry_specialties: industrySpecialties.length > 0 ? industrySpecialties : undefined,
         
+        // Contractor Specialty
+        contractor_specialty: industryType === 'Contractor' ? contractorSpecialty || undefined : undefined,
+        nest_pro_partner_id: nestProId || undefined,
+        
         // Builder-specific - NOW USING RANGE
         average_home_price_range: industryType === 'Builder' 
           ? averageHomePriceRange || undefined 
@@ -245,6 +250,7 @@ export function AddCompanyDialog({ open, onClose, onOpenChange, onSuccess }: Add
     setCompanyType('standalone');
     setParentCompanyId('');
     setContractorSpecialty('');
+    setNestProId('');
     setAnnualVolumeRange('');
     setAnnualRevenueRange('');
     setTotalEmployeesRange('');
@@ -457,21 +463,39 @@ export function AddCompanyDialog({ open, onClose, onOpenChange, onSuccess }: Add
 
               {/* Contractor Specialty (only shows for contractors) */}
               {industryType === 'Contractor' && (
-                <div className="bg-background p-3 rounded border border-orange-300">
-                  <Label htmlFor="contractor_specialty" className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Contractor Specialty / Trade
-                  </Label>
-                  <Input
-                    id="contractor_specialty"
-                    value={contractorSpecialty}
-                    onChange={(e) => setContractorSpecialty(e.target.value)}
-                    placeholder="e.g., HVAC Installation & Repair, Smart Home Integration, Emergency HVAC Services"
-                    className="mt-2"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Describe this contractor's primary specialty or trade (e.g., "Residential HVAC and Smart Thermostats")
-                  </p>
+                <div className="space-y-3">
+                  <div className="bg-background p-3 rounded border border-orange-300">
+                    <Label htmlFor="contractor_specialty" className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Contractor Specialty / Trade
+                    </Label>
+                    <Input
+                      id="contractor_specialty"
+                      value={contractorSpecialty}
+                      onChange={(e) => setContractorSpecialty(e.target.value)}
+                      placeholder="e.g., HVAC Installation & Repair, Smart Home Integration, Emergency HVAC Services"
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Describe this contractor's primary specialty or trade (e.g., "Residential HVAC and Smart Thermostats")
+                    </p>
+                  </div>
+
+                  <div className="bg-background p-3 rounded border border-orange-300">
+                    <Label htmlFor="nest_pro_id">
+                      Nest Pro ID
+                    </Label>
+                    <Input
+                      id="nest_pro_id"
+                      value={nestProId}
+                      onChange={(e) => setNestProId(e.target.value)}
+                      placeholder="Enter Nest Pro Partner ID"
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Nest Pro Partner identification number if applicable
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

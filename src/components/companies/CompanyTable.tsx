@@ -44,6 +44,7 @@ interface Company {
   parent_company_id: string | null;
   company_type: string | null;
   contractor_specialty: string | null;
+  nest_pro_partner_id: string | null;
   is_favorite?: boolean;
   annual_volume: number | null;
   annual_revenue_range: string | null;
@@ -201,6 +202,7 @@ export function CompanyTable({
               {columnVisibility.structure && <TableHead>Structure</TableHead>}
               {columnVisibility.parentCompany && <TableHead>Parent Company</TableHead>}
               {columnVisibility.contractorSpecialty && <TableHead>Specialty</TableHead>}
+              {columnVisibility.contractorSpecialty && <TableHead>Nest Pro ID</TableHead>}
               {columnVisibility.status && <TableHead>Status</TableHead>}
               {columnVisibility.score && <TableHead>Score</TableHead>}
               {columnVisibility.priority && <TableHead>Priority</TableHead>}
@@ -322,6 +324,16 @@ export function CompanyTable({
                     </div>
                   ) : company.industry_type === 'Contractor' ? (
                     <span className="text-muted-foreground text-sm italic">Not specified</span>
+                  ) : null}
+                </TableCell>
+              )}
+
+              {columnVisibility.contractorSpecialty && (
+                <TableCell>
+                  {company.industry_type === 'Contractor' && company.nest_pro_partner_id ? (
+                    <span className="text-sm font-mono text-foreground">{company.nest_pro_partner_id}</span>
+                  ) : company.industry_type === 'Contractor' ? (
+                    <span className="text-muted-foreground">—</span>
                   ) : null}
                 </TableCell>
               )}

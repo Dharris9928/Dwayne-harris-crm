@@ -97,6 +97,7 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
   
   // Contractor Specialty (only for contractors)
   const [contractorSpecialty, setContractorSpecialty] = useState('');
+  const [nestProId, setNestProId] = useState('');
   
   // Business Metrics (For Scoring) - NOW USING RANGES
   const [annualVolumeRange, setAnnualVolumeRange] = useState('');
@@ -205,6 +206,7 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
       
       // Contractor Specialty
       setContractorSpecialty(company.contractor_specialty || '');
+      setNestProId(company.nest_pro_partner_id || '');
       
       setAnnualVolumeRange(company.annual_volume_range || '');
       setAnnualRevenueRange(company.annual_revenue_range || '');
@@ -283,6 +285,7 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
         
         // Contractor Specialty (only saved if contractor)
         contractor_specialty: industryType === 'Contractor' ? contractorSpecialty || null : null,
+        nest_pro_partner_id: nestProId || undefined,
         
         // Business Metrics - NOW USING RANGES
         annual_volume_range: annualVolumeRange || undefined,
@@ -596,24 +599,45 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
 
               {/* Contractor Specialty (only shows for contractors) */}
               {industryType === 'Contractor' && (
-                <div className="bg-background p-3 rounded border border-orange-300 dark:border-orange-700">
-                  <Label htmlFor="contractor_specialty" className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    Contractor Specialty / Trade
-                  </Label>
-                  <Input
-                    id="contractor_specialty"
-                    value={contractorSpecialty}
-                    onChange={(e) => {
-                      setContractorSpecialty(e.target.value);
-                      markChanged();
-                    }}
-                    placeholder="e.g., HVAC Installation & Repair, Smart Home Integration, Emergency HVAC Services"
-                    className="mt-2"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Describe this contractor's primary specialty or trade (e.g., "Residential HVAC and Smart Thermostats")
-                  </p>
+                <div className="space-y-3">
+                  <div className="bg-background p-3 rounded border border-orange-300 dark:border-orange-700">
+                    <Label htmlFor="contractor_specialty" className="flex items-center gap-2">
+                      <Users className="h-4 w-4" />
+                      Contractor Specialty / Trade
+                    </Label>
+                    <Input
+                      id="contractor_specialty"
+                      value={contractorSpecialty}
+                      onChange={(e) => {
+                        setContractorSpecialty(e.target.value);
+                        markChanged();
+                      }}
+                      placeholder="e.g., HVAC Installation & Repair, Smart Home Integration, Emergency HVAC Services"
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Describe this contractor's primary specialty or trade (e.g., "Residential HVAC and Smart Thermostats")
+                    </p>
+                  </div>
+
+                  <div className="bg-background p-3 rounded border border-orange-300 dark:border-orange-700">
+                    <Label htmlFor="nest_pro_id">
+                      Nest Pro ID
+                    </Label>
+                    <Input
+                      id="nest_pro_id"
+                      value={nestProId}
+                      onChange={(e) => {
+                        setNestProId(e.target.value);
+                        markChanged();
+                      }}
+                      placeholder="Enter Nest Pro Partner ID"
+                      className="mt-2"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Nest Pro Partner identification number if applicable
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
