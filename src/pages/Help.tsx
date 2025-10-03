@@ -4,6 +4,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { EnrichmentErrorLog } from '@/components/help/EnrichmentErrorLog';
 import { 
   Search, 
   Building2, 
@@ -1188,6 +1189,11 @@ const Help = () => {
           </Accordion>
         </CardContent>
       </Card>
+
+      {/* Admin-Only Section: Enrichment Errors */}
+      <div className="mt-8">
+        <EnrichmentErrorLog />
+      </div>
 
       <Card className="bg-muted/50">
         <CardContent className="pt-6">
