@@ -52,7 +52,7 @@ export function AppSidebar() {
             {!isCollapsed && (
               <div>
                 <h2 className="text-sm font-semibold text-sidebar-foreground">Nest Pro</h2>
-                <p className="text-xs text-sidebar-foreground/70">CRM System</p>
+                <p className="text-xs text-sidebar-foreground/70">Nest Connector System</p>
               </div>
             )}
           </div>
