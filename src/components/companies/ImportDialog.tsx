@@ -128,10 +128,10 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
 
   const downloadTemplate = () => {
     const template = [
-      ['company_name', 'website_url', 'industry_type', 'builder_segment', 'contractor_segment', 'primary_phone', 'linkedin_company_url', 'status', 'priority_tier', 'lead_score'],
-      ['Example Builder Inc', 'https://example.com', 'Builder', 'production_tract', '', '555-1234', 'https://linkedin.com/company/example', 'Lead', 'P1', '85'],
-      ['Sample HVAC Co', 'https://sample.com', 'Contractor', '', 'smart_home_champions', '555-5678', 'https://linkedin.com/company/sample', 'Contacted', 'P2', '70'],
-      ['Security Systems Pro', 'https://securitypro.com', 'CI/Security', '', 'enterprise_integrators', '555-9999', 'https://linkedin.com/company/securitypro', 'Lead', 'P1', '80']
+      ['company_name', 'website_url', 'industry_type', 'builder_segment', 'contractor_segment', 'industry_specialties', 'primary_phone', 'linkedin_company_url', 'status', 'priority_tier', 'lead_score'],
+      ['Example Builder Inc', 'https://example.com', 'Builder', 'production_tract', '', '', '555-1234', 'https://linkedin.com/company/example', 'Lead', 'P1', '85'],
+      ['Sample HVAC Co', 'https://sample.com', 'Contractor', '', 'smart_home_champions', 'HVAC', '555-5678', 'https://linkedin.com/company/sample', 'Contacted', 'P2', '70'],
+      ['Security Pro', 'https://securitypro.com', 'Contractor', '', '', 'CI/Security,Electrical', '555-9999', 'https://linkedin.com/company/securitypro', 'Lead', 'P1', '80']
     ];
     
     const worksheet = XLSX.utils.aoa_to_sheet(template);
@@ -313,7 +313,7 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
                         <SelectItem value="skip">Skip this column</SelectItem>
                         <SelectItem value="company_name">Company Name *</SelectItem>
                         <SelectItem value="website_url">Website URL</SelectItem>
-                        <SelectItem value="industry_type">Company Type (Builder/Contractor/CI/Security) *</SelectItem>
+                        <SelectItem value="industry_type">Company Type (Builder/Contractor) *</SelectItem>
                         <SelectItem value="builder_segment">Builder Segment</SelectItem>
                         <SelectItem value="contractor_segment">Contractor Segment</SelectItem>
                         <SelectItem value="primary_phone">Phone</SelectItem>

@@ -2,8 +2,7 @@
 
 export const INDUSTRY_TYPES = [
   { value: 'Builder', label: 'Builder' },
-  { value: 'Contractor', label: 'Contractor' },
-  { value: 'CI/Security', label: 'CI/Security' }
+  { value: 'Contractor', label: 'Contractor' }
 ];
 
 export const BUILDER_SEGMENTS = [
@@ -27,22 +26,13 @@ export const CONTRACTOR_SEGMENTS = [
   { value: 'emergency_repair', label: 'Emergency/Repair Specialists' }
 ];
 
-export const CI_SECURITY_SEGMENTS = [
-  { value: 'enterprise_integrators', label: 'Enterprise Integrators' },
-  { value: 'residential_security', label: 'Residential Security Specialists' },
-  { value: 'commercial_security', label: 'Commercial Security' },
-  { value: 'access_control', label: 'Access Control Specialists' },
-  { value: 'surveillance_experts', label: 'Surveillance Experts' },
-  { value: 'smart_building', label: 'Smart Building Integrators' },
-  { value: 'managed_services', label: 'Managed Security Services' }
-];
-
 export const INDUSTRY_SPECIALTIES = [
   { value: 'Wholesaler', label: 'Wholesaler' },
   { value: 'HVAC', label: 'HVAC' },
   { value: 'Electrical', label: 'Electrical' },
   { value: 'Plumbing', label: 'Plumbing' },
-  { value: 'General Contracting', label: 'General Contracting' }
+  { value: 'General Contracting', label: 'General Contracting' },
+  { value: 'CI/Security', label: 'CI/Security' }
 ];
 
 export const STATUSES = [

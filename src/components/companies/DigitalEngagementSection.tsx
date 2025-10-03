@@ -10,7 +10,7 @@ import { Globe, Linkedin, Facebook, Instagram, Youtube, Star } from 'lucide-reac
 import { getFieldScoringOptions } from '@/lib/scoring/rangeScoringEngine';
 
 interface DigitalEngagementSectionProps {
-  industryType: 'Builder' | 'Contractor' | 'CI/Security';
+  industryType: 'Builder' | 'Contractor';
   
   // Website
   websiteUrl: string;
