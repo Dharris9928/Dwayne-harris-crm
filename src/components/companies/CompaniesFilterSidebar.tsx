@@ -128,7 +128,7 @@ export function CompaniesFilterSidebar({ isCollapsed, onToggle }: CompaniesFilte
 
   return (
     <div className="w-[280px] border-r border-border bg-card overflow-y-auto">
-      <div className="sticky top-0 bg-card border-b border-border p-4 z-10">
+      <div className="bg-card border-b border-border p-4">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-foreground">Filters</h3>
           <Button
