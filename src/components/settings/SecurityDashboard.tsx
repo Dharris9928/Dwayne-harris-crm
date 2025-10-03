@@ -79,8 +79,8 @@ export function SecurityDashboard() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="space-y-1.5">
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-primary" />
                 <CardTitle>Security Monitoring Dashboard</CardTitle>
@@ -89,8 +89,8 @@ export function SecurityDashboard() {
                 Real-time security metrics and alerts for your CRM
               </CardDescription>
             </div>
-            <Link to="/help">
-              <Button variant="outline" size="sm">
+            <Link to="/help" className="shrink-0">
+              <Button variant="default" size="sm" className="w-full md:w-auto">
                 <FileText className="h-4 w-4 mr-2" />
                 View Activity Logs
               </Button>
