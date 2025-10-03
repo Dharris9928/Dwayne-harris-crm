@@ -171,6 +171,26 @@ export function ExportDialog({ open, onClose, selectedIds, filters, totalCount }
         }
       }
 
+      // Log export activity
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        try {
+          await supabase.from('import_export_logs').insert({
+            user_id: user.id,
+            activity_type: 'export',
+            table_name: 'companies',
+            record_count: exportData.length,
+            successful_count: exportData.length,
+            failed_count: 0,
+            duplicate_count: 0,
+            file_format: exportFormat.toUpperCase(),
+            filters_applied: exportScope === 'filtered' ? filters : null
+          });
+        } catch (error) {
+          console.error('Failed to log export activity:', error);
+        }
+      }
+
       toast({
         title: "Export Successful",
         description: `Exported ${exportData.length} companies`,

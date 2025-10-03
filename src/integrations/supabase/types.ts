@@ -904,6 +904,51 @@ export type Database = {
           },
         ]
       }
+      import_export_logs: {
+        Row: {
+          activity_type: string
+          created_at: string
+          duplicate_count: number
+          error_summary: string | null
+          failed_count: number
+          file_format: string | null
+          filters_applied: Json | null
+          id: string
+          record_count: number
+          successful_count: number
+          table_name: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          duplicate_count?: number
+          error_summary?: string | null
+          failed_count?: number
+          file_format?: string | null
+          filters_applied?: Json | null
+          id?: string
+          record_count?: number
+          successful_count?: number
+          table_name: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          duplicate_count?: number
+          error_summary?: string | null
+          failed_count?: number
+          file_format?: string | null
+          filters_applied?: Json | null
+          id?: string
+          record_count?: number
+          successful_count?: number
+          table_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       installation_history: {
         Row: {
           branch_id: string | null

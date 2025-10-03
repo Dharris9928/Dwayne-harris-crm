@@ -367,6 +367,27 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
     setImportResults(results);
     setStep('complete');
 
+    // Log the import activity
+    if (user) {
+      try {
+        await supabase.from('import_export_logs').insert({
+          user_id: user.id,
+          activity_type: 'import',
+          table_name: 'companies',
+          record_count: parsedData.length,
+          successful_count: results.success,
+          failed_count: results.failed,
+          duplicate_count: results.duplicates,
+          file_format: file?.name.split('.').pop()?.toUpperCase(),
+          error_summary: results.errors.length > 0 
+            ? `${results.errors.length} errors occurred` 
+            : null
+        });
+      } catch (error) {
+        console.error('Failed to log import activity:', error);
+      }
+    }
+
     if (results.success > 0) {
       onImportComplete();
     }

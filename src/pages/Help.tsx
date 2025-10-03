@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { EnrichmentErrorLog } from '@/components/help/EnrichmentErrorLog';
+import { ImportExportActivityLog } from '@/components/help/ImportExportActivityLog';
 import { 
   Search, 
   Building2, 
@@ -1191,7 +1192,8 @@ const Help = () => {
       </Card>
 
       {/* Admin-Only Section: Enrichment Errors */}
-      <div className="mt-8">
+      <div className="mt-8 space-y-6">
+        <ImportExportActivityLog />
         <EnrichmentErrorLog />
       </div>
 
