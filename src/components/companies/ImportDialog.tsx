@@ -504,7 +504,7 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
               </table>
             </div>
 
-            <div className="flex justify-between pt-4 border-t">
+            <div className="flex gap-2 pt-4 border-t">
               <Button variant="outline" onClick={() => setStep('map')}>
                 Back
               </Button>
