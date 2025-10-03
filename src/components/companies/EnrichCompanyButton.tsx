@@ -13,6 +13,8 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { EnrichmentConfirmDialog } from './EnrichmentConfirmDialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface EnrichCompanyButtonProps {
   companyId: string;
@@ -32,6 +34,10 @@ export function EnrichCompanyButton({ companyId, onComplete }: EnrichCompanyButt
     perplexity: true,
   });
   const { toast } = useToast();
+  const { data: userRole, isLoading: roleLoading } = useUserRole();
+  
+  const canEnrich = userRole?.hasElevatedAccess || false;
+  const isDisabled = enriching || !canEnrich || roleLoading;
 
   const toggleProvider = (provider: keyof typeof providers) => {
     setProviders(prev => ({ ...prev, [provider]: !prev[provider] }));
@@ -122,17 +128,21 @@ export function EnrichCompanyButton({ companyId, onComplete }: EnrichCompanyButt
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={enriching}
-          >
-            <Sparkles className={`h-4 w-4 mr-2 ${enriching ? 'animate-pulse' : ''}`} />
-            {enriching ? 'Enriching...' : 'Enrich Data'}
-          </Button>
-        </DropdownMenuTrigger>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isDisabled}
+                  >
+                    <Sparkles className={`h-4 w-4 mr-2 ${enriching ? 'animate-pulse' : ''}`} />
+                    {enriching ? 'Enriching...' : 'Enrich Data'}
+                  </Button>
+                </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80">
           <div className="p-3 space-y-3">
             <div className="text-sm font-medium mb-2">Select Providers</div>
@@ -200,6 +210,15 @@ export function EnrichCompanyButton({ companyId, onComplete }: EnrichCompanyButt
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+            </div>
+          </TooltipTrigger>
+          {!canEnrich && !roleLoading && (
+            <TooltipContent>
+              <p>Enrichment requires Admin or Sales Manager role</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
 
       {previewData && (
         <EnrichmentConfirmDialog

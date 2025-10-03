@@ -20,6 +20,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { EnrichmentConfirmDialog } from "./EnrichmentConfirmDialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface BulkActionBarProps {
   selectedCount: number;
@@ -41,6 +43,9 @@ export function BulkActionBar({
   const [showEnrichConfirm, setShowEnrichConfirm] = useState(false);
   const [bulkEnrichPreviews, setBulkEnrichPreviews] = useState<any[]>([]);
   const { toast } = useToast();
+  const { data: userRole, isLoading: roleLoading } = useUserRole();
+  
+  const canEnrich = userRole?.hasElevatedAccess || false;
 
   const handleBulkStatusChange = async (status: "Lead" | "Contacted" | "Engaged" | "Pilot" | "Active" | "Inactive" | "Lost") => {
     try {
@@ -226,15 +231,28 @@ export function BulkActionBar({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleBulkEnrich}
-            disabled={isEnriching}
-          >
-            <Sparkles className={`h-4 w-4 mr-2 ${isEnriching ? 'animate-pulse' : ''}`} />
-            {isEnriching ? `Enriching ${enrichProgress.current}/${enrichProgress.total}...` : 'Enrich All'}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkEnrich}
+                    disabled={isEnriching || !canEnrich || roleLoading}
+                  >
+                    <Sparkles className={`h-4 w-4 mr-2 ${isEnriching ? 'animate-pulse' : ''}`} />
+                    {isEnriching ? `Enriching ${enrichProgress.current}/${enrichProgress.total}...` : 'Enrich All'}
+                  </Button>
+                </div>
+              </TooltipTrigger>
+              {!canEnrich && !roleLoading && (
+                <TooltipContent>
+                  <p>Enrichment requires Admin or Sales Manager role</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

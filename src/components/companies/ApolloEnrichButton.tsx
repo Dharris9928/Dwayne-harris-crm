@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface ApolloEnrichButtonProps {
   companyId: string;
@@ -21,6 +23,10 @@ export function ApolloEnrichButton({
 }: ApolloEnrichButtonProps) {
   const [enriching, setEnriching] = useState(false);
   const { toast } = useToast();
+  const { data: userRole, isLoading: roleLoading } = useUserRole();
+  
+  const canEnrich = userRole?.hasElevatedAccess || false;
+  const isDisabled = enriching || !canEnrich || roleLoading;
 
   const handleEnrich = async () => {
     setEnriching(true);
@@ -73,14 +79,27 @@ export function ApolloEnrichButton({
   };
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={handleEnrich}
-      disabled={enriching}
-    >
-      <Building2 className={`h-4 w-4 mr-2 ${enriching ? 'animate-pulse' : ''}`} />
-      {enriching ? 'Enriching from Apollo...' : 'Enrich with Apollo'}
-    </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleEnrich}
+              disabled={isDisabled}
+            >
+              <Building2 className={`h-4 w-4 mr-2 ${enriching ? 'animate-pulse' : ''}`} />
+              {enriching ? 'Enriching from Apollo...' : 'Enrich with Apollo'}
+            </Button>
+          </div>
+        </TooltipTrigger>
+        {!canEnrich && !roleLoading && (
+          <TooltipContent>
+            <p>Enrichment requires Admin or Sales Manager role</p>
+          </TooltipContent>
+        )}
+      </Tooltip>
+    </TooltipProvider>
   );
 }

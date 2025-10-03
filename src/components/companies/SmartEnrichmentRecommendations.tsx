@@ -8,6 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { EnrichmentConfirmDialog } from './EnrichmentConfirmDialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface SmartEnrichmentRecommendationsProps {
   onEnrichCompany: (companyId: string) => void;
@@ -19,6 +21,9 @@ export function SmartEnrichmentRecommendations({ onEnrichCompany }: SmartEnrichm
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
   const [pendingCompanyId, setPendingCompanyId] = useState<string | null>(null);
+  const { data: userRole, isLoading: roleLoading } = useUserRole();
+  
+  const canEnrich = userRole?.hasElevatedAccess || false;
 
   const recommendations = useQuery({
     queryKey: ['enrichment-recommendations'],
@@ -210,15 +215,28 @@ export function SmartEnrichmentRecommendations({ onEnrichCompany }: SmartEnrichm
                     )}
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleEnrich(company.id)}
-                  disabled={enriching === company.id}
-                >
-                  <Sparkles className={`h-4 w-4 mr-2 ${enriching === company.id ? 'animate-pulse' : ''}`} />
-                  {enriching === company.id ? 'Enriching...' : 'Enrich'}
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEnrich(company.id)}
+                          disabled={enriching === company.id || !canEnrich || roleLoading}
+                        >
+                          <Sparkles className={`h-4 w-4 mr-2 ${enriching === company.id ? 'animate-pulse' : ''}`} />
+                          {enriching === company.id ? 'Enriching...' : 'Enrich'}
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    {!canEnrich && !roleLoading && (
+                      <TooltipContent>
+                        <p>Enrichment requires Admin or Sales Manager role</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             ))}
           </div>
