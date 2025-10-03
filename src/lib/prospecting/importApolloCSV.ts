@@ -121,6 +121,7 @@ function parseEmployeeRange(value: string | number): string | null {
 
 /**
  * Parse revenue range to format expected by CRM
+ * Database accepts multiple formats - use contractor/builder ranges for better granularity
  */
 function parseRevenueRange(value: string | number): string | null {
   if (!value) return null;
@@ -128,8 +129,14 @@ function parseRevenueRange(value: string | number): string | null {
   // Convert to string and normalize
   const strValue = String(value).toLowerCase().replace(/[,$]/g, '').trim();
   
+  // Valid ranges from validation
+  const validRanges = [
+    '<$500K', '$500K-$999K', '$1M-$2.9M', '$3M-$5.9M', '$6M-$10M', '$10M+',
+    '$50M+', '$25M-$49M', '$10M-$24M', '$5M-$9M', '$2M-$4M', '$1M-$1.9M', '<$1M',
+    '$100M+', '$50M-$99M'
+  ];
+  
   // If it's already a formatted range, return it
-  const validRanges = ['<$1M', '$1M-$1.9M', '$2M-$4M', '$5M-$9M', '$10M-$24M', '$25M-$49M', '$50M-$99M', '$100M+'];
   if (validRanges.includes(value as string)) return value as string;
   
   // Parse as raw number (e.g., "50000000" or "111000000")
@@ -137,6 +144,7 @@ function parseRevenueRange(value: string | number): string | null {
   if (!isNaN(num)) {
     const millions = num / 1000000;
     
+    // Use contractor/builder range format for better granularity
     if (millions < 1) return '<$1M';
     if (millions < 2) return '$1M-$1.9M';
     if (millions < 5) return '$2M-$4M';
@@ -275,15 +283,21 @@ export function groupByCompany(rows: ApolloImportRow[]): CompanyWithContacts[] {
       const revenueRange = parseRevenueRange(revenueData);
       const location = parseLocation(row);
 
+      // Skip if missing required state field
+      if (!location.state) {
+        console.warn(`Skipping company ${companyName} - missing state`);
+        return;
+      }
+
       companiesMap.set(companyKey, {
         companyData: {
           company_name: companyName.trim(),
           website_url: row['Website'] || row['Company Website'] || row['website'] || null,
           industry_type: industryType,
           linkedin_company_url: row['Company Linkedin Url'] || row['Company LinkedIn Url'] || row['LinkedIn URL'] || null,
-          total_employees_range: employeeRange,
-          annual_revenue_range: revenueRange,
-          city: location.city,
+          total_employees_range: employeeRange || null,
+          annual_revenue_range: revenueRange || null,
+          city: location.city || null,
           state: location.state,
           primary_phone: row['Company Phone'] || row['Phone'] || row['phone'] || null,
           facebook_url: row['Facebook Url'] || null,
