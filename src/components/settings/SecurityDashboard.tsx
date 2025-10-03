@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Shield, AlertTriangle, Users, Clock, Database, Activity } from "lucide-react";
+import { Shield, AlertTriangle, Users, Clock, Database, Activity, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 export function SecurityDashboard() {
   // Fetch security monitoring dashboard
@@ -78,13 +79,23 @@ export function SecurityDashboard() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-primary" />
-            <CardTitle>Security Monitoring Dashboard</CardTitle>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-primary" />
+                <CardTitle>Security Monitoring Dashboard</CardTitle>
+              </div>
+              <CardDescription>
+                Real-time security metrics and alerts for your CRM
+              </CardDescription>
+            </div>
+            <Link to="/help">
+              <Button variant="outline" size="sm">
+                <FileText className="h-4 w-4 mr-2" />
+                View Activity Logs
+              </Button>
+            </Link>
           </div>
-          <CardDescription>
-            Real-time security metrics and alerts for your CRM
-          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
