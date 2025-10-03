@@ -265,16 +265,22 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
           const mappedData: any = {};
           Object.entries(columnMapping).forEach(([fileCol, crmField]) => {
             if (crmField && row[fileCol] !== undefined && row[fileCol] !== null && row[fileCol] !== '') {
-              // Handle industry_specialties as comma-separated array with value mapping
+              // Handle industry_specialties as comma or semicolon-separated array with value mapping
               if (crmField === 'industry_specialties') {
                 const value = String(row[fileCol]).trim();
                 const valueMap: Record<string, string> = {
                   'HVAC_PROFESSIONAL': 'HVAC',
                   'Electrician': 'Electrical',
                   'Plumber': 'Plumbing',
+                  'Builder Remodeler': 'General Contracting',
+                  'Security Installer': 'Security & Automation',
+                  'Smart Home': 'Smart Home Integration',
+                  'Garage Door Dealer': 'Garage Door',
+                  'Other': 'Other',
                   'Both Garage Door and/or Smart Home': 'General Contracting'
                 };
-                mappedData[crmField] = value.split(',').map(s => {
+                // Split on both commas and semicolons
+                mappedData[crmField] = value.split(/[,;]/).map(s => {
                   const trimmed = s.trim();
                   return valueMap[trimmed] || trimmed;
                 }).filter(s => s);
@@ -289,7 +295,12 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
             throw new Error('Company name is required');
           }
           if (!mappedData.industry_type) {
-            throw new Error('Company type is required');
+            // If industry_type is missing but we have company_type, use company_type as fallback
+            if (mappedData.company_type) {
+              mappedData.industry_type = mappedData.company_type;
+            } else {
+              throw new Error('Company type is required');
+            }
           }
 
           // Add created_by if user is authenticated
