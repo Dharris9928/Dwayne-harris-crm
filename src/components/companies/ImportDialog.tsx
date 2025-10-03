@@ -162,7 +162,13 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
         const mappedData: any = {};
         Object.entries(columnMapping).forEach(([fileCol, crmField]) => {
           if (crmField && row[fileCol] !== undefined && row[fileCol] !== null && row[fileCol] !== '') {
-            mappedData[crmField] = row[fileCol];
+            // Handle industry_specialties as comma-separated array
+            if (crmField === 'industry_specialties') {
+              const value = String(row[fileCol]).trim();
+              mappedData[crmField] = value.split(',').map(s => s.trim()).filter(s => s);
+            } else {
+              mappedData[crmField] = row[fileCol];
+            }
           }
         });
 
@@ -328,7 +334,7 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
                         <SelectItem value="nest_pro_partner_id">Nest Pro Partner ID</SelectItem>
                         <SelectItem value="franchise_name">Franchise Name</SelectItem>
                         <SelectItem value="owner_name">Owner</SelectItem>
-                        <SelectItem value="nest_pro_industry">Nest Pro Industry</SelectItem>
+                        <SelectItem value="industry_specialties">Industry Type (comma-separated)</SelectItem>
                         <SelectItem value="notes">Notes</SelectItem>
                       </SelectContent>
                     </Select>
