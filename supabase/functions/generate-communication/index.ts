@@ -30,7 +30,7 @@ serve(async (req) => {
       });
     }
 
-    const { companyId, communicationType, previousContext, aiModel, contactId } = await req.json();
+    const { companyId, communicationType, previousContext, aiModel, contactId, outreachPrompt } = await req.json();
 
     // Fetch company data with contacts and AI insights
     const { data: company, error: companyError } = await supabase
@@ -119,6 +119,8 @@ Keep emails concise (under 200 words), professional, and action-oriented.`;
 
       userPrompt = `Generate a personalized sales email for ${company.company_name}${targetContact ? ` to ${targetContact.first_name} ${targetContact.last_name} (${targetContact.title || 'Contact'})` : ''}.
 
+${outreachPrompt ? `OUTREACH PURPOSE:\n${outreachPrompt}\n\n` : ''}
+
 Company Context:
 ${JSON.stringify(companyContext, null, 2)}
 
@@ -135,6 +137,8 @@ Generate an email with:
 4. Specific call-to-action
 5. Professional closing
 
+${outreachPrompt ? 'IMPORTANT: Center the email around the outreach purpose specified above.' : ''}
+
 Return in JSON format:
 {
   "subject": "subject line here",
@@ -146,6 +150,8 @@ Your goal is to create effective call scripts that build rapport, uncover needs,
 Include discovery questions, objection handling, and clear value propositions.`;
 
       userPrompt = `Generate a personalized call script for ${company.company_name}${targetContact ? ` when speaking with ${targetContact.first_name} ${targetContact.last_name} (${targetContact.title || 'Contact'})` : ''}.
+
+${outreachPrompt ? `OUTREACH PURPOSE:\n${outreachPrompt}\n\n` : ''}
 
 Company Context:
 ${JSON.stringify(companyContext, null, 2)}
@@ -164,6 +170,8 @@ Generate a call script with:
 5. Objection handling responses
 6. Call-to-action and next steps
 
+${outreachPrompt ? 'IMPORTANT: Align the call script to address the outreach purpose specified above.' : ''}
+
 Return in JSON format:
 {
   "content": "full call script here with clear sections"
@@ -174,6 +182,8 @@ Keep messages brief (under 300 characters for initial connection), professional,
 Reference specific details about their company to show genuine interest.`;
 
       userPrompt = `Generate a personalized LinkedIn message for ${company.company_name}${targetContact ? ` to connect with ${targetContact.first_name} ${targetContact.last_name} (${targetContact.title || 'Contact'})` : ''}.
+
+${outreachPrompt ? `OUTREACH PURPOSE:\n${outreachPrompt}\n\n` : ''}
 
 Company Context:
 ${JSON.stringify(companyContext, null, 2)}
@@ -187,6 +197,8 @@ Generate a LinkedIn message that is:
 2. Shows you've researched their company
 3. Provides a compelling reason to connect
 4. Includes a soft call-to-action
+
+${outreachPrompt ? 'IMPORTANT: Tailor the message to address the outreach purpose specified above.' : ''}
 
 Return in JSON format:
 {

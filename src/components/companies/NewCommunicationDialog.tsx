@@ -34,6 +34,7 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const [selectedContactId, setSelectedContactId] = useState<string>('');
   const [communicationType, setCommunicationType] = useState<'email' | 'call_script' | 'linkedin_message'>('email');
+  const [outreachPrompt, setOutreachPrompt] = useState('');
   const [previousContext, setPreviousContext] = useState('');
   const [aiModel, setAiModel] = useState('google/gemini-2.5-flash');
 
@@ -107,6 +108,15 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
       return;
     }
 
+    if (!outreachPrompt.trim()) {
+      toast({
+        title: 'Outreach Purpose Required',
+        description: 'Please describe what you\'re reaching out about',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-communication', {
@@ -114,6 +124,7 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
           companyId: selectedCompanyId,
           contactId: selectedContactId || null,
           communicationType,
+          outreachPrompt: outreachPrompt || null,
           previousContext: previousContext || null,
           aiModel,
         },
@@ -145,6 +156,7 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
     setSelectedCompanyId('');
     setSelectedContactId('');
     setCommunicationType('email');
+    setOutreachPrompt('');
     setPreviousContext('');
     setAiModel('google/gemini-2.5-flash');
   };
@@ -262,6 +274,22 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
             </Select>
           </div>
 
+          {/* Outreach Purpose Prompt */}
+          <div className="space-y-2">
+            <Label htmlFor="prompt">What are you reaching out about? *</Label>
+            <Textarea
+              id="prompt"
+              placeholder="Example: Introducing our new smart thermostat installation program for builders, or Following up on our previous conversation about partnership opportunities..."
+              value={outreachPrompt}
+              onChange={(e) => setOutreachPrompt(e.target.value)}
+              rows={4}
+              className="resize-none"
+            />
+            <p className="text-xs text-muted-foreground">
+              Describe the purpose and key points of your outreach to generate a focused message
+            </p>
+          </div>
+
           {/* AI Model Selection */}
           <div className="space-y-2">
             <Label htmlFor="model">AI Model</Label>
@@ -286,7 +314,8 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
               placeholder="Add any previous communication context to help personalize the message..."
               value={previousContext}
               onChange={(e) => setPreviousContext(e.target.value)}
-              rows={4}
+              rows={3}
+              className="resize-none"
             />
             <p className="text-xs text-muted-foreground">
               Include any relevant conversation history, notes, or specific requirements
@@ -298,7 +327,7 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
           <Button variant="outline" onClick={() => setOpen(false)} disabled={generating}>
             Cancel
           </Button>
-          <Button onClick={handleGenerate} disabled={generating || !selectedCompanyId}>
+          <Button onClick={handleGenerate} disabled={generating || !selectedCompanyId || !outreachPrompt.trim()}>
             {generating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
