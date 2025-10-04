@@ -28,6 +28,7 @@ import { AIInsightsPanel } from './AIInsightsPanel';
 import { DataQualityIndicator } from './DataQualityIndicator';
 import { ApolloContactRecommendations } from './ApolloContactRecommendations';
 import { CommunicationsTab } from './CommunicationsTab';
+import { CompanyContactsList } from './CompanyContactsList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BUILDER_SEGMENTS, 
@@ -406,10 +407,11 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
         </DialogHeader>
 
         <Tabs defaultValue="form" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="form">Company Details</TabsTrigger>
             <TabsTrigger value="quality">Data Quality</TabsTrigger>
             <TabsTrigger value="insights">AI Insights</TabsTrigger>
+            <TabsTrigger value="existing-contacts">Contacts</TabsTrigger>
             <TabsTrigger value="contacts">Find Contacts</TabsTrigger>
             <TabsTrigger value="communications">Communications</TabsTrigger>
             <TabsTrigger value="history">Enrichment Log</TabsTrigger>
@@ -1282,6 +1284,13 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
       
       <TabsContent value="insights" className="space-y-4">
         <AIInsightsPanel companyId={companyId} />
+      </TabsContent>
+      
+      <TabsContent value="existing-contacts" className="space-y-4">
+        <CompanyContactsList 
+          companyId={companyId}
+          companyName={companyName}
+        />
       </TabsContent>
       
       <TabsContent value="contacts" className="space-y-4">
