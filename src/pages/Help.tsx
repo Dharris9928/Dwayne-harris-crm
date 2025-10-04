@@ -39,7 +39,7 @@ const Help = () => {
   const sections = [
     { value: 'getting-started', label: 'Getting Started', keywords: 'welcome quick start guide roles overview' },
     { value: 'companies', label: 'Companies', keywords: 'companies management lead scoring filters bulk actions enrichment segments recommendations apollo' },
-    { value: 'contacts', label: 'Contacts', keywords: 'contacts management decision makers influencers contact scoring import csv' },
+    { value: 'contacts', label: 'Contacts', keywords: 'contacts management decision makers influencers contact scoring import csv apollo' },
     { value: 'communications', label: 'Communications', keywords: 'communications ai generated emails call scripts linkedin messages outreach' },
     { value: 'prospecting', label: 'Prospecting', keywords: 'prospecting apollo search csv import segments recommendations' },
     { value: 'activities', label: 'Activities', keywords: 'activities outreach types outcomes sequences calendar' },
@@ -517,6 +517,68 @@ const Help = () => {
                       <li>Track response rates and engagement patterns</li>
                       <li>Identify "warm" vs "cold" contacts</li>
                     </ul>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="apollo-contact-import">
+                  <AccordionTrigger>
+                    <div className="flex items-center gap-2">
+                      Apollo Contact Import
+                      <Badge variant="outline" className="text-xs">New</Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p className="text-sm">Import contacts and their associated companies directly from Apollo CSV exports on the Contacts page</p>
+                    <div>
+                      <h4 className="font-medium mb-2">How to Import Apollo Contacts</h4>
+                      <ol className="list-decimal list-inside space-y-1 text-sm text-muted-foreground">
+                        <li>In Apollo.io, search for contacts and export as CSV</li>
+                        <li>Navigate to Contacts page in the CRM</li>
+                        <li>Click "Import from Apollo" button</li>
+                        <li>Upload your Apollo contacts CSV file</li>
+                        <li>Review the preview showing contacts and companies</li>
+                        <li>Click Import to add them to your CRM</li>
+                      </ol>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">Smart Import Features</h4>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                        <li><strong>Automatic company creation:</strong> Creates companies automatically if they don't exist</li>
+                        <li><strong>Duplicate prevention:</strong> Skips contacts and companies that already exist (based on name and email)</li>
+                        <li><strong>Phone number cleaning:</strong> Handles quoted and formatted phone numbers</li>
+                        <li><strong>State normalization:</strong> Converts full state names to abbreviations</li>
+                        <li><strong>Employee count parsing:</strong> Properly handles formatted numbers (e.g., "1,000" → 1000)</li>
+                        <li><strong>Complete data mapping:</strong> Maps Apollo fields (address, city, state, phone) to company records</li>
+                        <li><strong>Batch processing:</strong> Import hundreds of contacts at once</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">Imported Contact Data</h4>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                        <li>First and last names</li>
+                        <li>Job titles and roles</li>
+                        <li>Email addresses and phone numbers</li>
+                        <li>LinkedIn profile URLs</li>
+                        <li>LinkedIn connections count</li>
+                        <li>Decision tier classification</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">Imported Company Data</h4>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                        <li>Company name and website</li>
+                        <li>Complete address (street, city, state, zip)</li>
+                        <li>Company phone number</li>
+                        <li>LinkedIn company URL</li>
+                        <li>Employee count</li>
+                        <li>Industry type (auto-detected as Builder or Contractor)</li>
+                      </ul>
+                    </div>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <p className="text-sm">
+                        <strong>Note:</strong> Companies are automatically linked to contacts during import. Lead scoring is calculated immediately after import to help you prioritize follow-ups.
+                      </p>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
