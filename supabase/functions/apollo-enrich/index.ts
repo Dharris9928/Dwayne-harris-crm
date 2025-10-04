@@ -168,6 +168,30 @@ serve(async (req) => {
     if (org.city) companyUpdates.city = org.city;
     if (org.state) companyUpdates.state = org.state;
 
+    // Industry type and specialty detection based on keywords and industry
+    const keywords = (org.keywords || []).map((k: string) => k.toLowerCase()).join(' ');
+    const industry = (org.industry || '').toLowerCase();
+    const combined = `${keywords} ${industry}`;
+    
+    // Detect if it's a Builder or Contractor
+    const isBuilder = /builder|construction|homebuilder|developer|residential construction/i.test(combined);
+    const isContractor = /hvac|plumb|electric|contractor|mechanical|heating|cooling|air condition/i.test(combined);
+    
+    if (isBuilder) {
+      companyUpdates.industry_type = 'Builder';
+    } else if (isContractor) {
+      companyUpdates.industry_type = 'Contractor';
+      
+      // Detect contractor specialty
+      if (/hvac|heating|cooling|air condition/i.test(combined)) {
+        companyUpdates.contractor_specialty = 'HVAC';
+      } else if (/plumb/i.test(combined)) {
+        companyUpdates.contractor_specialty = 'Plumbing';
+      } else if (/electric/i.test(combined)) {
+        companyUpdates.contractor_specialty = 'Electrical';
+      }
+    }
+
     enrichmentData.companyUpdates = companyUpdates;
     enrichmentData.fieldsEnriched = Object.keys(companyUpdates);
 
