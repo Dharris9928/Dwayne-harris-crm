@@ -542,6 +542,7 @@ export type Database = {
           company_id: string
           contact_id: string | null
           content: string
+          conversation_active: boolean | null
           created_at: string | null
           generated_at: string | null
           id: string
@@ -559,6 +560,7 @@ export type Database = {
           company_id: string
           contact_id?: string | null
           content: string
+          conversation_active?: boolean | null
           created_at?: string | null
           generated_at?: string | null
           id?: string
@@ -576,6 +578,7 @@ export type Database = {
           company_id?: string
           contact_id?: string | null
           content?: string
+          conversation_active?: boolean | null
           created_at?: string | null
           generated_at?: string | null
           id?: string

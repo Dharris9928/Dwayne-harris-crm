@@ -17,6 +17,7 @@ export default function Communications() {
   const [industryTypeFilter, setIndustryTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [communicationTypeFilter, setCommunicationTypeFilter] = useState('all');
+  const [conversationStatusFilter, setConversationStatusFilter] = useState<string>('active');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const { data: communications, isLoading, refetch } = useQuery({
@@ -78,8 +79,15 @@ export default function Communications() {
       filtered = filtered.filter((comm) => comm.communication_type === communicationTypeFilter);
     }
 
+    // Conversation status filter
+    if (conversationStatusFilter === 'active') {
+      filtered = filtered.filter((comm) => comm.conversation_active !== false);
+    } else if (conversationStatusFilter === 'inactive') {
+      filtered = filtered.filter((comm) => comm.conversation_active === false);
+    }
+
     return filtered;
-  }, [communications, searchQuery, industryTypeFilter, statusFilter, communicationTypeFilter]);
+  }, [communications, searchQuery, industryTypeFilter, statusFilter, communicationTypeFilter, conversationStatusFilter]);
 
   const handleCopy = async (id: string, content: string, subject?: string) => {
     const textToCopy = subject ? `${subject}\n\n${content}` : content;
@@ -146,6 +154,32 @@ export default function Communications() {
     }
   };
 
+  const handleToggleConversationStatus = async (id: string, currentStatus: boolean | null) => {
+    try {
+      const newStatus = !currentStatus;
+      const { error } = await supabase
+        .from('company_communications')
+        .update({ conversation_active: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Updated',
+        description: `Conversation marked as ${newStatus ? 'active' : 'inactive'}`,
+      });
+
+      await refetch();
+    } catch (error: any) {
+      console.error('Error updating conversation status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update conversation status',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'email': return <Mail className="h-4 w-4" />;
@@ -169,6 +203,7 @@ export default function Communications() {
     setIndustryTypeFilter('all');
     setStatusFilter('all');
     setCommunicationTypeFilter('all');
+    setConversationStatusFilter('active');
   };
 
   const hasActiveFilters = searchQuery || industryTypeFilter !== 'all' || statusFilter !== 'all' || communicationTypeFilter !== 'all';
@@ -182,9 +217,20 @@ export default function Communications() {
             <h1 className="text-2xl font-bold">Communications</h1>
             <p className="text-muted-foreground">View and manage all generated communications</p>
           </div>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            {filteredCommunications.length} {filteredCommunications.length === 1 ? 'Communication' : 'Communications'}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Select value={conversationStatusFilter} onValueChange={setConversationStatusFilter}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active Conversations</SelectItem>
+                <SelectItem value="inactive">Inactive Conversations</SelectItem>
+              </SelectContent>
+            </Select>
+            <Badge variant="secondary" className="text-lg px-4 py-2">
+              {filteredCommunications.length} {filteredCommunications.length === 1 ? 'Communication' : 'Communications'}
+            </Badge>
+          </div>
         </div>
 
         {/* Filters */}
@@ -293,6 +339,9 @@ export default function Communications() {
                         {getTypeIcon(comm.communication_type)}
                         <CardTitle className="text-base">{getTypeLabel(comm.communication_type)}</CardTitle>
                         {comm.used && <Badge variant="secondary">Used</Badge>}
+                        <Badge variant={comm.conversation_active !== false ? "default" : "secondary"}>
+                          {comm.conversation_active !== false ? "Active" : "Inactive"}
+                        </Badge>
                         {comm.companies && (
                           <>
                             <Badge variant="outline">{comm.companies.company_name}</Badge>
@@ -339,6 +388,14 @@ export default function Communications() {
                         ) : (
                           <Copy className="h-4 w-4" />
                         )}
+                      </Button>
+                      <Button
+                        variant={comm.conversation_active !== false ? "secondary" : "default"}
+                        size="sm"
+                        onClick={() => handleToggleConversationStatus(comm.id, comm.conversation_active ?? true)}
+                        title={comm.conversation_active !== false ? "Mark as inactive" : "Mark as active"}
+                      >
+                        {comm.conversation_active !== false ? "Inactive" : "Active"}
                       </Button>
                       {!comm.used && (
                         <Button

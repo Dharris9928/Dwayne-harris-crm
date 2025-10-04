@@ -24,6 +24,7 @@ interface Communication {
   attempted_at: string | null;
   notes: string | null;
   contact_id: string | null;
+  conversation_active: boolean | null;
   contacts?: {
     first_name: string;
     last_name: string;
@@ -207,6 +208,32 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
     }
   };
 
+  const handleToggleConversationStatus = async (id: string, currentStatus: boolean | null) => {
+    try {
+      const newStatus = !currentStatus;
+      const { error } = await supabase
+        .from('company_communications')
+        .update({ conversation_active: newStatus })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Updated',
+        description: `Conversation marked as ${newStatus ? 'active' : 'inactive'}`,
+      });
+
+      await loadCommunications();
+    } catch (error: any) {
+      console.error('Error updating conversation status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update conversation status',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'email': return <Mail className="h-4 w-4" />;
@@ -363,10 +390,13 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <div className="space-y-2 flex-1">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             {getTypeIcon(comm.communication_type)}
                             <CardTitle className="text-base">{getTypeLabel(comm.communication_type)}</CardTitle>
                             {comm.used && <Badge variant="secondary">Used</Badge>}
+                            <Badge variant={comm.conversation_active !== false ? "default" : "secondary"}>
+                              {comm.conversation_active !== false ? "Active" : "Inactive"}
+                            </Badge>
                           </div>
                           {comm.contacts && (
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -389,6 +419,14 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
                             ) : (
                               <Copy className="h-4 w-4" />
                             )}
+                          </Button>
+                          <Button
+                            variant={comm.conversation_active !== false ? "secondary" : "default"}
+                            size="sm"
+                            onClick={() => handleToggleConversationStatus(comm.id, comm.conversation_active ?? true)}
+                            title={comm.conversation_active !== false ? "Mark as inactive" : "Mark as active"}
+                          >
+                            {comm.conversation_active !== false ? "Inactive" : "Active"}
                           </Button>
                           {!comm.used && (
                             <Button
@@ -445,10 +483,13 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
                         <CardHeader>
                           <div className="flex items-center justify-between">
                             <div className="space-y-2 flex-1">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 {getTypeIcon(comm.communication_type)}
                                 <CardTitle className="text-base">{getTypeLabel(comm.communication_type)}</CardTitle>
                                 {comm.used && <Badge variant="secondary">Used</Badge>}
+                                <Badge variant={comm.conversation_active !== false ? "default" : "secondary"}>
+                                  {comm.conversation_active !== false ? "Active" : "Inactive"}
+                                </Badge>
                               </div>
                               {comm.contacts && (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -471,6 +512,14 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
                                 ) : (
                                   <Copy className="h-4 w-4" />
                                 )}
+                              </Button>
+                              <Button
+                                variant={comm.conversation_active !== false ? "secondary" : "default"}
+                                size="sm"
+                                onClick={() => handleToggleConversationStatus(comm.id, comm.conversation_active ?? true)}
+                                title={comm.conversation_active !== false ? "Mark as inactive" : "Mark as active"}
+                              >
+                                {comm.conversation_active !== false ? "Inactive" : "Active"}
                               </Button>
                               {!comm.used && (
                                 <Button
