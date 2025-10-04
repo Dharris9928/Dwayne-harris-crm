@@ -106,7 +106,7 @@ export function ApolloContactImportDialog({ onSuccess }: { onSuccess?: () => voi
     return 'Contractor'; // Default
   };
 
-  const findOrCreateCompany = async (row: ApolloContactRow): Promise<{ id: string; created: boolean } | null> => {
+  const findOrCreateCompany = async (row: ApolloContactRow, userId: string): Promise<{ id: string; created: boolean } | null> => {
     const companyName = row['Company Name']?.trim();
     if (!companyName) return null;
 
@@ -135,6 +135,7 @@ export function ApolloContactImportDialog({ onSuccess }: { onSuccess?: () => voi
       linkedin_company_url: row['Company Linkedin Url']?.trim() || null,
       primary_phone: cleanPhoneNumber(row['Company Phone']) || null,
       address_line1: row['Company Address']?.trim() || null,
+      created_by: userId,
     };
 
     // Parse employees - handle both numeric and string formats
@@ -213,7 +214,7 @@ export function ApolloContactImportDialog({ onSuccess }: { onSuccess?: () => voi
 
             try {
               // Find or create company
-              const companyResult = await findOrCreateCompany(row);
+              const companyResult = await findOrCreateCompany(row, user.id);
               
               if (!companyResult) {
                 importResult.errors.push(`Row ${i + 1}: Company required - ${row['First Name']} ${row['Last Name']}`);
