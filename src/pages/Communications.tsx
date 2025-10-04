@@ -10,6 +10,7 @@ import { Mail, Phone, Linkedin, Copy, Check, Trash2, ExternalLink, Search, X, Us
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Label } from '@/components/ui/label';
+import { NewCommunicationDialog } from '@/components/companies/NewCommunicationDialog';
 
 export default function Communications() {
   const { toast } = useToast();
@@ -218,6 +219,7 @@ export default function Communications() {
             <p className="text-muted-foreground">View and manage all generated communications</p>
           </div>
           <div className="flex items-center gap-3">
+            <NewCommunicationDialog onSuccess={refetch} />
             <Select value={conversationStatusFilter} onValueChange={setConversationStatusFilter}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue />

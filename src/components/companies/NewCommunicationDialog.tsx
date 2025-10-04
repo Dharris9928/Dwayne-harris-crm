@@ -1,0 +1,318 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Mail, Phone, Linkedin, Loader2, Plus } from 'lucide-react';
+
+interface Company {
+  id: string;
+  company_name: string;
+  industry_type: string;
+}
+
+interface Contact {
+  id: string;
+  first_name: string;
+  last_name: string;
+  title: string | null;
+  company_id: string;
+}
+
+export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }) {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
+  const [loadingContacts, setLoadingContacts] = useState(false);
+
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
+  const [selectedContactId, setSelectedContactId] = useState<string>('');
+  const [communicationType, setCommunicationType] = useState<'email' | 'call_script' | 'linkedin_message'>('email');
+  const [previousContext, setPreviousContext] = useState('');
+  const [aiModel, setAiModel] = useState('google/gemini-2.5-flash');
+
+  useEffect(() => {
+    if (open) {
+      loadCompanies();
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (selectedCompanyId) {
+      loadContacts(selectedCompanyId);
+    } else {
+      setContacts([]);
+      setSelectedContactId('');
+    }
+  }, [selectedCompanyId]);
+
+  const loadCompanies = async () => {
+    setLoadingCompanies(true);
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, company_name, industry_type')
+        .order('company_name');
+
+      if (error) throw error;
+      setCompanies(data || []);
+    } catch (error: any) {
+      console.error('Error loading companies:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load companies',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingCompanies(false);
+    }
+  };
+
+  const loadContacts = async (companyId: string) => {
+    setLoadingContacts(true);
+    try {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('id, first_name, last_name, title, company_id')
+        .eq('company_id', companyId)
+        .order('first_name');
+
+      if (error) throw error;
+      setContacts(data || []);
+    } catch (error: any) {
+      console.error('Error loading contacts:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load contacts',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingContacts(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!selectedCompanyId) {
+      toast({
+        title: 'Company Required',
+        description: 'Please select a company',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-communication', {
+        body: {
+          companyId: selectedCompanyId,
+          contactId: selectedContactId || null,
+          communicationType,
+          previousContext: previousContext || null,
+          aiModel,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Success',
+        description: `${getTypeLabel(communicationType)} generated successfully`,
+      });
+
+      setOpen(false);
+      resetForm();
+      onSuccess?.();
+    } catch (error: any) {
+      console.error('Error generating communication:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to generate communication',
+        variant: 'destructive',
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const resetForm = () => {
+    setSelectedCompanyId('');
+    setSelectedContactId('');
+    setCommunicationType('email');
+    setPreviousContext('');
+    setAiModel('google/gemini-2.5-flash');
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'email': return <Mail className="h-4 w-4" />;
+      case 'call_script': return <Phone className="h-4 w-4" />;
+      case 'linkedin_message': return <Linkedin className="h-4 w-4" />;
+      default: return null;
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'email': return 'Email';
+      case 'call_script': return 'Call Script';
+      case 'linkedin_message': return 'LinkedIn Message';
+      default: return type;
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          New Communication
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Generate New Communication</DialogTitle>
+          <DialogDescription>
+            Select a company and contact to generate personalized communication
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          {/* Company Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="company">Company *</Label>
+            <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId} disabled={loadingCompanies}>
+              <SelectTrigger id="company">
+                <SelectValue placeholder={loadingCompanies ? "Loading companies..." : "Select a company"} />
+              </SelectTrigger>
+              <SelectContent>
+                {companies.map((company) => (
+                  <SelectItem key={company.id} value={company.id}>
+                    {company.company_name} ({company.industry_type})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Contact Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="contact">Target Contact (Optional)</Label>
+            <Select 
+              value={selectedContactId} 
+              onValueChange={setSelectedContactId} 
+              disabled={!selectedCompanyId || loadingContacts}
+            >
+              <SelectTrigger id="contact">
+                <SelectValue placeholder={
+                  !selectedCompanyId 
+                    ? "Select a company first" 
+                    : loadingContacts 
+                    ? "Loading contacts..." 
+                    : "No specific contact (general communication)"
+                } />
+              </SelectTrigger>
+              <SelectContent>
+                {contacts.map((contact) => (
+                  <SelectItem key={contact.id} value={contact.id}>
+                    {contact.first_name} {contact.last_name}
+                    {contact.title && ` - ${contact.title}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Select a specific contact to personalize the communication, or leave empty for general messaging
+            </p>
+          </div>
+
+          {/* Communication Type */}
+          <div className="space-y-2">
+            <Label htmlFor="type">Communication Type</Label>
+            <Select value={communicationType} onValueChange={(value: any) => setCommunicationType(value)}>
+              <SelectTrigger id="type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="email">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    <span>Email</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="call_script">
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" />
+                    <span>Call Script</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="linkedin_message">
+                  <div className="flex items-center gap-2">
+                    <Linkedin className="h-4 w-4" />
+                    <span>LinkedIn Message</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* AI Model Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="model">AI Model</Label>
+            <Select value={aiModel} onValueChange={setAiModel}>
+              <SelectTrigger id="model">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="google/gemini-2.5-flash">Gemini 2.5 Flash (Recommended)</SelectItem>
+                <SelectItem value="google/gemini-2.5-pro">Gemini 2.5 Pro (Best Quality)</SelectItem>
+                <SelectItem value="openai/gpt-5-mini">GPT-5 Mini</SelectItem>
+                <SelectItem value="openai/gpt-5">GPT-5</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Previous Context */}
+          <div className="space-y-2">
+            <Label htmlFor="context">Previous Context (Optional)</Label>
+            <Textarea
+              id="context"
+              placeholder="Add any previous communication context to help personalize the message..."
+              value={previousContext}
+              onChange={(e) => setPreviousContext(e.target.value)}
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground">
+              Include any relevant conversation history, notes, or specific requirements
+            </p>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={generating}>
+            Cancel
+          </Button>
+          <Button onClick={handleGenerate} disabled={generating || !selectedCompanyId}>
+            {generating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                {getTypeIcon(communicationType)}
+                <span className="ml-2">Generate {getTypeLabel(communicationType)}</span>
+              </>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
