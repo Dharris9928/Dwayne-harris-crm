@@ -4,8 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Shield, ShieldAlert, ShieldCheck, Eye } from "lucide-react";
+import { Shield, ShieldAlert, ShieldCheck, Eye, Key } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface UserProfile {
@@ -21,6 +25,10 @@ export function UserManagement() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -133,6 +141,41 @@ export function UserManagement() {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!selectedUserId || !newPassword) {
+      toast.error('Please enter a new password');
+      return;
+    }
+
+    if (newPassword.length < 8 || newPassword.length > 15) {
+      toast.error('Password must be 8-15 characters');
+      return;
+    }
+
+    setResetting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-reset-user-password', {
+        body: { userId: selectedUserId, newPassword }
+      });
+
+      if (error) throw error;
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      toast.success('Password reset successfully');
+      setResetDialogOpen(false);
+      setNewPassword("");
+      setSelectedUserId(null);
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to reset password');
+    } finally {
+      setResetting(false);
+    }
+  };
+
   const getRoleBadge = (role: string) => {
     const variants: Record<string, { variant: any; icon: any; label: string }> = {
       admin: { 
@@ -215,24 +258,38 @@ export function UserManagement() {
                   <TableCell className="font-mono text-sm">{user.email}</TableCell>
                   <TableCell>{getRoleBadge(user.role)}</TableCell>
                   <TableCell>
-                    {user.id === currentUser?.id ? (
-                      <span className="text-sm text-muted-foreground">You</span>
-                    ) : (
-                      <Select
-                        value={user.role}
-                        onValueChange={(value) => updateUserRole(user.id, value as 'admin' | 'sales_manager' | 'sales_rep' | 'read_only')}
-                      >
-                        <SelectTrigger className="w-40">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="admin">Admin</SelectItem>
-                          <SelectItem value="sales_manager">Sales Manager</SelectItem>
-                          <SelectItem value="sales_rep">Sales Rep</SelectItem>
-                          <SelectItem value="read_only">Read Only</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
+                    <div className="flex gap-2">
+                      {user.id === currentUser?.id ? (
+                        <span className="text-sm text-muted-foreground">You</span>
+                      ) : (
+                        <>
+                          <Select
+                            value={user.role}
+                            onValueChange={(value) => updateUserRole(user.id, value as 'admin' | 'sales_manager' | 'sales_rep' | 'read_only')}
+                          >
+                            <SelectTrigger className="w-40">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin">Admin</SelectItem>
+                              <SelectItem value="sales_manager">Sales Manager</SelectItem>
+                              <SelectItem value="sales_rep">Sales Rep</SelectItem>
+                              <SelectItem value="read_only">Read Only</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedUserId(user.id);
+                              setResetDialogOpen(true);
+                            }}
+                          >
+                            <Key className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -250,6 +307,50 @@ export function UserManagement() {
           </ul>
         </div>
       </CardContent>
+
+      <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset User Password</DialogTitle>
+            <DialogDescription>
+              Enter a new password for this user. Password must be 8-15 characters with at least one capital letter, number, and special character.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+              />
+              <p className="text-xs text-muted-foreground">
+                8-15 characters with capital letter, number, and special character
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setResetDialogOpen(false);
+                setNewPassword("");
+                setSelectedUserId(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleResetPassword}
+              disabled={resetting}
+            >
+              {resetting ? "Resetting..." : "Reset Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
