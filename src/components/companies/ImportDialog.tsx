@@ -139,10 +139,10 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
 
   const downloadTemplate = () => {
     const template = [
-      ['company_name', 'website_url', 'industry_type', 'builder_segment', 'contractor_segment', 'industry_specialties', 'primary_phone', 'linkedin_company_url', 'status', 'priority_tier', 'lead_score'],
-      ['Example Builder Inc', 'https://example.com', 'Builder', 'production_tract', '', '', '555-1234', 'https://linkedin.com/company/example', 'Lead', 'P1', '85'],
-      ['Sample HVAC Co', 'https://sample.com', 'Contractor', '', 'smart_home_champions', 'HVAC', '555-5678', 'https://linkedin.com/company/sample', 'Contacted', 'P2', '70'],
-      ['Security Pro', 'https://securitypro.com', 'Contractor', '', '', 'CI/Security,Electrical', '555-9999', 'https://linkedin.com/company/securitypro', 'Lead', 'P1', '80']
+      ['company_name', 'website_url', 'industry_type', 'builder_segment', 'contractor_segment', 'industry_specialties', 'primary_phone', 'linkedin_company_url', 'status', 'priority_tier', 'lead_score', 'hvac_monitoring'],
+      ['Example Builder Inc', 'https://example.com', 'Builder', 'production_tract', '', '', '555-1234', 'https://linkedin.com/company/example', 'Lead', 'P1', '85', 'Yes'],
+      ['Sample HVAC Co', 'https://sample.com', 'Contractor', '', 'smart_home_champions', 'HVAC', '555-5678', 'https://linkedin.com/company/sample', 'Contacted', 'P2', '70', 'No'],
+      ['Security Pro', 'https://securitypro.com', 'Contractor', '', '', 'CI/Security,Electrical', '555-9999', 'https://linkedin.com/company/securitypro', 'Lead', 'P1', '80', 'Not Interested']
     ];
     
     const worksheet = XLSX.utils.aoa_to_sheet(template);
@@ -559,6 +559,7 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
                         <SelectItem value="years_in_business">Years in Business</SelectItem>
                         <SelectItem value="annual_revenue_range">Annual Revenue Range</SelectItem>
                         <SelectItem value="nest_pro_partner_id">Nest Pro Partner ID</SelectItem>
+                        <SelectItem value="hvac_monitoring">HVAC Monitoring</SelectItem>
                         <SelectItem value="franchise_name">Franchise Name</SelectItem>
                         <SelectItem value="owner_name">Owner</SelectItem>
                         <SelectItem value="industry_specialties">Industry Type (comma-separated)</SelectItem>

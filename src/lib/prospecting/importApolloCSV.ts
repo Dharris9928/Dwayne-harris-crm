@@ -70,6 +70,7 @@ export function getApolloFieldMapping(): Record<string, string> {
     'Company Country': 'country',
     'Phone': 'primary_phone',
     'Company Phone': 'primary_phone',
+    'HVAC Monitoring': 'hvac_monitoring',
     'Facebook Url': 'facebook_url',
     'Twitter Url': 'twitter_url',
     
