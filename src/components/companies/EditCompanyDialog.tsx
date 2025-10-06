@@ -100,6 +100,7 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
   // Contractor Specialty (only for contractors)
   const [contractorSpecialty, setContractorSpecialty] = useState('');
   const [nestProId, setNestProId] = useState('');
+  const [hvacMonitoring, setHvacMonitoring] = useState('');
   
   // Business Metrics (For Scoring) - NOW USING RANGES
   const [annualVolumeRange, setAnnualVolumeRange] = useState('');
@@ -209,6 +210,7 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
       // Contractor Specialty
       setContractorSpecialty(company.contractor_specialty || '');
       setNestProId(company.nest_pro_partner_id || '');
+      setHvacMonitoring((company as any).hvac_monitoring || '');
       
       setAnnualVolumeRange(company.annual_volume_range || '');
       setAnnualRevenueRange(company.annual_revenue_range || '');
@@ -288,6 +290,7 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
         // Contractor Specialty (only saved if contractor)
         contractor_specialty: industryType === 'Contractor' ? contractorSpecialty || null : null,
         nest_pro_partner_id: nestProId || undefined,
+        hvac_monitoring: hvacMonitoring || undefined,
         
         // Business Metrics - NOW USING RANGES
         annual_volume_range: annualVolumeRange || undefined,
@@ -640,6 +643,31 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       Nest Pro Partner identification number if applicable
+                    </p>
+                  </div>
+
+                  <div className="bg-background p-3 rounded border border-orange-300 dark:border-orange-700">
+                    <Label htmlFor="hvac_monitoring">
+                      HVAC Monitoring
+                    </Label>
+                    <Select 
+                      value={hvacMonitoring} 
+                      onValueChange={(v) => {
+                        setHvacMonitoring(v);
+                        markChanged();
+                      }}
+                    >
+                      <SelectTrigger id="hvac_monitoring" className="mt-2">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        <SelectItem value="Yes">Yes</SelectItem>
+                        <SelectItem value="No">No</SelectItem>
+                        <SelectItem value="Not Interested">Not Interested</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Interest in HVAC monitoring services
                     </p>
                   </div>
                 </div>

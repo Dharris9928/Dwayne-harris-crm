@@ -303,6 +303,7 @@ export type Database = {
           financial_health_rating: string | null
           franchise_name: string | null
           has_google_business_profile: boolean | null
+          hvac_monitoring: string | null
           id: string
           industry_awards_recognition: boolean | null
           industry_specialties: string[] | null
@@ -381,6 +382,7 @@ export type Database = {
           financial_health_rating?: string | null
           franchise_name?: string | null
           has_google_business_profile?: boolean | null
+          hvac_monitoring?: string | null
           id?: string
           industry_awards_recognition?: boolean | null
           industry_specialties?: string[] | null
@@ -459,6 +461,7 @@ export type Database = {
           financial_health_rating?: string | null
           franchise_name?: string | null
           has_google_business_profile?: boolean | null
+          hvac_monitoring?: string | null
           id?: string
           industry_awards_recognition?: boolean | null
           industry_specialties?: string[] | null
