@@ -330,8 +330,56 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
           // Check for duplicates using the pre-loaded map
           const companyNameLower = mappedData.company_name.toLowerCase();
           if (existingNamesMap.has(companyNameLower)) {
-            results.duplicates++;
-            results.errors.push(`Row ${i + 2}: Duplicate company "${mappedData.company_name}"`);
+            // Get the existing company ID
+            const existingCompanyId = existingNamesMap.get(companyNameLower);
+            
+            // Fetch the existing company data
+            const { data: existingCompany, error: fetchError } = await supabase
+              .from('companies')
+              .select('*')
+              .eq('id', existingCompanyId)
+              .single();
+
+            if (fetchError || !existingCompany) {
+              results.failed++;
+              results.errors.push(`Row ${i + 2}: Failed to fetch existing company "${mappedData.company_name}"`);
+              continue;
+            }
+
+            // Build update object with only missing fields
+            const updateData: any = {};
+            Object.keys(mappedData).forEach(key => {
+              // Skip company_name, created_by, and system fields
+              if (key === 'company_name' || key === 'created_by' || key === 'created_at' || key === 'updated_at') {
+                return;
+              }
+              
+              // Only update if the existing field is null, undefined, or empty
+              const existingValue = existingCompany[key];
+              if (existingValue === null || existingValue === undefined || existingValue === '' || 
+                  (Array.isArray(existingValue) && existingValue.length === 0)) {
+                updateData[key] = mappedData[key];
+              }
+            });
+
+            // Only update if there are fields to update
+            if (Object.keys(updateData).length > 0) {
+              const { error: updateError } = await supabase
+                .from('companies')
+                .update(updateData)
+                .eq('id', existingCompanyId);
+
+              if (updateError) {
+                results.failed++;
+                results.errors.push(`Row ${i + 2}: Failed to update "${mappedData.company_name}" - ${updateError.message}`);
+              } else {
+                results.duplicates++;
+                results.errors.push(`Row ${i + 2}: Updated missing fields for "${mappedData.company_name}"`);
+              }
+            } else {
+              results.duplicates++;
+              results.errors.push(`Row ${i + 2}: Skipped "${mappedData.company_name}" - no missing fields to update`);
+            }
             continue;
           }
 

@@ -408,6 +408,40 @@ export async function importApolloData(
 
       if (existingCompanyId) {
         companyId = existingCompanyId;
+        
+        // Fetch existing company to check for missing fields
+        const { data: existingCompany, error: fetchError } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', existingCompanyId)
+          .single();
+
+        if (!fetchError && existingCompany) {
+          // Build update object with only missing fields
+          const updateData: any = {};
+          Object.keys(companyData).forEach(key => {
+            // Skip company_name and system fields
+            if (key === 'company_name' || key === 'created_at' || key === 'updated_at' || key === 'created_by') {
+              return;
+            }
+            
+            // Only update if the existing field is null, undefined, or empty
+            const existingValue = existingCompany[key];
+            if (existingValue === null || existingValue === undefined || existingValue === '' || 
+                (Array.isArray(existingValue) && existingValue.length === 0)) {
+              updateData[key] = companyData[key];
+            }
+          });
+
+          // Update if there are missing fields
+          if (Object.keys(updateData).length > 0) {
+            await supabase
+              .from('companies')
+              .update(updateData)
+              .eq('id', existingCompanyId);
+          }
+        }
+        
         results.duplicatesSkipped++;
       } else {
         // Create new company
