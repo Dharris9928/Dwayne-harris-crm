@@ -7,6 +7,7 @@ import { AppLayout } from "./components/layout/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Companies from "./pages/Companies";
 import Contacts from "./pages/Contacts";
+import Opportunities from "./pages/Opportunities";
 import Activities from "./pages/Activities";
 import Reports from "./pages/Reports";
 import AIFeatures from "./pages/AIFeatures";
@@ -48,6 +49,14 @@ const App = () => (
             element={
               <AppLayout>
                 <Contacts />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/opportunities"
+            element={
+              <AppLayout>
+                <Opportunities />
               </AppLayout>
             }
           />

@@ -1,0 +1,121 @@
+import { format } from "date-fns";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface Opportunity {
+  id: string;
+  opportunity_name: string;
+  status: string;
+  estimated_value: number | null;
+  expected_close_date: string | null;
+  created_at: string;
+  companies: { company_name: string } | null;
+  profiles: { first_name: string; last_name: string } | null;
+  opportunity_products: any[];
+}
+
+interface OpportunitiesTableProps {
+  opportunities: Opportunity[];
+  isLoading: boolean;
+}
+
+const statusColors: Record<string, string> = {
+  "New": "bg-blue-500",
+  "In Progress": "bg-yellow-500",
+  "Won": "bg-green-500",
+  "Lost": "bg-red-500",
+  "On Hold": "bg-gray-500",
+};
+
+export function OpportunitiesTable({ opportunities, isLoading }: OpportunitiesTableProps) {
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-16 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  if (opportunities.length === 0) {
+    return (
+      <div className="text-center py-12 border rounded-lg">
+        <p className="text-muted-foreground">No opportunities found</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          Create your first opportunity to get started
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="border rounded-lg">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Opportunity Name</TableHead>
+            <TableHead>Company</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Products</TableHead>
+            <TableHead>Estimated Value</TableHead>
+            <TableHead>Assigned To</TableHead>
+            <TableHead>Expected Close</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {opportunities.map((opportunity) => (
+            <TableRow key={opportunity.id}>
+              <TableCell className="font-medium">
+                {opportunity.opportunity_name}
+              </TableCell>
+              <TableCell>{opportunity.companies?.company_name || "N/A"}</TableCell>
+              <TableCell>
+                <Badge className={statusColors[opportunity.status]}>
+                  {opportunity.status}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                {opportunity.opportunity_products.length > 0 ? (
+                  <div className="text-sm">
+                    {opportunity.opportunity_products.map((p, i) => (
+                      <div key={i}>
+                        {p.quantity}x {p.product_type}
+                        {p.model && ` (${p.model})`}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground">No products</span>
+                )}
+              </TableCell>
+              <TableCell>
+                {opportunity.estimated_value
+                  ? `$${opportunity.estimated_value.toLocaleString()}`
+                  : "—"}
+              </TableCell>
+              <TableCell>
+                {opportunity.profiles
+                  ? `${opportunity.profiles.first_name} ${opportunity.profiles.last_name}`
+                  : "Unassigned"}
+              </TableCell>
+              <TableCell>
+                {opportunity.expected_close_date
+                  ? format(new Date(opportunity.expected_close_date), "MMM d, yyyy")
+                  : "—"}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
