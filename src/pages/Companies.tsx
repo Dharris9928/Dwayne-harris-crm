@@ -85,6 +85,7 @@ const Companies = () => {
   const hasPartnerFilter = searchParams.get("has_partner");
   const lastContactFilter = searchParams.get("last_contact");
   const enrichmentStatusFilter = searchParams.get("enrichment_status");
+  const assignedToFilter = searchParams.get("assigned_to");
 
   // Persist sort selection
   useEffect(() => {
@@ -124,10 +125,10 @@ const Companies = () => {
   useEffect(() => {
     setCurrentPage(1);
     setSelectedRows([]);
-  }, [debouncedSearch, statusFilter, priorityFilter, segmentFilter, industryTypeFilter, stateFilter, cityFilter, enrichmentStatusFilter]);
+  }, [debouncedSearch, statusFilter, priorityFilter, segmentFilter, industryTypeFilter, stateFilter, cityFilter, enrichmentStatusFilter, assignedToFilter]);
 
   const { data: companies, isLoading, refetch } = useQuery({
-    queryKey: ["companies", debouncedSearch, statusFilter, priorityFilter, segmentFilter, industryTypeFilter, stateFilter, cityFilter, enrichmentStatusFilter],
+    queryKey: ["companies", debouncedSearch, statusFilter, priorityFilter, segmentFilter, industryTypeFilter, stateFilter, cityFilter, enrichmentStatusFilter, assignedToFilter],
     queryFn: async () => {
       let query = supabase
         .from("companies")
@@ -150,6 +151,11 @@ const Companies = () => {
       if (statusFilter) query = query.eq('status', statusFilter);
       if (priorityFilter) query = query.eq('priority_tier', priorityFilter);
       if (segmentFilter) query = query.eq('segment', segmentFilter);
+
+      // Apply assignee filter
+      if (assignedToFilter) {
+        query = query.eq('assigned_to', assignedToFilter);
+      }
 
       // Apply enrichment status filter
       if (enrichmentStatusFilter === 'enriched') {

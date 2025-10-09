@@ -29,6 +29,7 @@ import { DataQualityIndicator } from './DataQualityIndicator';
 import { ApolloContactRecommendations } from './ApolloContactRecommendations';
 import { CommunicationsTab } from './CommunicationsTab';
 import { CompanyContactsList } from './CompanyContactsList';
+import { UserAssignmentSelect } from './UserAssignmentSelect';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BUILDER_SEGMENTS, 
@@ -91,6 +92,7 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
   const [segment, setSegment] = useState('');
   const [status, setStatus] = useState('Lead');
   const [industrySpecialties, setIndustrySpecialties] = useState<string[]>([]);
+  const [assignedTo, setAssignedTo] = useState<string>('');
   
   // Parent-Subsidiary Relationship
   const [companyType, setCompanyType] = useState<'standalone' | 'parent' | 'subsidiary'>('standalone');
@@ -202,6 +204,7 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
       setSegment(company.segment || '');
       
       setStatus(company.status || 'Lead');
+      setAssignedTo(company.assigned_to || '');
       
       // Parent-Subsidiary Relationship
       setCompanyType((company.company_type as 'standalone' | 'parent' | 'subsidiary') || 'standalone');
@@ -281,6 +284,7 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
         company_name: companyName,
         industry_type: industryType,
         status: status as any,
+        assigned_to: assignedTo === 'unassigned' ? null : (assignedTo || null),
         
         // Parent-Subsidiary Relationship
         company_type: companyType,
@@ -504,6 +508,18 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="assigned_to">Assigned To</Label>
+                <UserAssignmentSelect 
+                  value={assignedTo}
+                  onValueChange={(v) => {
+                    setAssignedTo(v);
+                    markChanged();
+                  }}
+                  placeholder="Assign to sales rep..."
+                />
               </div>
 
               <div className="col-span-2">

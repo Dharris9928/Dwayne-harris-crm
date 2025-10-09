@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
+import { UserAssignmentSelect } from "./UserAssignmentSelect";
 import { 
   BUILDER_SEGMENTS, 
   CONTRACTOR_SEGMENTS, 
@@ -458,6 +459,27 @@ export function CompaniesFilterSidebar({ isCollapsed, onToggle }: CompaniesFilte
               </RadioGroup>
             </div>
           </div>
+        </FilterSection>
+
+        {/* Assignee Filter */}
+        <FilterSection
+          title="Assignee"
+          isCollapsed={collapsedSections.has('assignee')}
+          onToggle={() => toggleSection('assignee')}
+        >
+          <UserAssignmentSelect
+            value={searchParams.get("assigned_to") || ""}
+            onValueChange={(value) => {
+              const newParams = new URLSearchParams(searchParams);
+              if (value === "unassigned" || !value) {
+                newParams.delete("assigned_to");
+              } else {
+                newParams.set("assigned_to", value);
+              }
+              setSearchParams(newParams);
+            }}
+            placeholder="Filter by assignee..."
+          />
         </FilterSection>
 
         {/* Enrichment Status Filter */}

@@ -288,6 +288,7 @@ export type Database = {
           annual_revenue_range: string | null
           annual_volume: number | null
           annual_volume_range: string | null
+          assigned_to: string | null
           average_home_price: number | null
           average_home_price_range: string | null
           city: string | null
@@ -367,6 +368,7 @@ export type Database = {
           annual_revenue_range?: string | null
           annual_volume?: number | null
           annual_volume_range?: string | null
+          assigned_to?: string | null
           average_home_price?: number | null
           average_home_price_range?: string | null
           city?: string | null
@@ -446,6 +448,7 @@ export type Database = {
           annual_revenue_range?: string | null
           annual_volume?: number | null
           annual_volume_range?: string | null
+          assigned_to?: string | null
           average_home_price?: number | null
           average_home_price_range?: string | null
           city?: string | null
