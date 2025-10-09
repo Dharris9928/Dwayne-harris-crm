@@ -27,21 +27,42 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { contactSchema, type ContactFormData } from "@/lib/validation/schemas";
 import { createContact } from "@/lib/contacts/createContact";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface AddContactDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  companyId?: string;
+  companyName?: string;
 }
 
 const decisionTiers = ["Primary", "Secondary", "Influencer"];
 const contactMethods = ["Email", "Phone", "LinkedIn", "Text"];
 
-export function AddContactDialog({ open, onOpenChange, onSuccess }: AddContactDialogProps) {
+export function AddContactDialog({ open, onOpenChange, onSuccess, companyId, companyName }: AddContactDialogProps) {
   const [companies, setCompanies] = useState<{ id: string; company_name: string }[]>([]);
+  const [companySearch, setCompanySearch] = useState("");
+  const [openCombobox, setOpenCombobox] = useState(false);
+  const debouncedSearch = useDebounce(companySearch, 300);
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
@@ -63,15 +84,34 @@ export function AddContactDialog({ open, onOpenChange, onSuccess }: AddContactDi
   useEffect(() => {
     if (open) {
       loadCompanies();
-      form.reset();
+      // Pre-fill company if provided
+      if (companyId && companyName) {
+        form.setValue("company_id", companyId);
+        setCompanySearch(companyName);
+      } else {
+        form.reset();
+        setCompanySearch("");
+      }
     }
-  }, [open]);
+  }, [open, companyId, companyName]);
 
-  const loadCompanies = async () => {
-    const { data } = await supabase
+  useEffect(() => {
+    if (debouncedSearch || open) {
+      loadCompanies(debouncedSearch);
+    }
+  }, [debouncedSearch, open]);
+
+  const loadCompanies = async (search: string = "") => {
+    let query = supabase
       .from("companies")
       .select("id, company_name")
       .order("company_name");
+    
+    if (search) {
+      query = query.ilike("company_name", `%${search}%`);
+    }
+    
+    const { data } = await query.limit(50);
     if (data) setCompanies(data);
   };
 
@@ -132,22 +172,63 @@ export function AddContactDialog({ open, onOpenChange, onSuccess }: AddContactDi
                 control={form.control}
                 name="company_id"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Company *</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a company" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {companies.map((company) => (
-                          <SelectItem key={company.id} value={company.id}>
-                            {company.company_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            disabled={!!companyId}
+                            className={cn(
+                              "justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value
+                              ? companies.find((company) => company.id === field.value)?.company_name || companySearch
+                              : "Search for a company..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-full p-0" align="start">
+                        <Command>
+                          <CommandInput 
+                            placeholder="Search companies..." 
+                            value={companySearch}
+                            onValueChange={setCompanySearch}
+                          />
+                          <CommandList>
+                            <CommandEmpty>No company found.</CommandEmpty>
+                            <CommandGroup>
+                              {companies.map((company) => (
+                                <CommandItem
+                                  key={company.id}
+                                  value={company.company_name}
+                                  onSelect={() => {
+                                    form.setValue("company_id", company.id);
+                                    setCompanySearch(company.company_name);
+                                    setOpenCombobox(false);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      company.id === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                  {company.company_name}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}

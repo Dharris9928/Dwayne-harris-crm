@@ -208,6 +208,8 @@ export function CompanyContactsList({ companyId, companyName }: CompanyContactsL
           refetch();
           setShowAddDialog(false);
         }}
+        companyId={companyId}
+        companyName={companyName}
       />
 
       {editingContact && (
