@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Users, FileText, Merge, Search } from "lucide-react";
+import { Building2, Users, FileText, Merge, Search, Database } from "lucide-react";
 import { UserManagement } from "@/components/settings/UserManagement";
 import { UserApprovalPanel } from "@/components/settings/UserApprovalPanel";
 import { DeletionApprovalPanel } from "@/components/settings/DeletionApprovalPanel";
@@ -18,6 +18,7 @@ import { BlockedSignupsViewer } from "@/components/settings/domain/BlockedSignup
 import { EncryptionManager } from "@/components/settings/encryption/EncryptionManager";
 import { EncryptionSetupGuide } from "@/components/settings/encryption/EncryptionSetupGuide";
 import { EncryptionUsageGuide } from "@/components/settings/encryption/EncryptionUsageGuide";
+import { DataWarehouseSync } from "@/components/settings/DataWarehouseSync";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ImportExportActivityLog } from "@/components/help/ImportExportActivityLog";
@@ -87,6 +88,7 @@ const Settings = () => {
             <EncryptionManager />
             <EncryptionSetupGuide />
             <EncryptionUsageGuide />
+            <DataWarehouseSync />
           </>
         )}
 

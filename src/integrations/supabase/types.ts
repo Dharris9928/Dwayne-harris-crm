@@ -1946,6 +1946,92 @@ export type Database = {
           },
         ]
       }
+      sync_configurations: {
+        Row: {
+          configuration: Json | null
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          last_sync_at: string | null
+          last_sync_status: string | null
+          schedule_cron: string
+          sync_name: string
+          sync_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          configuration?: Json | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          schedule_cron?: string
+          sync_name: string
+          sync_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          configuration?: Json | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_sync_at?: string | null
+          last_sync_status?: string | null
+          schedule_cron?: string
+          sync_name?: string
+          sync_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      sync_logs: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          error_details: Json | null
+          error_message: string | null
+          id: string
+          records_synced: number | null
+          started_at: string | null
+          status: string
+          sync_config_id: string | null
+          sync_duration_ms: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          records_synced?: number | null
+          started_at?: string | null
+          status: string
+          sync_config_id?: string | null
+          sync_duration_ms?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          records_synced?: number | null
+          started_at?: string | null
+          status?: string
+          sync_config_id?: string | null
+          sync_duration_ms?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sync_logs_sync_config_id_fkey"
+            columns: ["sync_config_id"]
+            isOneToOne: false
+            referencedRelation: "sync_configurations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_certifications: {
         Row: {
           certification_issued: boolean | null
@@ -2218,6 +2304,10 @@ export type Database = {
           records_deleted: number
           retention_days: number
         }[]
+      }
+      cleanup_old_sync_logs: {
+        Args: { retention_days?: number }
+        Returns: number
       }
       cleanup_rate_limit_tracking: {
         Args: Record<PropertyKey, never>
