@@ -18,30 +18,39 @@ export function EncryptionManager() {
   const { data: encryptionStatus, isLoading } = useQuery({
     queryKey: ['encryption-status'],
     queryFn: async () => {
-      // Get total contacts
+      // Total contacts
       const { count: totalContacts } = await supabase
         .from('contacts')
         .select('*', { count: 'exact', head: true });
 
-      // Get encrypted contacts
-      const { count: encryptedContacts } = await supabase
+      // Remaining needing migration (align with server logic)
+      const { count: remainingToMigrate } = await supabase
         .from('contacts')
         .select('*', { count: 'exact', head: true })
-        .not('email_encrypted', 'is', null);
+        .or([
+          'encryption_version.is.null',
+          'and(email.not.is.null,email.neq.,email_encrypted.is.null)',
+          'and(phone.not.is.null,phone.neq.,phone_encrypted.is.null)',
+          'and(mobile.not.is.null,mobile.neq.,mobile_encrypted.is.null)'
+        ].join(','));
 
-      // Get current encryption config
+      // Current encryption config (may be absent)
       const { data: config } = await supabase
         .from('encryption_config')
         .select('*')
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
+
+      const total = totalContacts || 0;
+      const remaining = remainingToMigrate || 0;
+      const encrypted = Math.max(0, total - remaining);
 
       return {
-        totalContacts: totalContacts || 0,
-        encryptedContacts: encryptedContacts || 0,
-        encryptionConfig: config,
-        encryptionPercentage: totalContacts 
-          ? Math.round((encryptedContacts / totalContacts) * 100) 
+        totalContacts: total,
+        encryptedContacts: encrypted,
+        encryptionConfig: config ?? null,
+        encryptionPercentage: total > 0
+          ? Math.round(((total - remaining) / total) * 100)
           : 0
       };
     },
