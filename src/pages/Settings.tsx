@@ -15,6 +15,9 @@ import { MergeCompaniesDialog } from "@/components/settings/MergeCompaniesDialog
 import { DuplicateDetectionDialog } from "@/components/settings/DuplicateDetectionDialog";
 import { AllowedDomainsManager } from "@/components/settings/domain/AllowedDomainsManager";
 import { BlockedSignupsViewer } from "@/components/settings/domain/BlockedSignupsViewer";
+import { EncryptionManager } from "@/components/settings/encryption/EncryptionManager";
+import { EncryptionSetupGuide } from "@/components/settings/encryption/EncryptionSetupGuide";
+import { EncryptionUsageGuide } from "@/components/settings/encryption/EncryptionUsageGuide";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ImportExportActivityLog } from "@/components/help/ImportExportActivityLog";
@@ -76,11 +79,14 @@ const Settings = () => {
         
         <SecurityDashboard />
 
-        {/* Domain Security Section - Admin Only */}
+        {/* Domain Security & Encryption Section - Admin Only */}
         {userData?.role === 'admin' && (
           <>
             <AllowedDomainsManager />
             <BlockedSignupsViewer />
+            <EncryptionManager />
+            <EncryptionSetupGuide />
+            <EncryptionUsageGuide />
           </>
         )}
 

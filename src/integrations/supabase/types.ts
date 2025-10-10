@@ -88,6 +88,13 @@ export type Database = {
             referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ai_usage_logs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts_decrypted"
+            referencedColumns: ["id"]
+          },
         ]
       }
       allowed_email_domains: {
@@ -813,6 +820,13 @@ export type Database = {
             referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "company_communications_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts_decrypted"
+            referencedColumns: ["id"]
+          },
         ]
       }
       company_partner_matches: {
@@ -909,6 +923,13 @@ export type Database = {
             referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contact_access_logs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts_decrypted"
+            referencedColumns: ["id"]
+          },
         ]
       }
       contacts: {
@@ -918,6 +939,8 @@ export type Database = {
           created_at: string | null
           decision_tier: Database["public"]["Enums"]["decision_tier"] | null
           email: string | null
+          email_encrypted: string | null
+          encryption_version: number | null
           first_name: string
           id: string
           last_name: string
@@ -925,8 +948,10 @@ export type Database = {
           linkedin_connections: number | null
           linkedin_url: string | null
           mobile: string | null
+          mobile_encrypted: string | null
           notes: string | null
           phone: string | null
+          phone_encrypted: string | null
           preferred_contact_method:
             | Database["public"]["Enums"]["contact_method"]
             | null
@@ -939,6 +964,8 @@ export type Database = {
           created_at?: string | null
           decision_tier?: Database["public"]["Enums"]["decision_tier"] | null
           email?: string | null
+          email_encrypted?: string | null
+          encryption_version?: number | null
           first_name: string
           id?: string
           last_name: string
@@ -946,8 +973,10 @@ export type Database = {
           linkedin_connections?: number | null
           linkedin_url?: string | null
           mobile?: string | null
+          mobile_encrypted?: string | null
           notes?: string | null
           phone?: string | null
+          phone_encrypted?: string | null
           preferred_contact_method?:
             | Database["public"]["Enums"]["contact_method"]
             | null
@@ -960,6 +989,8 @@ export type Database = {
           created_at?: string | null
           decision_tier?: Database["public"]["Enums"]["decision_tier"] | null
           email?: string | null
+          email_encrypted?: string | null
+          encryption_version?: number | null
           first_name?: string
           id?: string
           last_name?: string
@@ -967,8 +998,10 @@ export type Database = {
           linkedin_connections?: number | null
           linkedin_url?: string | null
           mobile?: string | null
+          mobile_encrypted?: string | null
           notes?: string | null
           phone?: string | null
+          phone_encrypted?: string | null
           preferred_contact_method?:
             | Database["public"]["Enums"]["contact_method"]
             | null
@@ -1168,6 +1201,72 @@ export type Database = {
           search_parameters?: Json | null
           search_type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      encryption_audit_log: {
+        Row: {
+          encryption_version: number | null
+          error_details: string | null
+          id: string
+          metadata: Json | null
+          operation_type: string
+          performed_at: string
+          performed_by: string | null
+          record_count: number | null
+          status: string
+          table_name: string
+        }
+        Insert: {
+          encryption_version?: number | null
+          error_details?: string | null
+          id?: string
+          metadata?: Json | null
+          operation_type: string
+          performed_at?: string
+          performed_by?: string | null
+          record_count?: number | null
+          status: string
+          table_name: string
+        }
+        Update: {
+          encryption_version?: number | null
+          error_details?: string | null
+          id?: string
+          metadata?: Json | null
+          operation_type?: string
+          performed_at?: string
+          performed_by?: string | null
+          record_count?: number | null
+          status?: string
+          table_name?: string
+        }
+        Relationships: []
+      }
+      encryption_config: {
+        Row: {
+          id: string
+          is_active: boolean
+          key_rotated_at: string | null
+          key_version: number
+          notes: string | null
+          rotated_by: string | null
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          key_rotated_at?: string | null
+          key_version?: number
+          notes?: string | null
+          rotated_by?: string | null
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          key_rotated_at?: string | null
+          key_version?: number
+          notes?: string | null
+          rotated_by?: string | null
         }
         Relationships: []
       }
@@ -1446,6 +1545,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_activities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts_decrypted"
             referencedColumns: ["id"]
           },
           {
@@ -1898,6 +2004,13 @@ export type Database = {
             referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "training_certifications_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts_decrypted"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -1981,6 +2094,90 @@ export type Database = {
         }
         Relationships: []
       }
+      contacts_decrypted: {
+        Row: {
+          branch_id: string | null
+          company_id: string | null
+          created_at: string | null
+          decision_tier: Database["public"]["Enums"]["decision_tier"] | null
+          email: string | null
+          encryption_version: number | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          linkedin_activity_score: number | null
+          linkedin_connections: number | null
+          linkedin_url: string | null
+          mobile: string | null
+          notes: string | null
+          phone: string | null
+          preferred_contact_method:
+            | Database["public"]["Enums"]["contact_method"]
+            | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          decision_tier?: Database["public"]["Enums"]["decision_tier"] | null
+          email?: never
+          encryption_version?: number | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          linkedin_activity_score?: number | null
+          linkedin_connections?: number | null
+          linkedin_url?: string | null
+          mobile?: never
+          notes?: string | null
+          phone?: never
+          preferred_contact_method?:
+            | Database["public"]["Enums"]["contact_method"]
+            | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          decision_tier?: Database["public"]["Enums"]["decision_tier"] | null
+          email?: never
+          encryption_version?: number | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          linkedin_activity_score?: number | null
+          linkedin_connections?: number | null
+          linkedin_url?: string | null
+          mobile?: never
+          notes?: string | null
+          phone?: never
+          preferred_contact_method?:
+            | Database["public"]["Enums"]["contact_method"]
+            | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "company_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       anonymize_ipv4: {
@@ -1992,6 +2189,14 @@ export type Database = {
         Returns: {
           records_anonymized: number
           table_name: string
+        }[]
+      }
+      batch_migrate_contacts_encryption: {
+        Args: { batch_size?: number }
+        Returns: {
+          completion_percentage: number
+          total_contacts: number
+          total_migrated: number
         }[]
       }
       can_access_company: {
@@ -2017,6 +2222,14 @@ export type Database = {
       cleanup_rate_limit_tracking: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      decrypt_text: {
+        Args: { encrypted_text: string }
+        Returns: string
+      }
+      encrypt_text: {
+        Args: { plain_text: string }
+        Returns: string
       }
       find_duplicate_companies: {
         Args: { max_results?: number; similarity_threshold?: number }
@@ -2053,6 +2266,10 @@ export type Database = {
           parent_company_id: string
           path: string[]
         }[]
+      }
+      get_encryption_key: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_user_role: {
         Args: { _user_id: string }
@@ -2100,6 +2317,10 @@ export type Database = {
       log_security_event: {
         Args: { _event_details?: Json; _event_type: string }
         Returns: undefined
+      }
+      migrate_contact_encryption: {
+        Args: { contact_id: string }
+        Returns: boolean
       }
       revoke_expired_access: {
         Args: Record<PropertyKey, never>
