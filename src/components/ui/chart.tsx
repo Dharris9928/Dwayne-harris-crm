@@ -58,6 +58,24 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+// Validates CSS color strings to prevent injection attacks
+const isValidColor = (color: string): boolean => {
+  // Allow hex colors (#RGB, #RRGGBB, #RRGGBBAA)
+  if (/^#([0-9A-Fa-f]{3}){1,2}([0-9A-Fa-f]{2})?$/.test(color)) return true;
+  
+  // Allow rgb/rgba
+  if (/^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(,\s*[\d.]+\s*)?\)$/.test(color)) return true;
+  
+  // Allow hsl/hsla
+  if (/^hsla?\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*(,\s*[\d.]+\s*)?\)$/.test(color)) return true;
+  
+  // Allow CSS color keywords (basic set)
+  const validKeywords = ['transparent', 'currentColor', 'inherit', 'initial', 'unset'];
+  if (validKeywords.includes(color)) return true;
+  
+  return false;
+};
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
 
@@ -65,25 +83,27 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  // Build CSS string with validation
+  const cssString = Object.entries(THEMES)
+    .map(([theme, prefix]) => {
+      const rules = colorConfig
+        .map(([key, itemConfig]) => {
+          const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
+          // Validate color before including it
+          if (!color || !isValidColor(color)) return null;
+          return `  --color-${key}: ${color};`;
+        })
+        .filter(Boolean)
+        .join("\n");
+      
+      return rules ? `${prefix} [data-chart=${id}] {\n${rules}\n}` : null;
+    })
+    .filter(Boolean)
+    .join("\n");
+
+  // Use a style element with text content instead of dangerouslySetInnerHTML
   return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join("\n")}
-}
-`,
-          )
-          .join("\n"),
-      }}
-    />
+    <style>{cssString}</style>
   );
 };
 

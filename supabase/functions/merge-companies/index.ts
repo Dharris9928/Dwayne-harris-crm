@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { requireAdmin } from '../_shared/authorization.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -28,36 +28,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
-    );
-
-    // Verify user is authenticated
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
-
-    if (authError || !user) {
-      throw new Error('Unauthorized');
-    }
-
-    // Verify user is admin
-    const { data: roleData, error: roleError } = await supabaseClient
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
-
-    if (roleError || !roleData || roleData.role !== 'admin') {
-      throw new Error('Admin access required');
-    }
+    // Verify admin access
+    const { user, supabase: supabaseClient } = await requireAdmin(req);
 
     const { source_company_id, target_company_id }: MergeRequest = await req.json();
 
