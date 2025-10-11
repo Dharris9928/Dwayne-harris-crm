@@ -106,6 +106,13 @@ export type Database = {
             foreignKeyName: "ai_usage_logs_contact_id_fkey"
             columns: ["contact_id"]
             isOneToOne: false
+            referencedRelation: "contacts_decrypted_secure"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_logs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
             referencedRelation: "contacts_masked"
             referencedColumns: ["id"]
           },
@@ -955,6 +962,13 @@ export type Database = {
             foreignKeyName: "company_communications_contact_id_fkey"
             columns: ["contact_id"]
             isOneToOne: false
+            referencedRelation: "contacts_decrypted_secure"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_communications_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
             referencedRelation: "contacts_masked"
             referencedColumns: ["id"]
           },
@@ -1073,6 +1087,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts_decrypted"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_access_logs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts_decrypted_secure"
             referencedColumns: ["id"]
           },
           {
@@ -1775,6 +1796,13 @@ export type Database = {
             foreignKeyName: "outreach_activities_contact_id_fkey"
             columns: ["contact_id"]
             isOneToOne: false
+            referencedRelation: "contacts_decrypted_secure"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_activities_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
             referencedRelation: "contacts_masked"
             referencedColumns: ["id"]
           },
@@ -2406,6 +2434,13 @@ export type Database = {
             foreignKeyName: "training_certifications_contact_id_fkey"
             columns: ["contact_id"]
             isOneToOne: false
+            referencedRelation: "contacts_decrypted_secure"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_certifications_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
             referencedRelation: "contacts_masked"
             referencedColumns: ["id"]
           },
@@ -2559,6 +2594,97 @@ export type Database = {
         Relationships: []
       }
       contacts_decrypted: {
+        Row: {
+          branch_id: string | null
+          company_id: string | null
+          created_at: string | null
+          decision_tier: Database["public"]["Enums"]["decision_tier"] | null
+          email: string | null
+          encryption_version: number | null
+          first_name: string | null
+          id: string | null
+          last_name: string | null
+          linkedin_activity_score: number | null
+          linkedin_connections: number | null
+          linkedin_url: string | null
+          mobile: string | null
+          notes: string | null
+          phone: string | null
+          preferred_contact_method:
+            | Database["public"]["Enums"]["contact_method"]
+            | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          branch_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          decision_tier?: Database["public"]["Enums"]["decision_tier"] | null
+          email?: never
+          encryption_version?: number | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          linkedin_activity_score?: number | null
+          linkedin_connections?: number | null
+          linkedin_url?: string | null
+          mobile?: never
+          notes?: string | null
+          phone?: never
+          preferred_contact_method?:
+            | Database["public"]["Enums"]["contact_method"]
+            | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          branch_id?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          decision_tier?: Database["public"]["Enums"]["decision_tier"] | null
+          email?: never
+          encryption_version?: number | null
+          first_name?: string | null
+          id?: string | null
+          last_name?: string | null
+          linkedin_activity_score?: number | null
+          linkedin_connections?: number | null
+          linkedin_url?: string | null
+          mobile?: never
+          notes?: string | null
+          phone?: never
+          preferred_contact_method?:
+            | Database["public"]["Enums"]["contact_method"]
+            | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "company_branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies_financial_masked"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts_decrypted_secure: {
         Row: {
           branch_id: string | null
           company_id: string | null
