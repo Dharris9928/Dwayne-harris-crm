@@ -1946,6 +1946,39 @@ export type Database = {
           },
         ]
       }
+      signup_rate_limit: {
+        Row: {
+          attempt_count: number | null
+          blocked: boolean | null
+          created_at: string | null
+          email: string
+          id: string
+          ip_address: unknown | null
+          window_end: string
+          window_start: string
+        }
+        Insert: {
+          attempt_count?: number | null
+          blocked?: boolean | null
+          created_at?: string | null
+          email: string
+          id?: string
+          ip_address?: unknown | null
+          window_end?: string
+          window_start?: string
+        }
+        Update: {
+          attempt_count?: number | null
+          blocked?: boolean | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          ip_address?: unknown | null
+          window_end?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       sync_configurations: {
         Row: {
           configuration: Json | null
@@ -2324,6 +2357,10 @@ export type Database = {
         Args: { _endpoint: string; _user_id: string; _window_minutes?: number }
         Returns: Json
       }
+      check_signup_rate_limit: {
+        Args: { _email: string; _ip_address?: unknown }
+        Returns: Json
+      }
       cleanup_old_records: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -2438,6 +2475,10 @@ export type Database = {
       migrate_contact_encryption: {
         Args: { contact_id: string }
         Returns: boolean
+      }
+      reverify_all_active_domains: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
       revoke_expired_access: {
         Args: Record<PropertyKey, never>

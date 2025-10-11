@@ -6,12 +6,49 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// List of known disposable email domains
+// Comprehensive list of known disposable email domains (150+ domains)
 const DISPOSABLE_DOMAINS = [
+  // Popular disposable email services
   'guerrillamail.com', 'mailinator.com', 'tempmail.com', '10minutemail.com',
   'throwaway.email', 'temp-mail.org', 'getnada.com', 'maildrop.cc',
   'yopmail.com', 'fake-mail.com', 'sharklasers.com', 'guerrillamail.net',
-  'trashmail.com', 'mailnesia.com', 'mintemail.com', 'mytrashmail.com'
+  'trashmail.com', 'mailnesia.com', 'mintemail.com', 'mytrashmail.com',
+  
+  // Additional disposable domains
+  'dispostable.com', 'emailondeck.com', 'spamgourmet.com', 'jetable.org',
+  'disposableemailaddresses.com', 'trash-mail.com', 'guerrillamailblock.com',
+  'spambox.us', 'incognitomail.com', 'anonymbox.com', 'mailcatch.com',
+  'throwawaymail.com', 'hide.biz.st', 'mytempemail.com', 'spamfree24.org',
+  'tempemail.net', 'tempinbox.com', 'fakeinbox.com', 'burnermail.io',
+  'getairmail.com', 'guerrillamail.biz', 'guerrillamail.de', 'spam4.me',
+  'grr.la', 'guerrillamail.org', 'pokemail.net', 'spamcon.org',
+  'speed.1s.fr', 'mail-temporaire.fr', 'meltmail.com', 'trashmailer.com',
+  'filzmail.com', 'armyspy.com', 'cuvox.de', 'dayrep.com', 'einrot.com',
+  'fleckens.hu', 'gustr.com', 'jourrapide.com', 'rhyta.com', 'superrito.com',
+  'teleworm.us', 'spambog.com', 'spambog.de', 'spambog.ru', 'tafmail.com',
+  'doanart.com', 'dropmail.me', 'emltmp.com', 'mailtemp.net', 'tmails.net',
+  'mohmal.com', 'mowgli.jungleheart.com', 'nospam.ze.tc', 'recipeforfailure.com',
+  'sharklasers.com', 'spam.la', 'spaml.de', 'tempr.email', 'trash2009.com',
+  'wegwerfmail.de', 'wegwerfemail.de', 'zehnminuten.de', 'mail.tm',
+  'inboxbear.com', 'slipry.net', 'trbvm.com', 'gufum.com', 'laste.ml',
+  'mail.wtf', 'muatra.com', 'owlpic.com', 'ruffrey.com', 'tafoi.gr',
+  'tmpmail.net', 'tmpeml.info', '20minutemail.com', '33mail.com',
+  'anonbox.net', 'binkmail.com', 'bobmail.info', 'clrmail.com',
+  'deadaddress.com', 'despam.it', 'disposemail.com', 'dodgeit.com',
+  'e4ward.com', 'emailias.com', 'emailmiser.com', 'emailto.de',
+  'emailwarden.com', 'enterto.com', 'ephemail.net', 'fastacura.com',
+  'fastchevy.com', 'fastchrysler.com', 'fastkawasaki.com', 'fastmazda.com',
+  'fastnissan.com', 'fastsubaru.com', 'fastsuzuki.com', 'fasttoyota.com',
+  'fastyamaha.com', 'getonemail.com', 'gishpuppy.com', 'greensloth.com',
+  'harakirimail.com', 'hatespam.org', 'ihateyoualot.info', 'imstations.com',
+  'inboxclean.com', 'incognitomail.org', 'insorg-mail.info', 'ipoo.org',
+  'irish2me.com', 'jetable.com', 'jetable.fr.nf', 'jetable.net',
+  'kasmail.com', 'koszmail.pl', 'lags.us', 'linksnappy.com',
+  'litedrop.com', 'lookugly.com', 'lortemail.dk', 'lr78.com',
+  'maileater.com', 'mailexpire.com', 'mailfreeonline.com', 'mailin8r.com',
+  'mailinator2.com', 'mailme.lv', 'mailmetrash.com', 'mailmoat.com',
+  'mailnull.com', 'mailshell.com', 'mailsiphon.com', 'mailslite.com',
+  'meltmail.com', 'mierdamail.com', 'mintemail.com', 'mt2009.com'
 ];
 
 interface VerificationRequest {

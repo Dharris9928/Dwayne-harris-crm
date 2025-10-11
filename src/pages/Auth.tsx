@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,15 +17,7 @@ const passwordSchema = z.string()
   .regex(/[0-9]/, "Password must contain at least one number")
   .regex(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character");
 
-const ALLOWED_DOMAINS = ['@google.com', '@gfieldsales.com', '@nestprorep.com'];
 const ADMIN_EXCEPTION = import.meta.env.VITE_ADMIN_EMAIL || 'dharris9928@gmail.com';
-
-const validateEmailDomain = (email: string): boolean => {
-  if (email.toLowerCase() === ADMIN_EXCEPTION.toLowerCase()) {
-    return true;
-  }
-  return ALLOWED_DOMAINS.some(domain => email.toLowerCase().endsWith(domain));
-};
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -34,6 +26,38 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [allowedDomains, setAllowedDomains] = useState<string[]>([]);
+  const [domainsLoaded, setDomainsLoaded] = useState(false);
+
+  useEffect(() => {
+    const fetchAllowedDomains = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('allowed_email_domains')
+          .select('domain')
+          .eq('is_active', true);
+
+        if (error) throw error;
+
+        const domains = data?.map(d => `@${d.domain.toLowerCase()}`) || [];
+        setAllowedDomains(domains);
+      } catch (error) {
+        console.error('Error fetching allowed domains:', error);
+        toast.error('Failed to load allowed domains');
+      } finally {
+        setDomainsLoaded(true);
+      }
+    };
+
+    fetchAllowedDomains();
+  }, []);
+
+  const validateEmailDomain = (email: string): boolean => {
+    if (email.toLowerCase() === ADMIN_EXCEPTION.toLowerCase()) {
+      return true;
+    }
+    return allowedDomains.some(domain => email.toLowerCase().endsWith(domain));
+  };
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -64,7 +88,7 @@ const Auth = () => {
     try {
       // Validate email domain
       if (!validateEmailDomain(email)) {
-        toast.error("Registration is restricted to @google.com, @gfieldsales.com, and @nestprorep.com email addresses");
+        toast.error("Registration is restricted to authorized email domains only");
         setLoading(false);
         return;
       }
@@ -270,8 +294,8 @@ const Auth = () => {
                     8-15 characters with capital letter, number, and special character
                   </p>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Creating account..." : "Create Account"}
+                <Button type="submit" className="w-full" disabled={loading || !domainsLoaded}>
+                  {loading ? "Creating account..." : !domainsLoaded ? "Loading..." : "Create Account"}
                 </Button>
               </form>
             </TabsContent>
