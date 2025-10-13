@@ -17,29 +17,33 @@ interface GrowthMetric {
 }
 
 export function SecurityGrowthTracker() {
-  const { data: metrics, isLoading } = useQuery({
+  const { data: metrics, isLoading } = useQuery<GrowthMetric[]>({
     queryKey: ['security-growth-metrics'],
     queryFn: async () => {
-      const results = await Promise.all([
-        supabase.from('profiles').select('*', { count: 'exact', head: true }),
-        supabase.from('companies').select('*', { count: 'exact', head: true }),
-        supabase.from('contacts').select('*', { count: 'exact', head: true }),
-        supabase.from('security_incidents').select('*', { count: 'exact', head: true }),
-        supabase.from('export_logs').select('record_count').gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
-        supabase.from('api_audit_log').select('*', { count: 'exact', head: true }).gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
-        supabase.from('bulk_access_alerts').select('*', { count: 'exact', head: true }).eq('status', 'open'),
-        supabase.from('companies').select('state')
-      ]);
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const sb = supabase as any;
+      const q1 = sb.from('profiles').select('*', { count: 'exact', head: true }).then((r: any) => r.count || 0) as Promise<number>;
+      const q2 = sb.from('companies').select('*', { count: 'exact', head: true }).then((r: any) => r.count || 0) as Promise<number>;
+      const q3 = sb.from('contacts').select('*', { count: 'exact', head: true }).then((r: any) => r.count || 0) as Promise<number>;
+      const q4 = sb.from('security_incidents').select('*', { count: 'exact', head: true }).then((r: any) => r.count || 0) as Promise<number>;
+      const q5 = sb.from('export_logs').select('record_count').gte('created_at', thirtyDaysAgo).then((r: any) => (r.data ?? []).reduce((sum: number, log: any) => sum + (log.record_count ?? 0), 0)) as Promise<number>;
+      const q6 = sb.from('api_audit_log').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo).then((r: any) => r.count || 0) as Promise<number>;
+      const q7 = sb.from('bulk_access_alerts').select('*', { count: 'exact', head: true }).eq('status', 'open').then((r: any) => r.count || 0) as Promise<number>;
+      const q8 = sb.from('companies').select('state').then((r: any) => {
+        const states = (r.data ?? []).map((c: any) => c.state).filter(Boolean);
+        return new Set(states).size;
+      }) as Promise<number>;
 
-      const userCount = results[0].count || 0;
-      const companyCount = results[1].count || 0;
-      const contactCount = results[2].count || 0;
-      const incidentCount = results[3].count || 0;
-      const exportVolume = results[4].data?.reduce((sum: number, log: any) => sum + (log.record_count || 0), 0) || 0;
-      const apiCallCount = results[5].count || 0;
-      const bulkAlertCount = results[6].count || 0;
-      const uniqueStates = new Set(results[7].data?.filter((c: any) => c.state).map((c: any) => c.state)).size;
-
+      const [
+        userCount,
+        companyCount,
+        contactCount,
+        incidentCount,
+        exportVolume,
+        apiCallCount,
+        bulkAlertCount,
+        uniqueStates
+      ] = await Promise.all([q1, q2, q3, q4, q5, q6, q7, q8]);
       const growthMetrics: GrowthMetric[] = [
         { name: "Active Users", current: userCount, threshold: 50, unit: "users", phase: 4, category: "Scale", description: "Consider SSO and adaptive MFA at 50+ users" },
         { name: "Total Records", current: companyCount + contactCount, threshold: 10000, unit: "records", phase: 4, category: "Scale", description: "SIEM integration recommended at 10K+ records" },
