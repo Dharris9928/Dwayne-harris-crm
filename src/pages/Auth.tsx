@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Building2 } from "lucide-react";
 import { z } from "zod";
+import { MFAVerificationDialog } from "@/components/settings/MFAVerificationDialog";
 
 const passwordSchema = z.string()
   .min(8, "Password must be at least 8 characters")
@@ -28,6 +29,8 @@ const Auth = () => {
   const [lastName, setLastName] = useState("");
   const [allowedDomains, setAllowedDomains] = useState<string[]>([]);
   const [domainsLoaded, setDomainsLoaded] = useState(false);
+  const [showMFAVerification, setShowMFAVerification] = useState(false);
+  const [pendingMFAFactorId, setPendingMFAFactorId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAllowedDomains = async () => {
@@ -71,6 +74,18 @@ const Auth = () => {
       });
 
       if (error) {
+        // Check if MFA is required
+        if (error.message.includes('MFA') || error.message.includes('factor')) {
+          // List MFA factors
+          const { data: factors } = await supabase.auth.mfa.listFactors();
+          if (factors?.totp && factors.totp.length > 0) {
+            setPendingMFAFactorId(factors.totp[0].id);
+            setShowMFAVerification(true);
+            setLoading(false);
+            return;
+          }
+        }
+
         // Log failed login attempt
         try {
           await supabase.rpc('log_auth_event', {
@@ -105,6 +120,13 @@ const Auth = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMFASuccess = () => {
+    setShowMFAVerification(false);
+    setPendingMFAFactorId(null);
+    toast.success("Successfully logged in!");
+    navigate("/");
   };
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -328,6 +350,12 @@ const Auth = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      <MFAVerificationDialog
+        open={showMFAVerification}
+        onOpenChange={setShowMFAVerification}
+        onSuccess={handleMFASuccess}
+      />
     </div>
   );
 };

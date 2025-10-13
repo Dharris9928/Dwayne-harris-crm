@@ -24,6 +24,7 @@ import { Link } from "react-router-dom";
 import { ImportExportActivityLog } from "@/components/help/ImportExportActivityLog";
 import { EnrichmentErrorLog } from "@/components/help/EnrichmentErrorLog";
 import { useUserRole } from "@/hooks/useUserRole";
+import { MFAManagement } from "@/components/settings/MFAManagement";
 
 const Settings = () => {
   const { data: userData } = useUserRole();
@@ -77,6 +78,8 @@ const Settings = () => {
 
       <div className="grid gap-6">
         <BusinessContextSettings />
+        
+        <MFAManagement />
         
         <SecurityDashboard />
 

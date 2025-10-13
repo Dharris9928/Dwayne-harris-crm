@@ -1,0 +1,176 @@
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Shield, Copy, Check } from 'lucide-react';
+import { useMFAStatus } from '@/hooks/useMFAStatus';
+
+interface MFAEnrollmentDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
+}
+
+export function MFAEnrollmentDialog({ open, onOpenChange, onSuccess }: MFAEnrollmentDialogProps) {
+  const [step, setStep] = useState<'enroll' | 'verify'>('enroll');
+  const [qrCode, setQrCode] = useState<string>('');
+  const [secret, setSecret] = useState<string>('');
+  const [factorId, setFactorId] = useState<string>('');
+  const [verifyCode, setVerifyCode] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const { updateMFAStatus } = useMFAStatus();
+
+  const handleEnroll = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: 'totp',
+      });
+
+      if (error) throw error;
+
+      setQrCode(data.totp.qr_code);
+      setSecret(data.totp.secret);
+      setFactorId(data.id);
+      setStep('verify');
+    } catch (error: any) {
+      toast.error('Failed to start MFA enrollment', {
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    if (!verifyCode || verifyCode.length !== 6) {
+      toast.error('Please enter a valid 6-digit code');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.mfa.challenge({
+        factorId,
+      });
+
+      if (error) throw error;
+
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: factorId,
+        code: verifyCode,
+      });
+
+      if (verifyError) throw verifyError;
+
+      // Update MFA status in database
+      updateMFAStatus(true);
+
+      toast.success('MFA enabled successfully');
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (error: any) {
+      toast.error('Failed to verify MFA code', {
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const copySecret = () => {
+    navigator.clipboard.writeText(secret);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-primary" />
+            <DialogTitle>Enable Two-Factor Authentication</DialogTitle>
+          </div>
+          <DialogDescription>
+            {step === 'enroll'
+              ? 'Set up MFA to add an extra layer of security to your account'
+              : 'Scan the QR code with your authenticator app and enter the verification code'}
+          </DialogDescription>
+        </DialogHeader>
+
+        {step === 'enroll' ? (
+          <div className="space-y-4">
+            <Alert>
+              <AlertDescription>
+                You'll need an authenticator app like Google Authenticator, Authy, or 1Password to continue.
+              </AlertDescription>
+            </Alert>
+            <Button onClick={handleEnroll} disabled={isLoading} className="w-full">
+              {isLoading ? 'Setting up...' : 'Continue'}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="bg-white p-4 rounded-lg">
+                <img src={qrCode} alt="QR Code" className="w-48 h-48" />
+              </div>
+
+              <div className="w-full space-y-2">
+                <Label htmlFor="secret">Or enter this code manually:</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="secret"
+                    value={secret}
+                    readOnly
+                    className="font-mono text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={copySecret}
+                  >
+                    {copied ? (
+                      <Check className="h-4 w-4" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="w-full space-y-2">
+                <Label htmlFor="verify-code">Enter verification code:</Label>
+                <Input
+                  id="verify-code"
+                  type="text"
+                  placeholder="000000"
+                  maxLength={6}
+                  value={verifyCode}
+                  onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, ''))}
+                  className="text-center text-2xl tracking-widest"
+                />
+              </div>
+
+              <Button
+                onClick={handleVerify}
+                disabled={isLoading || verifyCode.length !== 6}
+                className="w-full"
+              >
+                {isLoading ? 'Verifying...' : 'Verify and Enable'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}

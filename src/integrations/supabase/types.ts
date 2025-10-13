@@ -1991,6 +1991,33 @@ export type Database = {
           },
         ]
       }
+      mfa_requirements: {
+        Row: {
+          created_at: string
+          grace_period_days: number
+          id: string
+          is_required: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          grace_period_days?: number
+          id?: string
+          is_required?: boolean
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          grace_period_days?: number
+          id?: string
+          is_required?: boolean
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       nest_pro_partners: {
         Row: {
           builder_capacity: boolean | null
@@ -2815,6 +2842,39 @@ export type Database = {
           },
         ]
       }
+      user_mfa_status: {
+        Row: {
+          created_at: string
+          enrolled_at: string | null
+          grace_period_expires_at: string | null
+          id: string
+          last_prompted_at: string | null
+          mfa_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          enrolled_at?: string | null
+          grace_period_expires_at?: string | null
+          id?: string
+          last_prompted_at?: string | null
+          mfa_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          enrolled_at?: string | null
+          grace_period_expires_at?: string | null
+          id?: string
+          last_prompted_at?: string | null
+          mfa_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           access_expires_at: string | null
@@ -3529,6 +3589,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_mfa_required: {
+        Args: { _user_id: string }
         Returns: boolean
       }
       is_role_active: {
