@@ -3485,6 +3485,15 @@ export type Database = {
         Args: { _record_count: number; _table_name: string; _user_id: string }
         Returns: Json
       }
+      check_key_rotation_due: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          current_key_version: number
+          days_until_rotation: number
+          is_due: boolean
+          next_rotation_date: string
+        }[]
+      }
       check_rate_limit: {
         Args: { _endpoint: string; _user_id: string; _window_minutes?: number }
         Returns: Json
@@ -3568,6 +3577,16 @@ export type Database = {
       get_encryption_key: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      get_encryption_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          encrypted_records: number
+          encryption_percentage: number
+          pending_records: number
+          table_name: string
+          total_records: number
+        }[]
       }
       get_user_role: {
         Args: { _user_id: string }
@@ -3688,6 +3707,10 @@ export type Database = {
           revoked_role: Database["public"]["Enums"]["app_role"]
           revoked_user_id: string
         }[]
+      }
+      schedule_key_rotation: {
+        Args: { _days_until_rotation?: number }
+        Returns: Json
       }
       terminate_expired_sessions: {
         Args: Record<PropertyKey, never>

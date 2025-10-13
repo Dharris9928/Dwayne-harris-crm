@@ -18,6 +18,7 @@ import { BlockedSignupsViewer } from "@/components/settings/domain/BlockedSignup
 import { EncryptionManager } from "@/components/settings/encryption/EncryptionManager";
 import { EncryptionSetupGuide } from "@/components/settings/encryption/EncryptionSetupGuide";
 import { EncryptionUsageGuide } from "@/components/settings/encryption/EncryptionUsageGuide";
+import { EncryptionDashboard } from "@/components/settings/encryption/EncryptionDashboard";
 import { DataWarehouseSync } from "@/components/settings/DataWarehouseSync";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -88,6 +89,7 @@ const Settings = () => {
           <>
             <AllowedDomainsManager />
             <BlockedSignupsViewer />
+            <EncryptionDashboard />
             <EncryptionManager />
             <EncryptionSetupGuide />
             <EncryptionUsageGuide />
