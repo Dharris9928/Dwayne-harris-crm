@@ -55,15 +55,21 @@ export function MFAEnrollmentDialog({ open, onOpenChange, onSuccess }: MFAEnroll
 
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.mfa.challenge({
+
+      if (!factorId) throw new Error('Missing MFA factor. Please restart enrollment.');
+
+      // Create challenge for this factor and use the returned challenge id
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
         factorId,
       });
 
-      if (error) throw error;
+      if (challengeError) throw challengeError;
+      if (!challenge?.id) throw new Error('No challenge ID returned');
 
+      // Verify code with the challenge id
       const { error: verifyError } = await supabase.auth.mfa.verify({
         factorId,
-        challengeId: factorId,
+        challengeId: challenge.id,
         code: verifyCode,
       });
 
@@ -73,11 +79,12 @@ export function MFAEnrollmentDialog({ open, onOpenChange, onSuccess }: MFAEnroll
       updateMFAStatus(true);
 
       toast.success('MFA enabled successfully');
+      setVerifyCode('');
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
       toast.error('Failed to verify MFA code', {
-        description: error.message,
+        description: error.message || 'Please try again',
       });
     } finally {
       setIsLoading(false);
