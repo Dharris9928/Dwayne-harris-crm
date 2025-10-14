@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit } from '../_shared/rateLimiting.ts';
@@ -14,7 +15,7 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const lovableApiKey = Deno.env.get('LOVABLE_API_KEY')!;
+  const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY')!;
   
   const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -321,18 +322,20 @@ Return in JSON format:
 }`;
     }
 
-    // Call Lovable AI
-    const selectedModel = aiModel || 'google/gemini-2.5-flash';
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    // Call Claude AI for superior writing quality
+    const selectedModel = aiModel || 'claude-sonnet-4-5';
+    const aiResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
+        'x-api-key': anthropicApiKey,
+        'anthropic-version': '2023-06-01',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         model: selectedModel,
+        max_tokens: 4096,
+        system: systemPrompt,
         messages: [
-          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
         temperature: 0.7,
@@ -356,7 +359,7 @@ Return in JSON format:
     }
 
     const aiData = await aiResponse.json();
-    const generatedText = aiData.choices[0].message.content;
+    const generatedText = aiData.content[0].text;
     
     // Parse JSON response
     let parsedResponse;
@@ -397,9 +400,9 @@ Return in JSON format:
       user_id: user.id,
       feature_type: 'communication_generation',
       ai_model: selectedModel,
-      prompt_tokens: aiData.usage?.prompt_tokens || null,
-      completion_tokens: aiData.usage?.completion_tokens || null,
-      total_tokens: aiData.usage?.total_tokens || null,
+      prompt_tokens: aiData.usage?.input_tokens || null,
+      completion_tokens: aiData.usage?.output_tokens || null,
+      total_tokens: (aiData.usage?.input_tokens || 0) + (aiData.usage?.output_tokens || 0),
       company_id: companyId,
       contact_id: contactId || null,
       communication_id: savedComm.id,
