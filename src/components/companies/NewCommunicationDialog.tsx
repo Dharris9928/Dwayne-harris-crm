@@ -34,7 +34,7 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
 
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const [selectedContactId, setSelectedContactId] = useState<string>('');
-  const [selectedOpportunityId, setSelectedOpportunityId] = useState<string>('');
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState<string>('none');
   const [communicationType, setCommunicationType] = useState<'email' | 'call_script' | 'linkedin_message'>('email');
   const [businessContext, setBusinessContext] = useState('');
   const [outreachPrompt, setOutreachPrompt] = useState('');
@@ -55,7 +55,7 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
       setContacts([]);
       setSelectedContactId('');
       setOpportunities([]);
-      setSelectedOpportunityId('');
+      setSelectedOpportunityId('none');
     }
   }, [selectedCompanyId]);
 
@@ -144,7 +144,7 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
         body: {
           companyId: selectedCompanyId,
           contactId: selectedContactId || null,
-          opportunityId: selectedOpportunityId || null,
+          opportunityId: selectedOpportunityId && selectedOpportunityId !== 'none' ? selectedOpportunityId : null,
           communicationType,
           businessContext: businessContext || null,
           outreachPrompt: outreachPrompt || null,
@@ -178,7 +178,7 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
   const resetForm = () => {
     setSelectedCompanyId('');
     setSelectedContactId('');
-    setSelectedOpportunityId('');
+    setSelectedOpportunityId('none');
     setCommunicationType('email');
     setBusinessContext('');
     setOutreachPrompt('');
@@ -281,7 +281,7 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
                 <SelectValue placeholder="No specific opportunity" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None - General outreach</SelectItem>
+                <SelectItem value="none">None - General outreach</SelectItem>
                 {opportunities.map((opp) => (
                   <SelectItem key={opp.id} value={opp.id}>
                     {opp.opportunity_name} ({opp.stage})

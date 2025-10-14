@@ -48,8 +48,8 @@ export function ApolloCompanyProspecting() {
   // Search filters
   const [keywords, setKeywords] = useState<string[]>(['home builder', 'construction']);
   const [keywordInput, setKeywordInput] = useState('');
-  const [employeeRange, setEmployeeRange] = useState('');
-  const [revenueRange, setRevenueRange] = useState('');
+  const [employeeRange, setEmployeeRange] = useState('all');
+  const [revenueRange, setRevenueRange] = useState('all');
   const [states, setStates] = useState<string[]>([]);
   const [stateInput, setStateInput] = useState('');
 
@@ -81,8 +81,8 @@ export function ApolloCompanyProspecting() {
       const { data, error } = await supabase.functions.invoke('apollo-company-search', {
         body: {
           keywords,
-          employeeRange: employeeRange || undefined,
-          revenueRange: revenueRange || undefined,
+          employeeRange: employeeRange && employeeRange !== 'all' ? employeeRange : undefined,
+          revenueRange: revenueRange && revenueRange !== 'all' ? revenueRange : undefined,
           states: states.length > 0 ? states : undefined,
           page: 1
         }
@@ -266,7 +266,7 @@ export function ApolloCompanyProspecting() {
                     <SelectValue placeholder="Any size" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any size</SelectItem>
+                    <SelectItem value="all">Any size</SelectItem>
                     <SelectItem value="1,10">1-10</SelectItem>
                     <SelectItem value="11,50">11-50</SelectItem>
                     <SelectItem value="51,200">51-200</SelectItem>
@@ -309,7 +309,7 @@ export function ApolloCompanyProspecting() {
                     <SelectValue placeholder="Any revenue" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Any revenue</SelectItem>
+                    <SelectItem value="all">Any revenue</SelectItem>
                     <SelectItem value="1M-10M">$1M - $10M</SelectItem>
                     <SelectItem value="10M-50M">$10M - $50M</SelectItem>
                     <SelectItem value="50M-100M">$50M - $100M</SelectItem>

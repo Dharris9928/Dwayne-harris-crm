@@ -53,7 +53,7 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
   const [selectedContactId, setSelectedContactId] = useState<string>('');
   const [contacts, setContacts] = useState<any[]>([]);
   const [opportunities, setOpportunities] = useState<any[]>([]);
-  const [selectedOpportunityId, setSelectedOpportunityId] = useState<string>('');
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState<string>('none');
 
   useEffect(() => {
     if (companyId) {
@@ -144,7 +144,7 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
           previousContext: previousContext.trim() || null,
           aiModel,
           contactId: selectedContactId || null,
-          opportunityId: selectedOpportunityId || null,
+          opportunityId: selectedOpportunityId && selectedOpportunityId !== 'none' ? selectedOpportunityId : null,
         },
       });
 
@@ -363,7 +363,7 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
                 <SelectValue placeholder="No specific opportunity" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">None - General outreach</SelectItem>
+                <SelectItem value="none">None - General outreach</SelectItem>
                 {opportunities.map((opp) => (
                   <SelectItem key={opp.id} value={opp.id}>
                     {opp.opportunity_name} ({opp.stage})
