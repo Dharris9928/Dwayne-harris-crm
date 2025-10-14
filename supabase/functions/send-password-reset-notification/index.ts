@@ -13,6 +13,7 @@ const corsHeaders = {
 interface PasswordResetNotificationRequest {
   userId: string;
   resetByAdmin: boolean;
+  tempPassword?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -40,7 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    const { userId, resetByAdmin }: PasswordResetNotificationRequest = await req.json();
+    const { userId, resetByAdmin, tempPassword }: PasswordResetNotificationRequest = await req.json();
 
     console.log("Processing password reset notification for user:", userId);
 
@@ -56,12 +57,17 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("User email not found");
     }
 
-    const htmlContent = resetByAdmin
+    const resetUrl = `${Deno.env.get("SUPABASE_URL")?.replace('/supabase', '')}/auth?reset=true`;
+
+    const htmlContent = resetByAdmin && tempPassword
       ? `
         <h2>Password Reset by Administrator</h2>
         <p>Your password has been reset by an administrator.</p>
-        <p>You can now log in with your new password.</p>
-        <p>If you did not request this change, please contact an administrator immediately.</p>
+        <p><strong>Temporary Password:</strong> <code style="background: #f4f4f4; padding: 4px 8px; border-radius: 4px; font-family: monospace;">${tempPassword}</code></p>
+        <p>Please use this temporary password along with your email to set a new password:</p>
+        <p><a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0066cc; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">Reset Your Password</a></p>
+        <p>Or copy this link: ${resetUrl}</p>
+        <p style="margin-top: 24px; color: #666;">If you did not request this change, please contact an administrator immediately.</p>
       `
       : `
         <h2>Password Successfully Reset</h2>

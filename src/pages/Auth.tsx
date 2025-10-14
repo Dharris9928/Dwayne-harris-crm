@@ -36,6 +36,7 @@ const Auth = () => {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [tempPassword, setTempPassword] = useState("");
 
   useEffect(() => {
     // Check if this is a password reset flow
@@ -241,17 +242,39 @@ const Auth = () => {
         return;
       }
 
-      const { error } = await supabase.auth.updateUser({
+      // Get the email from the reset link
+      const searchParams = new URLSearchParams(window.location.search);
+      const tokenHash = searchParams.get('token_hash');
+      const type = searchParams.get('type');
+
+      // First, sign in with the temporary password to verify it
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: tempPassword,
+      });
+
+      if (signInError) {
+        toast.error("Invalid temporary password or email");
+        setLoading(false);
+        return;
+      }
+
+      // Now update to the new password
+      const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
       toast.success("Password updated successfully! You can now login.");
       setIsResettingPassword(false);
+      setEmail("");
+      setTempPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      navigate("/auth");
+      
+      // Clear the query parameters
+      window.history.replaceState({}, document.title, "/auth");
     } catch (error: any) {
       toast.error(error.message || "Failed to reset password");
     } finally {
@@ -272,11 +295,32 @@ const Auth = () => {
             </div>
             <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
             <CardDescription>
-              Enter your new password below
+              Enter your temporary password and choose a new password
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handlePasswordReset} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="name@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="temp-password">Temporary Password</Label>
+                <PasswordInput
+                  id="temp-password"
+                  value={tempPassword}
+                  onChange={(e) => setTempPassword(e.target.value)}
+                  placeholder="Enter temporary password from email"
+                  required
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="new-password">New Password</Label>
                 <PasswordInput
@@ -298,6 +342,17 @@ const Auth = () => {
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? "Updating password..." : "Update Password"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={() => {
+                  setIsResettingPassword(false);
+                  window.history.replaceState({}, document.title, "/auth");
+                }}
+              >
+                Back to Login
               </Button>
             </form>
           </CardContent>

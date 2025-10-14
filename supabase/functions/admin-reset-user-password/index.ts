@@ -15,30 +15,48 @@ serve(async (req) => {
     // Verify admin access and get authenticated user
     const { supabase } = await requireAdmin(req);
 
-    // Get the user ID and new password from the request
-    const { userId, newPassword } = await req.json();
+    // Get the user ID from the request
+    const { userId } = await req.json();
 
-    if (!userId || !newPassword) {
+    if (!userId) {
       return new Response(
-        JSON.stringify({ error: 'Missing userId or newPassword' }),
+        JSON.stringify({ error: 'Missing userId' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Validate password requirements
-    if (newPassword.length < 8 || newPassword.length > 20) {
-      return new Response(
-        JSON.stringify({ error: 'Password must be 8-20 characters' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    console.log('Generating temporary password for user:', userId);
 
-    console.log('Resetting password for user:', userId);
+    // Generate a random temporary password (12 characters with uppercase, lowercase, numbers, and special chars)
+    const generateTempPassword = () => {
+      const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+      const numbers = '0123456789';
+      const special = '!@#$%^&*';
+      const allChars = uppercase + lowercase + numbers + special;
+      
+      let tempPassword = '';
+      // Ensure at least one of each required character type
+      tempPassword += uppercase[Math.floor(Math.random() * uppercase.length)];
+      tempPassword += lowercase[Math.floor(Math.random() * lowercase.length)];
+      tempPassword += numbers[Math.floor(Math.random() * numbers.length)];
+      tempPassword += special[Math.floor(Math.random() * special.length)];
+      
+      // Fill the rest randomly
+      for (let i = 4; i < 12; i++) {
+        tempPassword += allChars[Math.floor(Math.random() * allChars.length)];
+      }
+      
+      // Shuffle the password
+      return tempPassword.split('').sort(() => Math.random() - 0.5).join('');
+    };
 
-    // Reset the user's password using admin API
+    const tempPassword = generateTempPassword();
+
+    // Reset the user's password to the temporary password using admin API
     const { data: updateData, error: updateError } = await supabase.auth.admin.updateUserById(
       userId,
-      { password: newPassword }
+      { password: tempPassword }
     );
 
     if (updateError) {
@@ -49,14 +67,15 @@ serve(async (req) => {
       );
     }
 
-    console.log('Password reset successful for user:', userId);
+    console.log('Temporary password set for user:', userId);
 
-    // Send password reset notification
+    // Send password reset notification with temporary password
     try {
       await supabase.functions.invoke('send-password-reset-notification', {
         body: {
           userId,
-          resetByAdmin: true
+          resetByAdmin: true,
+          tempPassword
         }
       });
     } catch (notifError) {
@@ -67,7 +86,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: 'Password reset successfully',
+        message: 'Temporary password generated and sent to user',
         user: updateData.user
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -36,7 +36,6 @@ export function UserManagement() {
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [newPassword, setNewPassword] = useState("");
   const [resetting, setResetting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -154,20 +153,15 @@ export function UserManagement() {
   };
 
   const handleResetPassword = async () => {
-    if (!selectedUserId || !newPassword) {
-      toast.error('Please enter a new password');
-      return;
-    }
-
-    if (newPassword.length < 8 || newPassword.length > 20) {
-      toast.error('Password must be 8-20 characters');
+    if (!selectedUserId) {
+      toast.error('Please select a user');
       return;
     }
 
     setResetting(true);
     try {
       const { data, error } = await supabase.functions.invoke('admin-reset-user-password', {
-        body: { userId: selectedUserId, newPassword }
+        body: { userId: selectedUserId }
       });
 
       if (error) throw error;
@@ -176,9 +170,8 @@ export function UserManagement() {
         throw new Error(data.error);
       }
 
-      toast.success('Password reset successfully');
+      toast.success('Temporary password generated and sent to user via email');
       setResetDialogOpen(false);
-      setNewPassword("");
       setSelectedUserId(null);
     } catch (error) {
       console.error('Error resetting password:', error);
@@ -483,27 +476,20 @@ export function UserManagement() {
           <DialogHeader>
             <DialogTitle>Reset User Password</DialogTitle>
             <DialogDescription>
-              Enter a new password for this user. Password must be 8-20 characters with at least one capital letter, number, and special character.
+              A temporary password will be automatically generated and sent to the user via email. The user will need to use this temporary password to set a new password.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
-              <PasswordInput
-                id="new-password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
-              />
-              <PasswordRequirements password={newPassword} />
-            </div>
-          </div>
+          <Alert>
+            <Key className="h-4 w-4" />
+            <AlertDescription>
+              The temporary password will be securely generated and sent to the user's email address. They will be prompted to create a new password upon their next login.
+            </AlertDescription>
+          </Alert>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
                 setResetDialogOpen(false);
-                setNewPassword("");
                 setSelectedUserId(null);
               }}
             >
@@ -513,7 +499,7 @@ export function UserManagement() {
               onClick={handleResetPassword}
               disabled={resetting}
             >
-              {resetting ? "Resetting..." : "Reset Password"}
+              {resetting ? "Generating..." : "Generate & Send Password"}
             </Button>
           </DialogFooter>
         </DialogContent>
