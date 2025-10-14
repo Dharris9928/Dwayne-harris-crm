@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mail, Phone, Linkedin, Loader2, Copy, Check, Trash2, ExternalLink, User } from 'lucide-react';
+import { Mail, Phone, Linkedin, Loader2, Copy, Check, Trash2, ExternalLink, User, Reply } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Communication {
@@ -54,6 +54,7 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
   const [contacts, setContacts] = useState<any[]>([]);
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string>('none');
+  const generatorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (companyId) {
@@ -279,9 +280,28 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
     }
   };
 
+  const handleReply = (comm: Communication) => {
+    // Build context from the communication being replied to
+    const contextText = `Previous ${getTypeLabel(comm.communication_type)}${comm.subject ? ` - "${comm.subject}"` : ''}:\n${comm.content}${comm.notes ? `\n\nNotes: ${comm.notes}` : ''}`;
+    
+    setPreviousContext(contextText);
+    setSelectedType(comm.communication_type as 'email' | 'call_script' | 'linkedin_message');
+    if (comm.contact_id) {
+      setSelectedContactId(comm.contact_id);
+    }
+    
+    // Scroll to generator
+    generatorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    toast({
+      title: 'Reply Mode',
+      description: 'Form pre-filled with context from previous communication',
+    });
+  };
+
   return (
     <div className="space-y-6">
-      <Card>
+      <Card ref={generatorRef}>
         <CardHeader>
           <CardTitle>AI Communication Generator</CardTitle>
           <CardDescription>
@@ -464,6 +484,14 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
                           )}
                         </div>
                         <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleReply(comm)}
+                            title="Reply or create follow-up"
+                          >
+                            <Reply className="h-4 w-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"
