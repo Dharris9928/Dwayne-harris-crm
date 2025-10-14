@@ -159,8 +159,8 @@ export function UserManagement() {
       return;
     }
 
-    if (newPassword.length < 8 || newPassword.length > 15) {
-      toast.error('Password must be 8-15 characters');
+    if (newPassword.length < 8 || newPassword.length > 20) {
+      toast.error('Password must be 8-20 characters');
       return;
     }
 
@@ -203,8 +203,8 @@ export function UserManagement() {
     if (!selectedUserId) return;
 
     // Validate password if provided
-    if (editForm.password && (editForm.password.length < 8 || editForm.password.length > 15)) {
-      toast.error('Password must be 8-15 characters');
+    if (editForm.password && (editForm.password.length < 8 || editForm.password.length > 20)) {
+      toast.error('Password must be 8-20 characters');
       return;
     }
 
@@ -483,7 +483,7 @@ export function UserManagement() {
           <DialogHeader>
             <DialogTitle>Reset User Password</DialogTitle>
             <DialogDescription>
-              Enter a new password for this user. Password must be 8-15 characters with at least one capital letter, number, and special character.
+              Enter a new password for this user. Password must be 8-20 characters with at least one capital letter, number, and special character.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">

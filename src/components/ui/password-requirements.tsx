@@ -14,7 +14,7 @@ interface PasswordRequirementsProps {
 }
 
 const requirements: PasswordRequirement[] = [
-  { label: "8-15 characters", regex: /.{8,15}$/, minLength: 8, maxLength: 15 },
+  { label: "8-20 characters", regex: /.{8,20}$/, minLength: 8, maxLength: 20 },
   { label: "One capital letter", regex: /[A-Z]/ },
   { label: "One number", regex: /[0-9]/ },
   { label: "One special character", regex: /[!@#$%^&*(),.?":{}|<>]/ },
