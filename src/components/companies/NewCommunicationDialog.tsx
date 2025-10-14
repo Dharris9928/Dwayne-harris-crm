@@ -30,9 +30,11 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(false);
   const [loadingContacts, setLoadingContacts] = useState(false);
+  const [opportunities, setOpportunities] = useState<any[]>([]);
 
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const [selectedContactId, setSelectedContactId] = useState<string>('');
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState<string>('');
   const [communicationType, setCommunicationType] = useState<'email' | 'call_script' | 'linkedin_message'>('email');
   const [businessContext, setBusinessContext] = useState('');
   const [outreachPrompt, setOutreachPrompt] = useState('');
@@ -48,9 +50,12 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
   useEffect(() => {
     if (selectedCompanyId) {
       loadContacts(selectedCompanyId);
+      loadOpportunities(selectedCompanyId);
     } else {
       setContacts([]);
       setSelectedContactId('');
+      setOpportunities([]);
+      setSelectedOpportunityId('');
     }
   }, [selectedCompanyId]);
 
@@ -99,6 +104,21 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
     }
   };
 
+  const loadOpportunities = async (companyId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('opportunities')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setOpportunities(data || []);
+    } catch (error: any) {
+      console.error('Error loading opportunities:', error);
+    }
+  };
+
   const handleGenerate = async () => {
     if (!selectedCompanyId) {
       toast({
@@ -124,6 +144,7 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
         body: {
           companyId: selectedCompanyId,
           contactId: selectedContactId || null,
+          opportunityId: selectedOpportunityId || null,
           communicationType,
           businessContext: businessContext || null,
           outreachPrompt: outreachPrompt || null,
@@ -157,6 +178,7 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
   const resetForm = () => {
     setSelectedCompanyId('');
     setSelectedContactId('');
+    setSelectedOpportunityId('');
     setCommunicationType('email');
     setBusinessContext('');
     setOutreachPrompt('');
@@ -244,6 +266,32 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
             </Select>
             <p className="text-xs text-muted-foreground">
               Select a specific contact to personalize the communication, or leave empty for general messaging
+            </p>
+          </div>
+
+          {/* Opportunity Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="opportunity">Link to Opportunity (Optional)</Label>
+            <Select 
+              value={selectedOpportunityId} 
+              onValueChange={setSelectedOpportunityId}
+              disabled={!selectedCompanyId}
+            >
+              <SelectTrigger id="opportunity">
+                <SelectValue placeholder="No specific opportunity" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None - General outreach</SelectItem>
+                {opportunities.map((opp) => (
+                  <SelectItem key={opp.id} value={opp.id}>
+                    {opp.opportunity_name} ({opp.stage})
+                    {opp.amount && ` - $${opp.amount}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Link this communication to track it with a specific opportunity
             </p>
           </div>
 

@@ -31,6 +31,10 @@ interface Communication {
     title: string | null;
     email: string | null;
   };
+  opportunities?: {
+    opportunity_name: string;
+    stage: string;
+  };
 }
 
 interface CommunicationsTabProps {
@@ -48,11 +52,14 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedContactId, setSelectedContactId] = useState<string>('');
   const [contacts, setContacts] = useState<any[]>([]);
+  const [opportunities, setOpportunities] = useState<any[]>([]);
+  const [selectedOpportunityId, setSelectedOpportunityId] = useState<string>('');
 
   useEffect(() => {
     if (companyId) {
       loadCommunications();
       loadContacts();
+      loadOpportunities();
     }
   }, [companyId]);
 
@@ -71,6 +78,21 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
     }
   };
 
+  const loadOpportunities = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('opportunities')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setOpportunities(data || []);
+    } catch (error: any) {
+      console.error('Error loading opportunities:', error);
+    }
+  };
+
   const loadCommunications = async () => {
     try {
       setLoading(true);
@@ -83,6 +105,10 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
             last_name,
             title,
             email
+          ),
+          opportunities(
+            opportunity_name,
+            stage
           )
         `)
         .eq('company_id', companyId)
@@ -118,6 +144,7 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
           previousContext: previousContext.trim() || null,
           aiModel,
           contactId: selectedContactId || null,
+          opportunityId: selectedOpportunityId || null,
         },
       });
 
@@ -330,6 +357,27 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
           </div>
 
           <div>
+            <Label>Link to Opportunity (Optional)</Label>
+            <Select value={selectedOpportunityId} onValueChange={setSelectedOpportunityId}>
+              <SelectTrigger>
+                <SelectValue placeholder="No specific opportunity" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">None - General outreach</SelectItem>
+                {opportunities.map((opp) => (
+                  <SelectItem key={opp.id} value={opp.id}>
+                    {opp.opportunity_name} ({opp.stage})
+                    {opp.amount && ` - $${opp.amount}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              Link this communication to a specific opportunity for better tracking and AI learning
+            </p>
+          </div>
+
+          <div>
             <Label>Previous Communication Context (Optional)</Label>
             <Textarea
               placeholder="Add context from previous communications to help the AI generate more relevant content..."
@@ -404,6 +452,13 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
                               <span>
                                 To: {comm.contacts.first_name} {comm.contacts.last_name}
                                 {comm.contacts.title && ` - ${comm.contacts.title}`}
+                              </span>
+                            </div>
+                          )}
+                          {comm.opportunities && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span className="font-medium">
+                                Opportunity: {comm.opportunities.opportunity_name} ({comm.opportunities.stage})
                               </span>
                             </div>
                           )}

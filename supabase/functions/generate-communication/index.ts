@@ -37,7 +37,7 @@ serve(async (req) => {
       return rateLimitResponse;
     }
 
-    const { companyId, communicationType, previousContext, aiModel, contactId, businessContext, outreachPrompt } = await req.json();
+    const { companyId, communicationType, previousContext, aiModel, contactId, businessContext, outreachPrompt, opportunityId } = await req.json();
 
     // Fetch permanent business context settings
     const { data: businessContextSettings } = await supabase
@@ -120,6 +120,45 @@ serve(async (req) => {
       .order('created_at', { ascending: false })
       .limit(3);
 
+    // Fetch opportunity data if provided
+    let opportunityData = null;
+    if (opportunityId) {
+      const { data } = await supabase
+        .from('opportunities')
+        .select('*, opportunity_products(*)')
+        .eq('id', opportunityId)
+        .single();
+      opportunityData = data;
+    }
+
+    // Fetch won opportunities with timelines for learning
+    const { data: wonOpportunities } = await supabase
+      .from('opportunities')
+      .select(`
+        *,
+        company_communications!inner(communication_type, generated_at, sent_at)
+      `)
+      .eq('company_id', companyId)
+      .eq('stage', 'won')
+      .order('closed_date', { ascending: false })
+      .limit(5);
+
+    // Calculate average time to close for won deals
+    let avgTimeToClose = null;
+    if (wonOpportunities && wonOpportunities.length > 0) {
+      const timelines = wonOpportunities
+        .filter(o => o.created_at && o.closed_date)
+        .map(o => {
+          const created = new Date(o.created_at);
+          const closed = new Date(o.closed_date);
+          return Math.floor((closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+        });
+      
+      if (timelines.length > 0) {
+        avgTimeToClose = Math.round(timelines.reduce((a, b) => a + b, 0) / timelines.length);
+      }
+    }
+
     // Build context for AI
     const companyContext = {
       name: company.company_name,
@@ -155,6 +194,9 @@ serve(async (req) => {
         decisionTier: targetContact.decision_tier,
         linkedinUrl: targetContact.linkedin_url,
       } : null,
+      opportunity: opportunityData,
+      wonOpportunities: wonOpportunities || [],
+      avgTimeToClose
     };
 
     // Build system prompt based on communication type
@@ -181,6 +223,23 @@ ${previousContext ? `Previous Communication Context:\n${previousContext}\n\n` : 
 ${recentComms && recentComms.length > 0 ? `Recent Communication History:\n${recentComms.map(c => `- ${c.communication_type}: ${c.subject || 'No subject'}`).join('\n')}\n\n` : ''}
 
 ${targetContact ? `Target Contact:\n- Name: ${targetContact.first_name} ${targetContact.last_name}\n- Title: ${targetContact.title || 'Not specified'}\n- Decision Tier: ${targetContact.decision_tier}\n- Email: ${targetContact.email || 'Not available'}\n${targetContact.linkedinUrl ? `- LinkedIn: ${targetContact.linkedinUrl}\n` : ''}\n` : ''}
+
+Opportunity Information:
+${companyContext.opportunity ? `Opportunity: ${companyContext.opportunity.opportunity_name}
+Stage: ${companyContext.opportunity.stage}
+Amount: $${companyContext.opportunity.amount || 'Not specified'}
+Expected Close: ${companyContext.opportunity.expected_close_date || 'Not specified'}` : 'No specific opportunity linked'}
+
+Historical Performance:
+${companyContext.wonOpportunities.length > 0 ? `
+- Previously won ${companyContext.wonOpportunities.length} opportunities with this company
+- Average time to close: ${companyContext.avgTimeToClose} days
+- Communication patterns that led to wins: ${JSON.stringify(companyContext.wonOpportunities.map(o => ({
+  stage: o.stage,
+  communications: o.company_communications?.length || 0,
+  timeline: o.closed_date
+})))}
+USE THIS DATA to craft messaging that mirrors successful past approaches.` : 'No previous wins with this company - use best practices for new opportunities'}
 
 Generate an email with:
 1. A compelling subject line
@@ -323,6 +382,7 @@ Return in JSON format:
         previous_context: previousContext,
         ai_model: selectedModel,
         contact_id: contactId || null,
+        opportunity_id: opportunityId || null,
       })
       .select()
       .single();

@@ -1227,6 +1227,7 @@ export type Database = {
           generated_at: string | null
           id: string
           notes: string | null
+          opportunity_id: string | null
           previous_context: string | null
           sent_at: string | null
           subject: string | null
@@ -1245,6 +1246,7 @@ export type Database = {
           generated_at?: string | null
           id?: string
           notes?: string | null
+          opportunity_id?: string | null
           previous_context?: string | null
           sent_at?: string | null
           subject?: string | null
@@ -1263,6 +1265,7 @@ export type Database = {
           generated_at?: string | null
           id?: string
           notes?: string | null
+          opportunity_id?: string | null
           previous_context?: string | null
           sent_at?: string | null
           subject?: string | null
@@ -1317,6 +1320,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts_masked"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_communications_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
             referencedColumns: ["id"]
           },
         ]
@@ -2480,6 +2490,131 @@ export type Database = {
           specializations?: string[] | null
         }
         Relationships: []
+      }
+      opportunities: {
+        Row: {
+          amount: number | null
+          assigned_to: string | null
+          closed_date: string | null
+          company_id: string
+          created_at: string | null
+          created_by: string
+          expected_close_date: string | null
+          id: string
+          notes: string | null
+          opportunity_name: string
+          probability: number | null
+          stage: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number | null
+          assigned_to?: string | null
+          closed_date?: string | null
+          company_id: string
+          created_at?: string | null
+          created_by: string
+          expected_close_date?: string | null
+          id?: string
+          notes?: string | null
+          opportunity_name: string
+          probability?: number | null
+          stage?: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number | null
+          assigned_to?: string | null
+          closed_date?: string | null
+          company_id?: string
+          created_at?: string | null
+          created_by?: string
+          expected_close_date?: string | null
+          id?: string
+          notes?: string | null
+          opportunity_name?: string
+          probability?: number | null
+          stage?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies_decrypted"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies_financial_masked"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      opportunity_products: {
+        Row: {
+          created_at: string | null
+          discount_percent: number | null
+          id: string
+          opportunity_id: string
+          product_name: string
+          quantity: number
+          total_price: number | null
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string | null
+          discount_percent?: number | null
+          id?: string
+          opportunity_id: string
+          product_name: string
+          quantity?: number
+          total_price?: number | null
+          unit_price: number
+        }
+        Update: {
+          created_at?: string | null
+          discount_percent?: number | null
+          id?: string
+          opportunity_id?: string
+          product_name?: string
+          quantity?: number
+          total_price?: number | null
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_products_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       outreach_activities: {
         Row: {

@@ -48,8 +48,59 @@ serve(async (req) => {
 
     if (companiesError) throw companiesError;
 
+    // Fetch communication history for these companies
+    const { data: communications } = await supabase
+      .from('company_communications')
+      .select('company_id, communication_type, sent_at, attempted_at, opportunity_id')
+      .in('company_id', companyIds);
+
+    // Fetch opportunities for these companies
+    const { data: opportunities } = await supabase
+      .from('opportunities')
+      .select('company_id, stage, amount, closed_date, created_at')
+      .in('company_id', companyIds);
+
+    // Enrich companies with communication and opportunity data
+    const enrichedCompanies = companies?.map(company => {
+      const companyComs = communications?.filter(c => c.company_id === company.id) || [];
+      const companyOpps = opportunities?.filter(o => o.company_id === company.id) || [];
+      const wonOpps = companyOpps.filter(o => o.stage === 'won');
+      
+      // Calculate average time to close for won deals
+      let avgTimeToClose = null;
+      if (wonOpps.length > 0) {
+        const timelines = wonOpps
+          .filter(o => o.created_at && o.closed_date)
+          .map(o => {
+            const created = new Date(o.created_at);
+            const closed = new Date(o.closed_date);
+            return Math.floor((closed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+          });
+        
+        if (timelines.length > 0) {
+          avgTimeToClose = Math.round(timelines.reduce((a, b) => a + b, 0) / timelines.length);
+        }
+      }
+
+      return {
+        ...company,
+        total_communications: companyComs.length,
+        recent_communications: companyComs.slice(0, 5),
+        total_opportunities: companyOpps.length,
+        won_opportunities: wonOpps.length,
+        avg_days_to_close: avgTimeToClose,
+        total_won_revenue: wonOpps.reduce((sum, o) => sum + (parseFloat(o.amount) || 0), 0)
+      };
+    }) || [];
+
     // Build AI prompt
-    const systemPrompt = `You are an expert sales strategist. Analyze these companies and provide prioritization recommendations.
+    const systemPrompt = `You are an expert sales strategist with access to historical communication and conversion data. Analyze these companies and provide prioritization recommendations.
+
+IMPORTANT: Use the communication history and won opportunity timelines to inform your recommendations. Companies with:
+- Previous wins should be prioritized higher
+- Faster time-to-close rates indicate better prospects
+- Active communication patterns show engagement
+- Multiple opportunities suggest stronger relationships
 
 For each company, consider:
 - Lead score and priority tier
@@ -60,10 +111,12 @@ For each company, consider:
 - Financial stability indicators
 - Recent enrichment activity
 - Outreach history
+- Communication engagement patterns
+- Won opportunity history and conversion timelines
 
-Provide clear, actionable prioritization advice.`;
+Provide clear, actionable prioritization advice based on historical performance.`;
 
-    const companyData = companies.map(c => ({
+    const companyData = enrichedCompanies.map(c => ({
       id: c.id,
       name: c.company_name,
       industryType: c.industry_type,
@@ -82,7 +135,12 @@ Provide clear, actionable prioritization advice.`;
       lastEnriched: c.enrichment_logs?.[0]?.created_at || null,
       recentOutreach: c.outreach_activities?.filter((a: any) => 
         new Date(a.scheduled_date) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-      ).length || 0
+      ).length || 0,
+      totalCommunications: c.total_communications,
+      totalOpportunities: c.total_opportunities,
+      wonOpportunities: c.won_opportunities,
+      avgDaysToClose: c.avg_days_to_close,
+      totalWonRevenue: c.total_won_revenue
     }));
 
     const userPrompt = `Analyze these ${companies.length} companies and provide prioritization recommendations:\n\n${JSON.stringify(companyData, null, 2)}\n\nFor each company, provide:\n1. Priority score (1-100)\n2. Key reasons for prioritization\n3. Recommended next action\n4. Potential objections or concerns\n5. Estimated conversion probability`;
