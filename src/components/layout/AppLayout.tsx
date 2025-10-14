@@ -74,7 +74,11 @@ export function AppLayout({ children }: AppLayoutProps) {
   }
 
   if (!user) {
-    return null;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-muted-foreground">Redirecting to login...</div>
+      </div>
+    );
   }
 
   // Show pending approval message
