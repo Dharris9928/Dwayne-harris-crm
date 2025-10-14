@@ -242,29 +242,22 @@ const Auth = () => {
         return;
       }
 
-      // Get the email from the reset link
-      const searchParams = new URLSearchParams(window.location.search);
-      const tokenHash = searchParams.get('token_hash');
-      const type = searchParams.get('type');
-
-      // First, sign in with the temporary password to verify it
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: tempPassword,
+      // Use the new code-based reset system
+      const { data, error } = await supabase.functions.invoke('verify-reset-code', {
+        body: {
+          email: email,
+          code: tempPassword, // Reusing tempPassword field for reset code
+          newPassword: newPassword
+        }
       });
 
-      if (signInError) {
-        toast.error("Invalid temporary password or email");
+      if (error) throw error;
+
+      if (data?.error) {
+        toast.error(data.error);
         setLoading(false);
         return;
       }
-
-      // Now update to the new password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (updateError) throw updateError;
 
       toast.success("Password updated successfully! You can now login.");
       setIsResettingPassword(false);
@@ -295,7 +288,7 @@ const Auth = () => {
             </div>
             <CardTitle className="text-2xl font-bold">Reset Password</CardTitle>
             <CardDescription>
-              Enter your temporary password and choose a new password
+              Enter the 6-digit reset code and choose a new password
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -312,14 +305,18 @@ const Auth = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="temp-password">Temporary Password</Label>
+                <Label htmlFor="temp-password">Reset Code</Label>
                 <PasswordInput
                   id="temp-password"
                   value={tempPassword}
                   onChange={(e) => setTempPassword(e.target.value)}
-                  placeholder="Enter temporary password from email"
+                  placeholder="Enter 6-digit code from email"
                   required
+                  maxLength={6}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Enter the 6-digit code you received from your administrator
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-password">New Password</Label>

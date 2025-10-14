@@ -2749,6 +2749,39 @@ export type Database = {
           },
         ]
       }
+      password_reset_codes: {
+        Row: {
+          code: string
+          code_hash: string
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code: string
+          code_hash: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code?: string
+          code_hash?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       pii_inventory: {
         Row: {
           can_be_deleted: boolean
@@ -4479,6 +4512,10 @@ export type Database = {
         Returns: Json
       }
       cleanup_expired_approvals: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
+      cleanup_expired_reset_codes: {
         Args: Record<PropertyKey, never>
         Returns: number
       }

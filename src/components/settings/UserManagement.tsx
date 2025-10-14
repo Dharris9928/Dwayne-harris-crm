@@ -160,7 +160,7 @@ export function UserManagement() {
 
     setResetting(true);
     try {
-      const { data, error } = await supabase.functions.invoke('admin-reset-user-password', {
+      const { data, error } = await supabase.functions.invoke('generate-reset-code', {
         body: { userId: selectedUserId }
       });
 
@@ -170,12 +170,21 @@ export function UserManagement() {
         throw new Error(data.error);
       }
 
-      toast.success('Temporary password generated and sent to user via email');
+      // Show the code to admin
+      if (data.code) {
+        toast.success(
+          data.emailSent 
+            ? `Reset code sent via email: ${data.code} (valid for 15 minutes)` 
+            : `Reset code generated: ${data.code} (valid for 15 minutes) - Please provide this code to the user manually`,
+          { duration: 10000 }
+        );
+      }
+      
       setResetDialogOpen(false);
       setSelectedUserId(null);
     } catch (error) {
-      console.error('Error resetting password:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to reset password');
+      console.error('Error generating reset code:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to generate reset code');
     } finally {
       setResetting(false);
     }
