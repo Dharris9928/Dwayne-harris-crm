@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Users, FileText, Merge, Search, Database } from "lucide-react";
+import { Building2, Users, FileText, Merge, Search, Database, Shield, Lock, FileCheck, Activity, Settings as SettingsIcon, Briefcase } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserManagement } from "@/components/settings/UserManagement";
 import { UserApprovalPanel } from "@/components/settings/UserApprovalPanel";
 import { DeletionApprovalPanel } from "@/components/settings/DeletionApprovalPanel";
@@ -90,140 +92,37 @@ const Settings = () => {
         </p>
       </div>
 
-      <div className="grid gap-6">
-        <BusinessContextSettings />
-        
-        <MFAManagement />
-        
-        <SecurityDashboard />
+      <Tabs defaultValue="general" className="w-full">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="general" className="flex items-center gap-2">
+            <SettingsIcon className="h-4 w-4" />
+            General
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <Shield className="h-4 w-4" />
+            Security
+          </TabsTrigger>
+          <TabsTrigger value="compliance" className="flex items-center gap-2">
+            <FileCheck className="h-4 w-4" />
+            Compliance
+          </TabsTrigger>
+          <TabsTrigger value="users" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Users
+          </TabsTrigger>
+          <TabsTrigger value="data" className="flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            Data
+          </TabsTrigger>
+          <TabsTrigger value="logs" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Logs
+          </TabsTrigger>
+        </TabsList>
 
-        {/* Security Growth Tracker - Admin only */}
-        {userData?.role === 'admin' && (
-          <SecurityGrowthTracker />
-        )}
-
-        {/* GDPR/CCPA Compliance */}
-        <ConsentManagement />
-        <DataExportRequest />
-        <RightToBeForgotten />
-        
-        {/* Admin Only - Compliance Documents */}
-        {userData?.role === 'admin' && (
-          <ComplianceDocumentsDashboard />
-        )}
-
-        {/* Domain Security & Encryption Section - Admin Only */}
-        {userData?.role === 'admin' && (
-          <>
-            <PIIInventoryDashboard />
-            <AllowedDomainsManager />
-            <BlockedSignupsViewer />
-            <EncryptionDashboard />
-            <EncryptionManager />
-            <EncryptionSetupGuide />
-            <EncryptionUsageGuide />
-            <DataWarehouseSync />
-          </>
-        )}
-
-        {/* Access Review & Certification Section - Admin/Manager Only */}
-        {userData?.hasElevatedAccess && (
-          <>
-            <AccessReviewDashboard />
-            <RoleExpirationManager />
-            <InactiveUserDetection />
-          </>
-        )}
-
-        {/* Vulnerability Management Section - Admin Only */}
-        {userData?.role === 'admin' && (
-          <>
-            <VulnerabilityDashboard />
-            <SecurityPatchManager />
-            <SecurityTestingLog />
-          </>
-        )}
-
-        {/* SOC 2 Type II Preparation - Admin Only */}
-        {userData?.role === 'admin' && (
-          <SOC2ComplianceDashboard />
-        )}
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              <CardTitle>Sales Rep Database</CardTitle>
-            </div>
-            <CardDescription>Manage external sales personnel</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SalesRepManagement />
-          </CardContent>
-        </Card>
-
-        {/* Admin Tools Section */}
-        {userData?.role === 'admin' && (
+        {/* General Settings */}
+        <TabsContent value="general" className="space-y-6 mt-6">
           <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Merge className="h-5 w-5 text-primary" />
-                <CardTitle>Admin Tools</CardTitle>
-              </div>
-              <CardDescription>Advanced administrative functions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-semibold mb-2">Find Duplicate Companies</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Detect potential duplicate company records using intelligent fuzzy matching. Searches are logged with timestamps for audit purposes.
-                  </p>
-                  <Button onClick={() => setIsDuplicateDialogOpen(true)} variant="outline">
-                    <Search className="h-4 w-4 mr-2" />
-                    Find Duplicates
-                  </Button>
-                </div>
-                <Separator />
-                <div>
-                  <h3 className="text-sm font-semibold mb-2">Merge Company Profiles</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Combine duplicate company profiles by transferring all contacts, activities, and data from one company to another.
-                  </p>
-                  <Button onClick={() => setIsMergeDialogOpen(true)} variant="outline">
-                    <Merge className="h-4 w-4 mr-2" />
-                    Merge Companies
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* System Activity Logs Section */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              <CardTitle>System Activity Logs</CardTitle>
-            </div>
-            <CardDescription>Imports, exports, and enrichment activities</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <ImportExportActivityLog />
-            <EnrichmentErrorLog />
-          </CardContent>
-        </Card>
-        
-        <UserApprovalPanel />
-        
-        <DeletionApprovalPanel />
-        
-        <UserManagement />
-        
-        <ApprovalAuditLog />
-        
-        <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-primary" />
@@ -318,7 +217,139 @@ const Settings = () => {
             ))}
           </CardContent>
         </Card>
-      </div>
+        </TabsContent>
+
+        {/* Security Settings */}
+        <TabsContent value="security" className="space-y-6 mt-6">
+          <MFAManagement />
+          <SecurityDashboard />
+          
+          {userData?.role === 'admin' && (
+            <>
+              <SecurityGrowthTracker />
+              <AllowedDomainsManager />
+              <BlockedSignupsViewer />
+            </>
+          )}
+          
+          {userData?.hasElevatedAccess && (
+            <>
+              <AccessReviewDashboard />
+              <RoleExpirationManager />
+              <InactiveUserDetection />
+            </>
+          )}
+          
+          {userData?.role === 'admin' && (
+            <>
+              <VulnerabilityDashboard />
+              <SecurityPatchManager />
+              <SecurityTestingLog />
+            </>
+          )}
+        </TabsContent>
+
+        {/* Compliance Settings */}
+        <TabsContent value="compliance" className="space-y-6 mt-6">
+          <ConsentManagement />
+          <DataExportRequest />
+          <RightToBeForgotten />
+          
+          {userData?.role === 'admin' && (
+            <>
+              <PIIInventoryDashboard />
+              <ComplianceDocumentsDashboard />
+              <EncryptionDashboard />
+              <EncryptionManager />
+              <EncryptionSetupGuide />
+              <EncryptionUsageGuide />
+              <SOC2ComplianceDashboard />
+            </>
+          )}
+        </TabsContent>
+
+        {/* User Management Settings */}
+        <TabsContent value="users" className="space-y-6 mt-6">
+          <UserApprovalPanel />
+          <DeletionApprovalPanel />
+          <UserManagement />
+          <ApprovalAuditLog />
+          
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-primary" />
+                <CardTitle>Sales Rep Database</CardTitle>
+              </div>
+              <CardDescription>Manage external sales personnel</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <SalesRepManagement />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Data Management Settings */}
+        <TabsContent value="data" className="space-y-6 mt-6">
+          {userData?.role === 'admin' && (
+            <>
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <Merge className="h-5 w-5 text-primary" />
+                    <CardTitle>Admin Tools</CardTitle>
+                  </div>
+                  <CardDescription>Advanced administrative functions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2">Find Duplicate Companies</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Detect potential duplicate company records using intelligent fuzzy matching. Searches are logged with timestamps for audit purposes.
+                      </p>
+                      <Button onClick={() => setIsDuplicateDialogOpen(true)} variant="outline">
+                        <Search className="h-4 w-4 mr-2" />
+                        Find Duplicates
+                      </Button>
+                    </div>
+                    <Separator />
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2">Merge Company Profiles</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Combine duplicate company profiles by transferring all contacts, activities, and data from one company to another.
+                      </p>
+                      <Button onClick={() => setIsMergeDialogOpen(true)} variant="outline">
+                        <Merge className="h-4 w-4 mr-2" />
+                        Merge Companies
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <DataWarehouseSync />
+            </>
+          )}
+        </TabsContent>
+
+        {/* Activity Logs */}
+        <TabsContent value="logs" className="space-y-6 mt-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                <CardTitle>System Activity Logs</CardTitle>
+              </div>
+              <CardDescription>Imports, exports, and enrichment activities</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <ImportExportActivityLog />
+              <EnrichmentErrorLog />
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <MergeCompaniesDialog
         open={isMergeDialogOpen}
