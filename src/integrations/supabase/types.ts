@@ -2497,6 +2497,7 @@ export type Database = {
           assigned_to: string | null
           closed_date: string | null
           company_id: string
+          contractor_id: string | null
           created_at: string | null
           created_by: string
           expected_close_date: string | null
@@ -2512,6 +2513,7 @@ export type Database = {
           assigned_to?: string | null
           closed_date?: string | null
           company_id: string
+          contractor_id?: string | null
           created_at?: string | null
           created_by: string
           expected_close_date?: string | null
@@ -2527,6 +2529,7 @@ export type Database = {
           assigned_to?: string | null
           closed_date?: string | null
           company_id?: string
+          contractor_id?: string | null
           created_at?: string | null
           created_by?: string
           expected_close_date?: string | null
@@ -2562,6 +2565,27 @@ export type Database = {
           {
             foreignKeyName: "opportunities_company_id_fkey"
             columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies_financial_masked"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "companies_decrypted"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunities_contractor_id_fkey"
+            columns: ["contractor_id"]
             isOneToOne: false
             referencedRelation: "companies_financial_masked"
             referencedColumns: ["id"]

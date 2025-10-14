@@ -32,11 +32,13 @@ import {
 import { UserAssignmentSelect } from "@/components/companies/UserAssignmentSelect";
 import { SalesRepSelect } from "@/components/companies/SalesRepSelect";
 import { CompanySearchSelect } from "@/components/opportunities/CompanySearchSelect";
+import { ContractorSearchSelect } from "@/components/opportunities/ContractorSearchSelect";
 import { OpportunityProductsForm } from "@/components/opportunities/OpportunityProductsForm";
 
 const opportunitySchema = z.object({
   company_id: z.string().min(1, "Company is required"),
   assigned_to: z.string().optional(),
+  contractor_id: z.string().optional(),
   opportunity_name: z.string().min(1, "Opportunity name is required"),
   status: z.enum(["Open", "Proposal", "Committed", "Purchased", "Declined"]),
   estimated_value: z.string().optional(),
@@ -85,6 +87,7 @@ export function AddOpportunityDialog({ open, onOpenChange }: AddOpportunityDialo
         .insert({
           ...values,
           estimated_value: values.estimated_value ? parseFloat(values.estimated_value) : null,
+          contractor_id: values.contractor_id || null,
           created_by: currentUser.id,
         })
         .select()
@@ -215,6 +218,23 @@ export function AddOpportunityDialog({ open, onOpenChange }: AddOpportunityDialo
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="contractor_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contractor (Optional)</FormLabel>
+                  <FormControl>
+                    <ContractorSearchSelect
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
