@@ -6,20 +6,26 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mail, Phone, Linkedin, Copy, Check, Trash2, ExternalLink, Search, X, User } from 'lucide-react';
+import { Mail, Phone, Linkedin, Reply, Trash2, ExternalLink, Search, X, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Label } from '@/components/ui/label';
 import { NewCommunicationDialog } from '@/components/companies/NewCommunicationDialog';
+import { useNavigate } from 'react-router-dom';
 
 export default function Communications() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [industryTypeFilter, setIndustryTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [communicationTypeFilter, setCommunicationTypeFilter] = useState('all');
   const [conversationStatusFilter, setConversationStatusFilter] = useState<string>('active');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [openNewCommDialog, setOpenNewCommDialog] = useState(false);
+  const [replyToCompanyId, setReplyToCompanyId] = useState<string | null>(null);
+  const [replyToContactId, setReplyToContactId] = useState<string | null>(null);
+  const [replyToPreviousContext, setReplyToPreviousContext] = useState<string>('');
+  const [replyCommunicationType, setReplyCommunicationType] = useState<'email' | 'call_script' | 'linkedin_message'>('email');
 
   const { data: communications, isLoading, refetch } = useQuery({
     queryKey: ['all-communications'],
@@ -90,15 +96,20 @@ export default function Communications() {
     return filtered;
   }, [communications, searchQuery, industryTypeFilter, statusFilter, communicationTypeFilter, conversationStatusFilter]);
 
-  const handleCopy = async (id: string, content: string, subject?: string) => {
-    const textToCopy = subject ? `${subject}\n\n${content}` : content;
-    await navigator.clipboard.writeText(textToCopy);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-    toast({
-      title: 'Copied',
-      description: 'Content copied to clipboard',
-    });
+  const handleReply = (comm: any) => {
+    setReplyToCompanyId(comm.company_id);
+    setReplyToContactId(comm.contact_id);
+    setReplyToPreviousContext(`Previous ${getTypeLabel(comm.communication_type)}:\nSubject: ${comm.subject || 'N/A'}\n\n${comm.content}`);
+    setReplyCommunicationType(comm.communication_type);
+    setOpenNewCommDialog(true);
+  };
+
+  const handleNavigateToCompany = (companyId: string) => {
+    navigate(`/companies?company=${companyId}`);
+  };
+
+  const handleNavigateToContact = (contactId: string, companyId: string) => {
+    navigate(`/companies?company=${companyId}&contact=${contactId}`);
   };
 
   const handleDelete = async (id: string) => {
@@ -219,7 +230,21 @@ export default function Communications() {
             <p className="text-muted-foreground">View and manage all generated communications</p>
           </div>
           <div className="flex items-center gap-3">
-            <NewCommunicationDialog onSuccess={refetch} />
+            <NewCommunicationDialog 
+              onSuccess={() => {
+                refetch();
+                setOpenNewCommDialog(false);
+                setReplyToCompanyId(null);
+                setReplyToContactId(null);
+                setReplyToPreviousContext('');
+              }}
+              open={openNewCommDialog}
+              onOpenChange={setOpenNewCommDialog}
+              prefilledCompanyId={replyToCompanyId || undefined}
+              prefilledContactId={replyToContactId || undefined}
+              prefilledPreviousContext={replyToPreviousContext || undefined}
+              prefilledCommunicationType={replyCommunicationType}
+            />
             <Select value={conversationStatusFilter} onValueChange={setConversationStatusFilter}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue />
@@ -346,7 +371,14 @@ export default function Communications() {
                         </Badge>
                         {comm.companies && (
                           <>
-                            <Badge variant="outline">{comm.companies.company_name}</Badge>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleNavigateToCompany(comm.company_id)}
+                              className="h-6 px-2"
+                            >
+                              {comm.companies.company_name}
+                            </Button>
                             <Badge>{comm.companies.industry_type}</Badge>
                             <Badge variant="secondary">{comm.companies.status}</Badge>
                           </>
@@ -354,13 +386,19 @@ export default function Communications() {
                       </div>
 
                       {comm.contacts && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <User className="h-4 w-4" />
-                          <span>
-                            To: {comm.contacts.first_name} {comm.contacts.last_name}
-                            {comm.contacts.title && ` - ${comm.contacts.title}`}
-                            {comm.contacts.email && ` (${comm.contacts.email})`}
-                          </span>
+                        <div className="flex items-center gap-2 text-sm">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-muted-foreground">To:</span>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            onClick={() => handleNavigateToContact(comm.contact_id, comm.company_id)}
+                            className="h-auto p-0 text-sm"
+                          >
+                            {comm.contacts.first_name} {comm.contacts.last_name}
+                          </Button>
+                          {comm.contacts.title && <span className="text-muted-foreground">- {comm.contacts.title}</span>}
+                          {comm.contacts.email && <span className="text-muted-foreground">({comm.contacts.email})</span>}
                         </div>
                       )}
 
@@ -383,13 +421,10 @@ export default function Communications() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleCopy(comm.id, comm.content, comm.subject || undefined)}
+                        onClick={() => handleReply(comm)}
+                        title="Reply to this communication"
                       >
-                        {copiedId === comm.id ? (
-                          <Check className="h-4 w-4" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
+                        <Reply className="h-4 w-4" />
                       </Button>
                       <Button
                         variant={comm.conversation_active !== false ? "secondary" : "default"}

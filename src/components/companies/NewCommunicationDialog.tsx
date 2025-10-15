@@ -22,15 +22,36 @@ interface Contact {
   company_id: string;
 }
 
-export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }) {
+interface NewCommunicationDialogProps {
+  onSuccess?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  prefilledCompanyId?: string;
+  prefilledContactId?: string;
+  prefilledPreviousContext?: string;
+  prefilledCommunicationType?: 'email' | 'call_script' | 'linkedin_message';
+}
+
+export function NewCommunicationDialog({ 
+  onSuccess, 
+  open: controlledOpen,
+  onOpenChange,
+  prefilledCompanyId,
+  prefilledContactId,
+  prefilledPreviousContext,
+  prefilledCommunicationType
+}: NewCommunicationDialogProps) {
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loadingCompanies, setLoadingCompanies] = useState(false);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [opportunities, setOpportunities] = useState<any[]>([]);
+
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = onOpenChange || setInternalOpen;
 
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const [selectedContactId, setSelectedContactId] = useState<string>('');
@@ -44,8 +65,13 @@ export function NewCommunicationDialog({ onSuccess }: { onSuccess?: () => void }
   useEffect(() => {
     if (open) {
       loadCompanies();
+      // Set prefilled values when dialog opens
+      if (prefilledCompanyId) setSelectedCompanyId(prefilledCompanyId);
+      if (prefilledContactId) setSelectedContactId(prefilledContactId);
+      if (prefilledPreviousContext) setPreviousContext(prefilledPreviousContext);
+      if (prefilledCommunicationType) setCommunicationType(prefilledCommunicationType);
     }
-  }, [open]);
+  }, [open, prefilledCompanyId, prefilledContactId, prefilledPreviousContext, prefilledCommunicationType]);
 
   useEffect(() => {
     if (selectedCompanyId) {
