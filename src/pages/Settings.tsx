@@ -282,9 +282,9 @@ const Settings = () => {
 
         {/* User Management Settings */}
         <TabsContent value="users" className="space-y-6 mt-6">
-          <UserApprovalPanel />
-          <DeletionApprovalPanel />
+          {/* Consolidated user management: Pending Invites + Pending Sign-Ups with role assignment */}
           <UserManagement />
+          <DeletionApprovalPanel />
           <ApprovalAuditLog />
           
           <Card>

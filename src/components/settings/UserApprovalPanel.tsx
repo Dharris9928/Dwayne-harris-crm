@@ -32,46 +32,44 @@ export function UserApprovalPanel() {
     try {
       setLoading(true);
       
-      // Use admin function to get all profiles, then filter for pending
-      const { data: profiles, error: profilesError } = await supabase.rpc('admin_get_all_profiles');
+      // Load profiles directly and enrich with emails via edge function
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, created_at, approval_status, temp_password, invitation_email_sent_at, invitation_email_delivered_at, invitation_email_opened_at, invitation_email_status');
 
       if (profilesError) {
-        if (profilesError.message?.includes('Admin access required')) {
-          toast({
-            title: 'Access Denied',
-            description: 'Admin access required to view pending users',
-            variant: 'destructive'
-          });
-          return;
-        }
         throw profilesError;
       }
 
-      // Filter for pending users only
-      const pendingProfiles = (profiles || []).filter(p => p.approval_status === 'pending');
+      const allProfiles = profiles || [];
 
-      if (pendingProfiles && pendingProfiles.length > 0) {
-        const usersWithEmails = pendingProfiles.map(profile => {
-          const profileData = profile as any; // Type assertion for new fields
-          return {
-            id: profileData.id,
-            first_name: profileData.first_name,
-            last_name: profileData.last_name,
-            created_at: profileData.created_at,
-            approval_status: profileData.approval_status,
-            email: profileData.email || 'No email',
-            temp_password: profileData.temp_password || null,
-            invitation_email_sent_at: profileData.invitation_email_sent_at || null,
-            invitation_email_delivered_at: profileData.invitation_email_delivered_at || null,
-            invitation_email_opened_at: profileData.invitation_email_opened_at || null,
-            invitation_email_status: profileData.invitation_email_status || null
-          };
-        });
+      // Only sign-up requests: pending status AND no temp password (invites use temp_password)
+      const pendingProfiles = allProfiles.filter(p => p.approval_status === 'pending' && !p.temp_password);
 
-        setPendingUsers(usersWithEmails);
-      } else {
-        setPendingUsers([]);
+      // Fetch emails via edge function
+      const { data: emailsData, error: emailsError } = await supabase.functions.invoke('get-user-emails', {
+        body: { userIds: pendingProfiles.map(p => p.id) }
+      });
+      if (emailsError) {
+        console.error('Error fetching user emails:', emailsError);
       }
+      const emailsMap: Record<string, string> = emailsData?.emails || {};
+
+      const usersWithEmails = pendingProfiles.map((profile: any) => ({
+        id: profile.id,
+        first_name: profile.first_name,
+        last_name: profile.last_name,
+        created_at: profile.created_at,
+        approval_status: profile.approval_status,
+        email: emailsMap[profile.id] || 'No email',
+        temp_password: profile.temp_password || null,
+        invitation_email_sent_at: profile.invitation_email_sent_at || null,
+        invitation_email_delivered_at: profile.invitation_email_delivered_at || null,
+        invitation_email_opened_at: profile.invitation_email_opened_at || null,
+        invitation_email_status: profile.invitation_email_status || null,
+      }));
+
+      setPendingUsers(usersWithEmails);
     } catch (error) {
       console.error('Error fetching pending users:', error);
       toast({
