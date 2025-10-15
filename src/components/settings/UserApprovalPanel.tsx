@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { CheckCircle, XCircle, Clock, Mail, User } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Mail, User, Key, MailCheck, MailOpen } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 
 interface PendingUser {
   id: string;
@@ -14,6 +15,11 @@ interface PendingUser {
   email?: string;
   created_at: string;
   approval_status: string;
+  temp_password?: string | null;
+  invitation_email_sent_at?: string | null;
+  invitation_email_delivered_at?: string | null;
+  invitation_email_opened_at?: string | null;
+  invitation_email_status?: string | null;
 }
 
 export function UserApprovalPanel() {
@@ -45,14 +51,22 @@ export function UserApprovalPanel() {
       const pendingProfiles = (profiles || []).filter(p => p.approval_status === 'pending');
 
       if (pendingProfiles && pendingProfiles.length > 0) {
-        const usersWithEmails = pendingProfiles.map(profile => ({
-          id: profile.id,
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          created_at: profile.created_at,
-          approval_status: profile.approval_status,
-          email: profile.email || 'No email'
-        }));
+        const usersWithEmails = pendingProfiles.map(profile => {
+          const profileData = profile as any; // Type assertion for new fields
+          return {
+            id: profileData.id,
+            first_name: profileData.first_name,
+            last_name: profileData.last_name,
+            created_at: profileData.created_at,
+            approval_status: profileData.approval_status,
+            email: profileData.email || 'No email',
+            temp_password: profileData.temp_password || null,
+            invitation_email_sent_at: profileData.invitation_email_sent_at || null,
+            invitation_email_delivered_at: profileData.invitation_email_delivered_at || null,
+            invitation_email_opened_at: profileData.invitation_email_opened_at || null,
+            invitation_email_status: profileData.invitation_email_status || null
+          };
+        });
 
         setPendingUsers(usersWithEmails);
       } else {
@@ -198,6 +212,58 @@ export function UserApprovalPanel() {
                     <div className="text-xs text-muted-foreground">
                       Requested: {new Date(user.created_at).toLocaleDateString()}
                     </div>
+                    
+                    {user.temp_password && (
+                      <>
+                        <Separator className="my-2" />
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Key className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">Temp Password:</span>
+                            <code className="bg-muted px-2 py-0.5 rounded text-xs font-mono">
+                              {user.temp_password}
+                            </code>
+                          </div>
+                          
+                          <div className="text-xs space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-3 w-3" />
+                              <span>
+                                Sent: {user.invitation_email_sent_at 
+                                  ? new Date(user.invitation_email_sent_at).toLocaleString()
+                                  : 'Not sent'}
+                              </span>
+                            </div>
+                            {user.invitation_email_delivered_at && (
+                              <div className="flex items-center gap-2 text-green-600">
+                                <MailCheck className="h-3 w-3" />
+                                <span>
+                                  Delivered: {new Date(user.invitation_email_delivered_at).toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+                            {user.invitation_email_opened_at && (
+                              <div className="flex items-center gap-2 text-blue-600">
+                                <MailOpen className="h-3 w-3" />
+                                <span>
+                                  Opened: {new Date(user.invitation_email_opened_at).toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-2">
+                              <Badge variant={
+                                user.invitation_email_status === 'opened' ? 'default' :
+                                user.invitation_email_status === 'delivered' ? 'secondary' :
+                                user.invitation_email_status === 'sent' ? 'outline' :
+                                'destructive'
+                              } className="text-xs">
+                                {user.invitation_email_status || 'pending'}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button

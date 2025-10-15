@@ -2957,8 +2957,13 @@ export type Database = {
           created_at: string | null
           first_name: string | null
           id: string
+          invitation_email_delivered_at: string | null
+          invitation_email_opened_at: string | null
+          invitation_email_sent_at: string | null
+          invitation_email_status: string | null
           last_name: string | null
           role: Database["public"]["Enums"]["app_role"] | null
+          temp_password: string | null
           updated_at: string | null
         }
         Insert: {
@@ -2970,8 +2975,13 @@ export type Database = {
           created_at?: string | null
           first_name?: string | null
           id: string
+          invitation_email_delivered_at?: string | null
+          invitation_email_opened_at?: string | null
+          invitation_email_sent_at?: string | null
+          invitation_email_status?: string | null
           last_name?: string | null
           role?: Database["public"]["Enums"]["app_role"] | null
+          temp_password?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -2983,8 +2993,13 @@ export type Database = {
           created_at?: string | null
           first_name?: string | null
           id?: string
+          invitation_email_delivered_at?: string | null
+          invitation_email_opened_at?: string | null
+          invitation_email_sent_at?: string | null
+          invitation_email_status?: string | null
           last_name?: string | null
           role?: Database["public"]["Enums"]["app_role"] | null
+          temp_password?: string | null
           updated_at?: string | null
         }
         Relationships: [

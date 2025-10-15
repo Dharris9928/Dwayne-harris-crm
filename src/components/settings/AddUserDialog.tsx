@@ -75,7 +75,7 @@ export function AddUserDialog({ open, onOpenChange, onUserAdded }: AddUserDialog
         throw new Error('User creation failed');
       }
 
-      // Create profile
+      // Create profile with temp password and email tracking
       const { error: profileError } = await supabase
         .from('profiles')
         .insert({
@@ -83,7 +83,10 @@ export function AddUserDialog({ open, onOpenChange, onUserAdded }: AddUserDialog
           first_name: form.firstName,
           last_name: form.lastName,
           approval_status: 'approved',
-          approved_at: new Date().toISOString()
+          approved_at: new Date().toISOString(),
+          temp_password: form.useTemporaryPassword ? actualPassword : null,
+          invitation_email_sent_at: form.useTemporaryPassword ? new Date().toISOString() : null,
+          invitation_email_status: form.useTemporaryPassword ? 'sent' : 'not_applicable'
         });
 
       if (profileError) throw profileError;
