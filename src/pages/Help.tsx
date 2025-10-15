@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { EnrichmentErrorLog } from '@/components/help/EnrichmentErrorLog';
 import { ImportExportActivityLog } from '@/components/help/ImportExportActivityLog';
 import { AIUsageLog } from '@/components/help/AIUsageLog';
+import { SystemDiagnostics } from '@/components/help/SystemDiagnostics';
 import {
   Search, 
   Building2, 
@@ -47,6 +48,7 @@ const Help = () => {
     { value: 'reports', label: 'Reports', keywords: 'reports analytics scoring breakdown distribution segment performance enrichment' },
     { value: 'settings', label: 'Settings', keywords: 'settings user management security dashboard deletion approval integrations business context access controls audit logs encryption data warehouse sync bigquery' },
     { value: 'activity-logs', label: 'Activity Logs', keywords: 'logs import export enrichment ai usage monitoring tracking' },
+    { value: 'diagnostics', label: 'System Diagnostics', keywords: 'diagnostics system test debug troubleshooting edge functions database webhook authentication' },
   ];
 
   const matches = searchQuery.trim().length > 0
@@ -102,7 +104,7 @@ const Help = () => {
       )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-5 lg:grid-cols-10 w-full">
+        <TabsList className="grid grid-cols-5 lg:grid-cols-11 w-full">
           <TabsTrigger value="getting-started">Getting Started</TabsTrigger>
           <TabsTrigger value="companies">Companies</TabsTrigger>
           <TabsTrigger value="contacts">Contacts</TabsTrigger>
@@ -113,6 +115,7 @@ const Help = () => {
           <TabsTrigger value="reports">Reports</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
           <TabsTrigger value="activity-logs">Activity Logs</TabsTrigger>
+          <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
         </TabsList>
 
         {/* Getting Started Tab */}
@@ -1477,6 +1480,11 @@ const Help = () => {
               <EnrichmentErrorLog />
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* System Diagnostics Tab */}
+        <TabsContent value="diagnostics" className="space-y-4">
+          <SystemDiagnostics />
         </TabsContent>
       </Tabs>
 
