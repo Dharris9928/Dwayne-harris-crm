@@ -368,14 +368,25 @@ export function ApolloContactImportDialog({ onSuccess }: { onSuccess?: () => voi
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Prevent closing during import or if results need to be reviewed
+      if (!isOpen && (importing || result)) {
+        return;
+      }
+      setOpen(isOpen);
+    }}>
       <DialogTrigger asChild>
         <Button variant="outline">
           <Building2 className="h-4 w-4 mr-2" />
           Import from Apollo
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl" onInteractOutside={(e) => {
+        // Prevent closing when clicking outside during import
+        if (importing || result) {
+          e.preventDefault();
+        }
+      }}>
         <DialogHeader>
           <DialogTitle>Import Contacts from Apollo</DialogTitle>
           <DialogDescription>

@@ -171,6 +171,10 @@ export function ApolloCSVImportDialog({
   };
 
   const handleClose = () => {
+    // Prevent closing during import or if user is in preview/importing step
+    if (step === 'importing' || step === 'preview') {
+      return;
+    }
     resetDialog();
     onClose();
   };
@@ -178,8 +182,21 @@ export function ApolloCSVImportDialog({
   const totalContacts = groupedData.reduce((sum, g) => sum + g.contacts.length, 0);
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      // Only allow closing if not in critical steps
+      if (!isOpen && (step === 'importing' || step === 'preview')) {
+        return;
+      }
+      if (!isOpen) {
+        handleClose();
+      }
+    }}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" onInteractOutside={(e) => {
+        // Prevent closing when clicking outside during import or preview
+        if (step === 'importing' || step === 'preview') {
+          e.preventDefault();
+        }
+      }}>
         <DialogHeader>
           <DialogTitle>Import from Apollo.io</DialogTitle>
         </DialogHeader>
