@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { SessionTimeoutWarning } from "@/components/settings/SessionTimeoutWarning";
+import { NotificationBell } from "./NotificationBell";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -129,8 +130,11 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="min-h-screen flex w-full bg-background">
           <AppSidebar />
           <div className="flex-1 flex flex-col">
-            <header className="h-14 border-b border-border flex items-center px-4 bg-card">
+            <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-card">
               <SidebarTrigger />
+              <div className="flex items-center gap-2">
+                <NotificationBell />
+              </div>
             </header>
             <main className="flex-1 overflow-auto">
               {children}

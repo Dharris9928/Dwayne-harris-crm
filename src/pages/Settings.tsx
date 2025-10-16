@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Building2, Users, FileText, Merge, Search, Database, Shield, Lock, FileCheck, Activity, Settings as SettingsIcon, Briefcase } from "lucide-react";
+import { Building2, Users, FileText, Merge, Search, Database, Shield, Lock, FileCheck, Activity, Settings as SettingsIcon, Briefcase, Bell } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserManagement } from "@/components/settings/UserManagement";
@@ -35,6 +35,7 @@ import { RightToBeForgotten } from "@/components/settings/gdpr/RightToBeForgotte
 import { SecurityGrowthTracker } from "@/components/settings/SecurityGrowthTracker";
 import { ComplianceDocumentsDashboard } from "@/components/settings/ComplianceDocumentsDashboard";
 import { DataWarehouseSync } from "@/components/settings/DataWarehouseSync";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ImportExportActivityLog } from "@/components/help/ImportExportActivityLog";
@@ -220,6 +221,22 @@ const Settings = () => {
                 {index < priorityTiers.length - 1 && <Separator className="mt-4" />}
               </div>
             ))}
+          </CardContent>
+        </Card>
+
+        {/* Notification Settings */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-primary" />
+              <CardTitle>Notification Preferences</CardTitle>
+            </div>
+            <CardDescription>
+              Manage your notification settings and delivery preferences
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <NotificationSettings />
           </CardContent>
         </Card>
         </TabsContent>

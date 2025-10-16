@@ -15,6 +15,7 @@ import ProspectingDashboard from "./pages/ProspectingDashboard";
 import Communications from "./pages/Communications";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
+import Notifications from "./pages/Notifications";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -113,6 +114,14 @@ const App = () => (
             element={
               <AppLayout>
                 <Help />
+              </AppLayout>
+            }
+          />
+          <Route
+            path="/notifications"
+            element={
+              <AppLayout>
+                <Notifications />
               </AppLayout>
             }
           />
