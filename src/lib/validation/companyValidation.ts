@@ -10,8 +10,8 @@ export function validateCompanyData(data: any): { valid: boolean; errors: string
   
   if (!data.industry_type) {
     errors.push('Industry type is required');
-  } else if (!['Builder', 'Contractor'].includes(data.industry_type)) {
-    errors.push('Industry type must be "Builder" or "Contractor"');
+  } else if (!['Builder', 'Contractor', 'Energy Implementer', 'Engineer/Architect', 'Partner/Other'].includes(data.industry_type)) {
+    errors.push('Industry type must be "Builder", "Contractor", "Energy Implementer", "Engineer/Architect", or "Partner/Other"');
   }
   
   if (!data.state) {
@@ -31,12 +31,33 @@ export function validateCompanyData(data: any): { valid: boolean; errors: string
       'premium_specialists', 'regional_growth', 'specialty_integrators',
       'traditionalists', 'emergency_repair'
     ];
+    const validEnergyImplementerSegments = [
+      'solar_installers', 'hvac_energy_specialists', 'energy_auditors',
+      'retrofit_specialists', 'green_building_consultants', 'battery_storage', 'ev_charging'
+    ];
+    const validEngineerArchitectSegments = [
+      'residential_architects', 'commercial_architects', 'structural_engineers',
+      'mep_engineers', 'green_building_designers', 'smart_home_specialists', 'urban_planners'
+    ];
+    const validPartnerOtherSegments = [
+      'technology_partner', 'service_provider', 'vendor', 'consultant',
+      'industry_association', 'research_organization', 'other'
+    ];
     
     if (data.industry_type === 'Builder' && !validBuilderSegments.includes(data.segment)) {
       errors.push(`Invalid builder segment: ${data.segment}`);
     }
     if (data.industry_type === 'Contractor' && !validContractorSegments.includes(data.segment)) {
       errors.push(`Invalid contractor segment: ${data.segment}`);
+    }
+    if (data.industry_type === 'Energy Implementer' && !validEnergyImplementerSegments.includes(data.segment)) {
+      errors.push(`Invalid energy implementer segment: ${data.segment}`);
+    }
+    if (data.industry_type === 'Engineer/Architect' && !validEngineerArchitectSegments.includes(data.segment)) {
+      errors.push(`Invalid engineer/architect segment: ${data.segment}`);
+    }
+    if (data.industry_type === 'Partner/Other' && !validPartnerOtherSegments.includes(data.segment)) {
+      errors.push(`Invalid partner/other segment: ${data.segment}`);
     }
   }
   
