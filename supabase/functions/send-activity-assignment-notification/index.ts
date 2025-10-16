@@ -1,9 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { checkRateLimit } from '../_shared/rateLimiting.ts';
-import { Resend } from "https://esm.sh/resend@4.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -61,27 +58,24 @@ const handler = async (req: Request): Promise<Response> => {
 
     const formattedDate = scheduledDate ? new Date(scheduledDate).toLocaleDateString() : "Not scheduled";
 
-    // Send email to assigned user
-    const emailResponse = await resend.emails.send({
-      from: "CRM Notifications <notifications@nestpro-connector.com>",
-      to: [userEmail],
-      subject: `New Activity Assigned: ${activityType}`,
-      html: `
-        <h2>New Activity Assigned to You</h2>
-        <p>You have been assigned a new activity:</p>
-        <ul>
-          <li><strong>Company:</strong> ${companyName}</li>
-          <li><strong>Activity Type:</strong> ${activityType}</li>
-          <li><strong>Scheduled Date:</strong> ${formattedDate}</li>
-        </ul>
-        <p>Please log in to the CRM to view more details and manage this activity.</p>
-      `,
-    });
+    // Create notification using unified system
+    const { data: notification, error: notificationError } = await supabase
+      .rpc('create_notification', {
+        p_user_id: assignedToId,
+        p_title: `New Activity Assigned: ${activityType}`,
+        p_message: `You have been assigned a new activity for ${companyName}. Scheduled: ${formattedDate}`,
+        p_link_url: `/activities`,
+        p_action_required: true
+      });
 
-    console.log("Email sent successfully:", emailResponse);
+    if (notificationError) {
+      throw notificationError;
+    }
+
+    console.log("Notification created successfully:", notification);
 
     return new Response(
-      JSON.stringify({ success: true, emailResponse }),
+      JSON.stringify({ success: true, notificationId: notification }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },

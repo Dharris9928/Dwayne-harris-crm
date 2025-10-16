@@ -1,9 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { checkRateLimit } from '../_shared/rateLimiting.ts';
-import { Resend } from "https://esm.sh/resend@4.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,33 +54,29 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const isApproved = status === 'approved';
-    const subject = isApproved ? "Account Approved - Welcome!" : "Account Registration Update";
-    
-    const htmlContent = isApproved 
-      ? `
-        <h2>Your Account Has Been Approved!</h2>
-        <p>Great news! Your account has been approved by an administrator.</p>
-        <p>You can now access all features of the CRM system.</p>
-        <p>Log in to get started: <a href="${Deno.env.get("SUPABASE_URL")}">Click here to log in</a></p>
-      `
-      : `
-        <h2>Account Registration Update</h2>
-        <p>We regret to inform you that your account registration has not been approved at this time.</p>
-        <p>If you believe this is an error, please contact the administrator for more information.</p>
-      `;
+    const title = isApproved ? "Account Approved - Welcome!" : "Account Registration Update";
+    const message = isApproved 
+      ? "Great news! Your account has been approved by an administrator. You can now access all features of the CRM system."
+      : "Your account registration has not been approved at this time. If you believe this is an error, please contact the administrator.";
 
-    // Send email to user
-    const emailResponse = await resend.emails.send({
-      from: "CRM Notifications <notifications@nestpro-connector.com>",
-      to: [userEmail],
-      subject,
-      html: htmlContent,
-    });
+    // Create notification using unified system
+    const { data: notification, error: notificationError } = await supabase
+      .rpc('create_notification', {
+        p_user_id: userId,
+        p_title: title,
+        p_message: message,
+        p_link_url: isApproved ? '/dashboard' : null,
+        p_action_required: false
+      });
 
-    console.log("Email sent successfully:", emailResponse);
+    if (notificationError) {
+      throw notificationError;
+    }
+
+    console.log("Notification created successfully:", notification);
 
     return new Response(
-      JSON.stringify({ success: true, emailResponse }),
+      JSON.stringify({ success: true, notificationId: notification }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },

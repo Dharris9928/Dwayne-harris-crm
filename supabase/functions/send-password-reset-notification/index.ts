@@ -1,9 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { checkRateLimit } from '../_shared/rateLimiting.ts';
-import { Resend } from "https://esm.sh/resend@4.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,47 +54,32 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("User email not found");
     }
 
-    const resetUrl = `${Deno.env.get("SUPABASE_URL")?.replace('/supabase', '')}/auth?reset=true`;
+    const title = resetByAdmin && tempPassword 
+      ? "Password Reset - Action Required" 
+      : "Password Reset Confirmation";
+    
+    const message = resetByAdmin && tempPassword
+      ? `Your password has been reset by an administrator. Your temporary password is: ${tempPassword}. Please log in and change your password immediately.`
+      : "Your password has been successfully reset. You can now log in with your new password.";
 
-    const htmlContent = resetByAdmin && tempPassword
-      ? `
-        <h2>Password Reset by Administrator</h2>
-        <p>Your password has been reset by an administrator.</p>
-        <p><strong>Temporary Password:</strong> <code style="background: #f4f4f4; padding: 4px 8px; border-radius: 4px; font-family: monospace;">${tempPassword}</code></p>
-        <p>Please use this temporary password along with your email to set a new password:</p>
-        <p><a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0066cc; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">Reset Your Password</a></p>
-        <p>Or copy this link: ${resetUrl}</p>
-        <p style="margin-top: 24px; color: #666;">If you did not request this change, please contact an administrator immediately.</p>
-      `
-      : `
-        <h2>Password Successfully Reset</h2>
-        <p>Your password has been successfully reset.</p>
-        <p>You can now log in with your new password.</p>
-        <p>If you did not make this change, please contact support immediately.</p>
-      `;
+    // Create notification using unified system
+    const { data: notification, error: notificationError } = await supabase
+      .rpc('create_notification', {
+        p_user_id: userId,
+        p_title: title,
+        p_message: message,
+        p_link_url: '/auth',
+        p_action_required: resetByAdmin && !!tempPassword
+      });
 
-    // Send email to user
-    const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "Lovable <onboarding@resend.dev>";
-
-    if (!Deno.env.get("RESEND_API_KEY")) {
-      console.error("RESEND_API_KEY is not configured. Unable to send password reset email.");
-      return new Response(
-        JSON.stringify({ error: "Email service not configured (missing RESEND_API_KEY)" }),
-        { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    if (notificationError) {
+      throw notificationError;
     }
 
-    const emailResponse = await resend.emails.send({
-      from: fromEmail,
-      to: [userEmail],
-      subject: resetByAdmin && tempPassword ? "Your Temporary Password and Reset Instructions" : "Password Reset Confirmation",
-      html: htmlContent,
-    });
-
-    console.log("Email sent successfully:", emailResponse);
+    console.log("Notification created successfully:", notification);
 
     return new Response(
-      JSON.stringify({ success: true, emailResponse }),
+      JSON.stringify({ success: true, notificationId: notification }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },

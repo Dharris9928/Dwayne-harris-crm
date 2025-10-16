@@ -1,9 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { checkRateLimit } from '../_shared/rateLimiting.ts';
-import { Resend } from "https://esm.sh/resend@4.0.0";
-
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -81,28 +78,29 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Send email to all admins
-    const emailResponse = await resend.emails.send({
-      from: "CRM Notifications <notifications@nestpro-connector.com>",
-      to: adminEmails,
-      subject: "New Deletion Request",
-      html: `
-        <h2>New Deletion Request</h2>
-        <p>A user has requested to delete a record:</p>
-        <ul>
-          <li><strong>Requested By:</strong> ${requestedByEmail}</li>
-          <li><strong>Table:</strong> ${tableName}</li>
-          ${reason ? `<li><strong>Reason:</strong> ${reason}</li>` : ''}
-          <li><strong>Request ID:</strong> ${requestId}</li>
-        </ul>
-        <p>Please review and approve/reject this deletion request in the admin panel.</p>
-      `,
-    });
+    // Create notifications for all admins using unified system
+    const reasonText = reason ? ` Reason: ${reason}` : '';
+    const notificationPromises = adminIds.map(adminId => 
+      supabase.rpc('create_notification', {
+        p_user_id: adminId,
+        p_title: 'New Deletion Request',
+        p_message: `${requestedByEmail} has requested to delete a ${tableName} record.${reasonText}`,
+        p_link_url: '/settings',
+        p_action_required: true
+      })
+    );
 
-    console.log("Email sent successfully:", emailResponse);
+    const results = await Promise.all(notificationPromises);
+    const errors = results.filter(r => r.error);
+    
+    if (errors.length > 0) {
+      console.error("Some notifications failed:", errors);
+    }
+
+    console.log(`Created ${results.length - errors.length} notifications for admins`);
 
     return new Response(
-      JSON.stringify({ success: true, emailResponse }),
+      JSON.stringify({ success: true, notificationsSent: results.length - errors.length }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
