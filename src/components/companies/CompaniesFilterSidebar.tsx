@@ -12,10 +12,12 @@ import { useSearchParams } from "react-router-dom";
 import { UserAssignmentSelect } from "./UserAssignmentSelect";
 import { SalesRepSelect } from "./SalesRepSelect";
 import { 
+  INDUSTRY_TYPES,
   BUILDER_SEGMENTS, 
   CONTRACTOR_SEGMENTS, 
   ENERGY_IMPLEMENTER_SEGMENTS,
   ENGINEER_ARCHITECT_SEGMENTS,
+  PARTNER_OTHER_SEGMENTS,
   STATUSES 
 } from './formOptions';
 
@@ -167,18 +169,18 @@ export function CompaniesFilterSidebar({ isCollapsed, onToggle }: CompaniesFilte
           onToggle={() => toggleSection('industry')}
         >
           <div className="space-y-2">
-            {['Builder', 'Contractor', 'Energy Implementer', 'Engineer/Architect'].map((type) => (
-              <div key={type} className="flex items-center space-x-2">
+            {INDUSTRY_TYPES.map((type) => (
+              <div key={type.value} className="flex items-center space-x-2">
                 <Checkbox
-                  id={`industry-${type}`}
-                  checked={isActiveFilter("industry_type", type)}
-                  onCheckedChange={() => handleFilterClick("industry_type", type)}
+                  id={`industry-${type.value}`}
+                  checked={isActiveFilter("industry_type", type.value)}
+                  onCheckedChange={() => handleFilterClick("industry_type", type.value)}
                 />
                 <Label
-                  htmlFor={`industry-${type}`}
+                  htmlFor={`industry-${type.value}`}
                   className="text-sm font-normal cursor-pointer"
                 >
-                  {type}
+                  {type.label}
                 </Label>
               </div>
             ))}
@@ -283,6 +285,33 @@ export function CompaniesFilterSidebar({ isCollapsed, onToggle }: CompaniesFilte
                   />
                   <Label
                     htmlFor={`engineer-${segment.value}`}
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {segment.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </FilterSection>
+        )}
+
+        {/* Partner/Other Segments */}
+        {industryType === 'Partner/Other' && (
+          <FilterSection
+            title="Partner/Other Segments"
+            isCollapsed={collapsedSections.has('partner-segments')}
+            onToggle={() => toggleSection('partner-segments')}
+          >
+            <div className="space-y-2">
+              {PARTNER_OTHER_SEGMENTS.map(segment => (
+                <div key={segment.value} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`partner-${segment.value}`}
+                    checked={isActiveFilter("segment", segment.value)}
+                    onCheckedChange={() => handleFilterClick("segment", segment.value)}
+                  />
+                  <Label
+                    htmlFor={`partner-${segment.value}`}
                     className="text-sm font-normal cursor-pointer"
                   >
                     {segment.label}

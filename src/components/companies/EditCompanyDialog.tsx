@@ -39,6 +39,7 @@ import {
   CONTRACTOR_SEGMENTS,
   ENERGY_IMPLEMENTER_SEGMENTS,
   ENGINEER_ARCHITECT_SEGMENTS,
+  PARTNER_OTHER_SEGMENTS,
   STATUSES, 
   US_STATES,
   ANNUAL_REVENUE_RANGES,
@@ -91,7 +92,7 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
   
   // Basic Info
   const [companyName, setCompanyName] = useState('');
-  const [industryType, setIndustryType] = useState<'Builder' | 'Contractor' | 'Energy Implementer' | 'Engineer/Architect'>('Builder');
+  const [industryType, setIndustryType] = useState<'Builder' | 'Contractor' | 'Energy Implementer' | 'Engineer/Architect' | 'Partner/Other'>('Builder');
   const [segment, setSegment] = useState('');
   const [status, setStatus] = useState('Lead');
   const [industrySpecialties, setIndustrySpecialties] = useState<string[]>([]);
@@ -471,6 +472,7 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
                     <SelectItem value="Contractor">Contractor</SelectItem>
                     <SelectItem value="Energy Implementer">Energy Implementer</SelectItem>
                     <SelectItem value="Engineer/Architect">Engineer/Architect</SelectItem>
+                    <SelectItem value="Partner/Other">Partner/Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -488,7 +490,8 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
                     {(industryType === 'Builder' ? BUILDER_SEGMENTS : 
                       industryType === 'Contractor' ? CONTRACTOR_SEGMENTS :
                       industryType === 'Energy Implementer' ? ENERGY_IMPLEMENTER_SEGMENTS :
-                      ENGINEER_ARCHITECT_SEGMENTS).map(seg => (
+                      industryType === 'Engineer/Architect' ? ENGINEER_ARCHITECT_SEGMENTS :
+                      PARTNER_OTHER_SEGMENTS).map(seg => (
                       <SelectItem key={seg.value} value={seg.value}>
                         {seg.label}
                       </SelectItem>
