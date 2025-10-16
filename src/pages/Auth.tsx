@@ -272,7 +272,46 @@ const Auth = () => {
 
         if (metadataError) console.error('Failed to update metadata:', metadataError);
 
-        toast.success("Password updated successfully! You can now access the system.");
+        // Clear temp_password in profiles table to move user to "Active Users"
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ temp_password: null })
+          .eq('id', user.id);
+
+        if (profileError) console.error('Failed to clear temp password:', profileError);
+
+        toast.success("Password updated successfully! Checking MFA requirements...");
+        
+        // Check if MFA is required for this user's role
+        const { data: mfaStatus } = await supabase
+          .from('user_mfa_status')
+          .select('mfa_enabled')
+          .eq('user_id', user.id)
+          .single();
+
+        if (!mfaStatus?.mfa_enabled) {
+          // Check if MFA is required
+          const { data: userRole } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single();
+
+          if (userRole) {
+            const { data: mfaReq } = await supabase
+              .from('mfa_requirements')
+              .select('is_required')
+              .eq('role', userRole.role)
+              .single();
+
+            if (mfaReq?.is_required) {
+              toast.info('Please set up two-factor authentication', {
+                description: 'MFA is required for your role. You can set it up in Settings.'
+              });
+            }
+          }
+        }
+
         setIsResettingPassword(false);
         setEmail("");
         setTempPassword("");

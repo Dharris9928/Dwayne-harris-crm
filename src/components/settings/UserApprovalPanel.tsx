@@ -112,6 +112,7 @@ export function UserApprovalPanel() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
+      // Update approval status
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -122,6 +123,21 @@ export function UserApprovalPanel() {
         .eq('id', userId);
 
       if (error) throw error;
+
+      // If approved, ensure user has a role (default to sales_rep for sign-ups)
+      if (approve) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .upsert(
+            { user_id: userId, role: 'sales_rep' },
+            { onConflict: 'user_id' }
+          );
+
+        if (roleError) {
+          console.error('Error assigning role:', roleError);
+          throw new Error('Failed to assign user role');
+        }
+      }
 
       // Send notification email
       try {
