@@ -20,15 +20,14 @@ import { useNavigate } from "react-router-dom";
 
 interface Notification {
   id: string;
-  notification_type: string;
+  type: string;
   title: string;
   message: string;
   link_url: string | null;
   read: boolean;
   action_required: boolean;
   created_at: string;
-  related_record_id: string | null;
-  related_table: string | null;
+  read_at: string | null;
 }
 
 export default function Notifications() {
@@ -57,7 +56,7 @@ export default function Notifications() {
         if (filterType === 'action_required') {
           query = query.eq('action_required', true);
         } else {
-          query = query.eq('notification_type', filterType);
+          query = query.eq('type', filterType);
         }
       }
 
