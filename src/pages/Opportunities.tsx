@@ -13,6 +13,9 @@ import { OpportunitiesListView } from "@/components/opportunities/OpportunitiesL
 import { FormView } from "@/components/views/FormView";
 import { useToast } from "@/hooks/use-toast";
 import { EditOpportunityDialog } from "@/components/opportunities/EditOpportunityDialog";
+import { PerspectiveSelector } from "@/components/common/PerspectiveSelector";
+import { usePerspective } from "@/hooks/usePerspective";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export default function Opportunities() {
   const { toast } = useToast();
@@ -20,19 +23,36 @@ export default function Opportunities() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedOpportunity, setSelectedOpportunity] = useState<any>(null);
   const [currentView, setCurrentView] = useState<ViewType>('grid');
+  const { perspective, setPerspective } = usePerspective('my_records');
+  const { data: userRoleData } = useUserRole();
 
   const { data: opportunities, isLoading, refetch } = useQuery({
-    queryKey: ['opportunities'],
+    queryKey: ['opportunities', perspective],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      let query = supabase
         .from('opportunities' as any)
         .select(`
           *,
           companies(company_name),
           profiles!opportunities_assigned_to_fkey(first_name, last_name),
           opportunity_products(*)
-        `)
-        .order('created_at', { ascending: false });
+        `);
+
+      // Apply perspective filter
+      if (perspective === 'my_records') {
+        query = query.eq('created_by', user.id);
+      } else if (perspective === 'assigned_to_me') {
+        query = query.eq('assigned_to', user.id);
+      } else if (perspective === 'all_records' && !userRoleData?.hasElevatedAccess) {
+        // Non-elevated users default to their records
+        query = query.eq('created_by', user.id);
+      }
+      // 'my_team' and 'all_records' for elevated users show all accessible records
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as any;
@@ -157,6 +177,7 @@ export default function Opportunities() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <PerspectiveSelector value={perspective} onChange={setPerspective} />
           <ViewSelector 
             currentView={currentView} 
             onViewChange={setCurrentView}

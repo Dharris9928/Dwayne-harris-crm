@@ -81,7 +81,8 @@ export const STATUSES = [
 export const COMPANY_TYPES = [
   { value: 'standalone', label: 'Standalone Company', description: 'Independent company with no parent or subsidiaries' },
   { value: 'parent', label: 'Parent Company', description: 'Has subsidiary companies/divisions' },
-  { value: 'subsidiary', label: 'Subsidiary/Division', description: 'Part of a larger parent company' }
+  { value: 'subsidiary', label: 'Subsidiary/Division', description: 'Part of a larger parent company' },
+  { value: 'other_partner', label: 'Other/Partner', description: 'Partner organization or other entity type' }
 ];
 
 export const PRICE_POINT_CATEGORIES = [

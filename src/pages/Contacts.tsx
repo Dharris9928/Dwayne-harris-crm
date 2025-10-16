@@ -10,20 +10,40 @@ import { EditContactDialog } from "@/components/contacts/EditContactDialog";
 import { ImportContactsDialog } from "@/components/contacts/ImportContactsDialog";
 import { ApolloContactImportDialog } from "@/components/contacts/ApolloContactImportDialog";
 import { logBulkContactView } from "@/lib/contacts/logContactAccess";
+import { PerspectiveSelector } from "@/components/common/PerspectiveSelector";
+import { usePerspective } from "@/hooks/usePerspective";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const Contacts = () => {
   const location = useLocation();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<any>(null);
+  const { perspective, setPerspective } = usePerspective('my_records');
+  const { data: userRoleData } = useUserRole();
 
   const { data: contacts, isLoading, refetch } = useQuery({
-    queryKey: ["contacts"],
+    queryKey: ["contacts", perspective],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      let query = supabase
         .from("contacts")
-        .select("*, companies(company_name)")
-        .order("created_at", { ascending: false });
+        .select("*, companies(company_name, created_by, assigned_to)");
+
+      // Apply perspective filter
+      if (perspective === 'my_records') {
+        query = query.eq('companies.created_by', user.id);
+      } else if (perspective === 'assigned_to_me') {
+        query = query.eq('companies.assigned_to', user.id);
+      } else if (perspective === 'all_records' && !userRoleData?.hasElevatedAccess) {
+        // Non-elevated users default to their records
+        query = query.eq('companies.created_by', user.id);
+      }
+      // 'my_team' and 'all_records' for elevated users show all accessible records
+
+      const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
       
       // Log bulk contact view for audit trail
@@ -59,6 +79,7 @@ const Contacts = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <PerspectiveSelector value={perspective} onChange={setPerspective} />
           <ApolloContactImportDialog onSuccess={refetch} />
           <ImportContactsDialog onSuccess={refetch} />
           <Button onClick={() => setIsAddDialogOpen(true)}>

@@ -9,11 +9,16 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { AddActivityDialog } from "@/components/activities/AddActivityDialog";
 import { ActivityDetailsDialog } from "@/components/activities/ActivityDetailsDialog";
+import { PerspectiveSelector } from "@/components/common/PerspectiveSelector";
+import { usePerspective } from "@/hooks/usePerspective";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const Activities = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const { perspective, setPerspective } = usePerspective('my_records');
+  const { data: userRoleData } = useUserRole();
   const [dateRange, setDateRange] = useState<{
     from: Date;
     to: Date;
@@ -27,11 +32,27 @@ const Activities = () => {
   });
 
   const { data: activities, isLoading, refetch } = useQuery({
-    queryKey: ["activities", dateRange],
+    queryKey: ["activities", dateRange, perspective],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      let query = supabase
         .from("outreach_activities")
-        .select("*, companies(company_name), contacts(first_name, last_name)")
+        .select("*, companies(company_name, created_by, assigned_to), contacts(first_name, last_name)");
+
+      // Apply perspective filter
+      if (perspective === 'my_records') {
+        query = query.eq('companies.created_by', user.id);
+      } else if (perspective === 'assigned_to_me') {
+        query = query.eq('companies.assigned_to', user.id);
+      } else if (perspective === 'all_records' && !userRoleData?.hasElevatedAccess) {
+        // Non-elevated users default to their records
+        query = query.eq('companies.created_by', user.id);
+      }
+      // 'my_team' and 'all_records' for elevated users show all accessible records
+
+      const { data, error } = await query
         .or(`completed_date.gte.${dateRange.from.toISOString()},scheduled_date.gte.${dateRange.from.toISOString()}`)
         .or(`completed_date.lte.${dateRange.to.toISOString()},scheduled_date.lte.${dateRange.to.toISOString()}`)
         .order("created_at", { ascending: false });
@@ -66,6 +87,7 @@ const Activities = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <PerspectiveSelector value={perspective} onChange={setPerspective} />
           <Button onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             New Activity
