@@ -45,6 +45,7 @@ export function ApolloContactImportDialog({ onSuccess }: { onSuccess?: () => voi
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   const cleanPhoneNumber = (phone: string): string => {
     if (!phone) return '';
@@ -178,8 +179,7 @@ export function ApolloContactImportDialog({ onSuccess }: { onSuccess?: () => voi
     return 'Influencer';
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const processFile = async (file: File) => {
     if (!file) return;
 
     setImporting(true);
@@ -320,8 +320,51 @@ export function ApolloContactImportDialog({ onSuccess }: { onSuccess?: () => voi
       });
       setImporting(false);
     }
+  };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
     event.target.value = '';
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragIn = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setDragActive(true);
+    }
+  };
+
+  const handleDragOut = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+        processFile(file);
+      } else {
+        toast({
+          title: 'Invalid File',
+          description: 'Please upload a CSV file',
+          variant: 'destructive',
+        });
+      }
+    }
   };
 
   return (
@@ -353,16 +396,35 @@ export function ApolloContactImportDialog({ onSuccess }: { onSuccess?: () => voi
             <div>
               <Label>Upload Apollo CSV Export</Label>
               <p className="text-sm text-muted-foreground mb-2">
-                Select your Apollo contacts export file
+                Drag and drop your file here or click to browse
               </p>
-              <div className="flex items-center gap-2">
+              <div
+                className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  dragActive
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/50'
+                } ${importing ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
+                onDragEnter={handleDragIn}
+                onDragLeave={handleDragOut}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => !importing && document.getElementById('apollo-file-input')?.click()}
+              >
                 <input
+                  id="apollo-file-input"
                   type="file"
                   accept=".csv"
                   onChange={handleFileUpload}
                   disabled={importing}
-                  className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 disabled:opacity-50"
+                  className="hidden"
                 />
+                <Upload className={`mx-auto h-12 w-12 mb-4 ${dragActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                <p className="text-sm font-medium mb-1">
+                  {dragActive ? 'Drop your CSV file here' : 'Drag & drop your Apollo CSV export'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  or click to browse files
+                </p>
               </div>
             </div>
           </div>
