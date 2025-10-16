@@ -2269,6 +2269,42 @@ export type Database = {
         }
         Relationships: []
       }
+      field_access_log: {
+        Row: {
+          access_granted: boolean
+          accessed_at: string
+          field_name: string
+          id: string
+          record_id: string
+          table_name: string
+          user_agent: string | null
+          user_id: string
+          user_ip: string | null
+        }
+        Insert: {
+          access_granted?: boolean
+          accessed_at?: string
+          field_name: string
+          id?: string
+          record_id: string
+          table_name: string
+          user_agent?: string | null
+          user_id: string
+          user_ip?: string | null
+        }
+        Update: {
+          access_granted?: boolean
+          accessed_at?: string
+          field_name?: string
+          id?: string
+          record_id?: string
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string
+          user_ip?: string | null
+        }
+        Relationships: []
+      }
       field_permissions: {
         Row: {
           created_at: string
@@ -4953,6 +4989,15 @@ export type Database = {
           _user_id: string
         }
         Returns: string
+      }
+      log_field_access: {
+        Args: {
+          _access_granted: boolean
+          _field_name: string
+          _record_id: string
+          _table_name: string
+        }
+        Returns: undefined
       }
       log_security_event: {
         Args: { _event_details?: Json; _event_type: string }

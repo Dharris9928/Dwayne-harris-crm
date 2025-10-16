@@ -48,7 +48,9 @@ import { ImportExportLogsViewer } from "@/components/settings/audit/ImportExport
 import { TeamManagement } from "@/components/settings/TeamManagement";
 import { ApprovalAuditViewer } from "@/components/settings/audit/ApprovalAuditViewer";
 import { ContactAccessLogsViewer } from "@/components/settings/audit/ContactAccessLogsViewer";
-import { AccessRequestsPanel } from "@/components/settings/AccessRequestsPanel";
+import { AccessRequestsPanel } from '@/components/settings/AccessRequestsPanel';
+import { FieldPermissionsManager } from '@/components/settings/FieldPermissionsManager';
+import { FieldAccessAuditLog } from '@/components/settings/FieldAccessAuditLog';
 
 const Settings = () => {
   const { data: userData } = useUserRole();
@@ -248,6 +250,8 @@ const Settings = () => {
           <AccessRequestsPanel />
           <MFAManagement />
           <SecurityDashboard />
+          <FieldPermissionsManager />
+          <FieldAccessAuditLog />
           
           {userData?.role === 'admin' && (
             <>
