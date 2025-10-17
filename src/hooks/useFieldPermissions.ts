@@ -44,6 +44,9 @@ export function useFieldPermissions() {
   const canAccessField = (tableName: string, fieldName: string): boolean => {
     if (!permissions || !userRole) return true;
 
+    // Admins and sales managers have full access to all fields
+    if (userRole === 'admin' || userRole === 'sales_manager') return true;
+
     const permission = permissions.find(
       p => p.table_name === tableName && p.field_name === fieldName
     );
@@ -65,6 +68,9 @@ export function useFieldPermissions() {
 
   const maskField = (value: string, tableName: string, fieldName: string): string => {
     if (!permissions || !value) return value;
+
+    // Admins and sales managers see unmasked values
+    if (userRole === 'admin' || userRole === 'sales_manager') return value;
 
     const permission = permissions.find(
       p => p.table_name === tableName && p.field_name === fieldName && p.is_pii
