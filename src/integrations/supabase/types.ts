@@ -2052,6 +2052,57 @@ export type Database = {
         }
         Relationships: []
       }
+      email_logs: {
+        Row: {
+          created_at: string
+          delivered_at: string | null
+          email_type: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          opened_at: string | null
+          recipient_email: string
+          recipient_user_id: string | null
+          resend_email_id: string | null
+          sender_email: string
+          sent_at: string
+          status: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string | null
+          email_type: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          recipient_email: string
+          recipient_user_id?: string | null
+          resend_email_id?: string | null
+          sender_email?: string
+          sent_at?: string
+          status?: string
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string | null
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          opened_at?: string | null
+          recipient_email?: string
+          recipient_user_id?: string | null
+          resend_email_id?: string | null
+          sender_email?: string
+          sent_at?: string
+          status?: string
+          subject?: string
+        }
+        Relationships: []
+      }
       encryption_audit_log: {
         Row: {
           encryption_version: number | null
@@ -5113,6 +5164,19 @@ export type Database = {
           _ip_address?: unknown
           _is_disposable?: boolean
           _reason: string
+        }
+        Returns: string
+      }
+      log_email: {
+        Args: {
+          p_email_type: string
+          p_error_message?: string
+          p_metadata?: Json
+          p_recipient_email: string
+          p_recipient_user_id: string
+          p_resend_email_id?: string
+          p_status?: string
+          p_subject: string
         }
         Returns: string
       }

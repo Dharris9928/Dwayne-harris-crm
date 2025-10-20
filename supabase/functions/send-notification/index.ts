@@ -101,27 +101,59 @@ serve(async (req) => {
         <p style="color: #666; font-size: 12px;">You received this email because you have notifications enabled in your account settings.</p>
       `;
 
-      const resendResponse = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${RESEND_API_KEY}`,
-        },
-        body: JSON.stringify({
-          from: RESEND_FROM_EMAIL,
-          to: [userEmail],
-          subject: title,
-          html: emailHtml,
-        }),
-      });
+      try {
+        const resendResponse = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: RESEND_FROM_EMAIL,
+            to: [userEmail],
+            subject: title,
+            html: emailHtml,
+          }),
+        });
 
-      if (!resendResponse.ok) {
-        const error = await resendResponse.text();
-        console.error("Resend API error:", error);
-        throw new Error(`Failed to send email: ${error}`);
+        if (!resendResponse.ok) {
+          const error = await resendResponse.text();
+          console.error("Resend API error:", error);
+          throw new Error(`Failed to send email: ${error}`);
+        }
+
+        const emailData = await resendResponse.json();
+        console.log(`Email sent to ${userEmail} for notification ${notification_id}`);
+
+        // Log the email
+        await supabase.rpc('log_email', {
+          p_recipient_email: userEmail,
+          p_recipient_user_id: user_id,
+          p_subject: title,
+          p_email_type: type,
+          p_status: 'sent',
+          p_resend_email_id: emailData?.id || null,
+          p_metadata: { notification_id }
+        });
+      } catch (error: any) {
+        console.error("Error sending or logging email:", error);
+        
+        // Log failed email attempt
+        try {
+          await supabase.rpc('log_email', {
+            p_recipient_email: userEmail,
+            p_recipient_user_id: user_id,
+            p_subject: title,
+            p_email_type: type,
+            p_status: 'failed',
+            p_error_message: error.message,
+            p_metadata: { notification_id }
+          });
+        } catch (logError) {
+          console.error("Error logging failed email:", logError);
+        }
+        throw error;
       }
-
-      console.log(`Email sent to ${userEmail} for notification ${notification_id}`);
     } else {
       console.log("RESEND_API_KEY not configured, skipping email send");
     }

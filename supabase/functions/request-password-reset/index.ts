@@ -93,7 +93,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (Deno.env.get("RESEND_API_KEY")) {
       try {
-        const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "Lovable <onboarding@resend.dev>";
+        const fromEmail = Deno.env.get("RESEND_FROM_EMAIL") || "Nest Pro <info@nestproconnector.com>";
         const resetUrl = `${Deno.env.get("SUPABASE_URL")?.replace('/supabase', '')}/auth?reset=true`;
 
         const htmlContent = `
@@ -117,8 +117,34 @@ const handler = async (req: Request): Promise<Response> => {
 
         console.log("Email sent successfully:", emailResponse);
         emailSent = true;
+
+        // Log the email
+        await supabase.rpc('log_email', {
+          p_recipient_email: email,
+          p_recipient_user_id: user?.id || null,
+          p_subject: `Your Password Reset Code: ${code}`,
+          p_email_type: 'password_reset',
+          p_status: 'sent',
+          p_resend_email_id: emailResponse.data?.id || null,
+          p_metadata: { self_service: true }
+        });
       } catch (error: any) {
         console.error("Error sending email:", error);
+        
+        // Log failed email attempt
+        try {
+          await supabase.rpc('log_email', {
+            p_recipient_email: email,
+            p_recipient_user_id: user?.id || null,
+            p_subject: `Your Password Reset Code: ${code}`,
+            p_email_type: 'password_reset',
+            p_status: 'failed',
+            p_error_message: error.message,
+            p_metadata: { self_service: true }
+          });
+        } catch (logError) {
+          console.error("Error logging failed email:", logError);
+        }
       }
     }
 
