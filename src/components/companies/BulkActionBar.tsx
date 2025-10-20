@@ -198,11 +198,15 @@ export function BulkActionBar({
         
         if (data?.error) {
           console.error(`Enrichment failed for ${companyId}:`, data);
+          
+          // Use user-friendly message from backend
           const errorMessage = data.message || data.error;
           console.error('User-friendly error:', errorMessage);
+          
           if (data.technicalDetails) {
             console.error('Technical details:', data.technicalDetails);
           }
+          
           throw new Error(errorMessage);
         }
         

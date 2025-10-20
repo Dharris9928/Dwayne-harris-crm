@@ -111,16 +111,21 @@ export function EnrichCompanyButton({ companyId, onComplete }: EnrichCompanyButt
       }
 
       if (data.error) {
-        // Handle detailed error response
-        const errorMsg = data.details 
-          ? `Enrichment failed:\n${Object.entries(data.details).map(([provider, error]) => `• ${provider}: ${error}`).join('\n')}`
-          : data.error;
+        // Handle detailed error response with user-friendly message
+        const errorMsg = data.message || data.error;
         
         toast({
           title: 'Enrichment Failed',
           description: errorMsg,
-          variant: 'destructive'
+          variant: 'destructive',
+          duration: 10000 // Extra time for detailed explanations
         });
+        
+        // Log technical details for debugging
+        if (data.technicalDetails) {
+          console.error('Technical error details:', data.technicalDetails);
+        }
+        
         setEnriching(false);
         return;
       }
