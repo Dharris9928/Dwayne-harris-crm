@@ -78,6 +78,20 @@ export function EmailNotificationsLog() {
             Failed
           </Badge>
         );
+      case 'bounced':
+        return (
+          <Badge variant="outline" className="gap-1 bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950 dark:text-orange-400">
+            <AlertCircle className="h-3 w-3" />
+            Bounced
+          </Badge>
+        );
+      case 'complained':
+        return (
+          <Badge variant="outline" className="gap-1 bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950 dark:text-yellow-400">
+            <AlertCircle className="h-3 w-3" />
+            Spam Report
+          </Badge>
+        );
       default:
         return (
           <Badge variant="outline" className="gap-1">
