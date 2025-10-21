@@ -6,11 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mail, Phone, Linkedin, Reply, Trash2, ExternalLink, Search, X, User, Calendar, Video, GraduationCap, MessageSquare } from 'lucide-react';
+import { Mail, Phone, Linkedin, Reply, Trash2, ExternalLink, Search, X, User, Calendar, Video, GraduationCap, MessageSquare, Pencil } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { Label } from '@/components/ui/label';
 import { NewCommunicationDialog } from '@/components/companies/NewCommunicationDialog';
+import { EditCommunicationDialog } from '@/components/companies/EditCommunicationDialog';
 import { useNavigate } from 'react-router-dom';
 
 export default function Communications() {
@@ -26,6 +27,8 @@ export default function Communications() {
   const [replyToContactId, setReplyToContactId] = useState<string | null>(null);
   const [replyToPreviousContext, setReplyToPreviousContext] = useState<string>('');
   const [replyCommunicationType, setReplyCommunicationType] = useState<'email' | 'call_script' | 'linkedin_message'>('email');
+  const [editCommunication, setEditCommunication] = useState<any>(null);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
 
   const { data: communications, isLoading, refetch } = useQuery({
     queryKey: ['all-communications'],
@@ -102,6 +105,11 @@ export default function Communications() {
     setReplyToPreviousContext(`Previous ${getTypeLabel(comm.communication_type)}:\nSubject: ${comm.subject || 'N/A'}\n\n${comm.content}`);
     setReplyCommunicationType(comm.communication_type);
     setOpenNewCommDialog(true);
+  };
+
+  const handleEdit = (comm: any) => {
+    setEditCommunication(comm);
+    setOpenEditDialog(true);
   };
 
   const handleNavigateToCompany = (companyId: string) => {
@@ -429,6 +437,14 @@ export default function Communications() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => handleEdit(comm)}
+                        title="Edit this communication"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => handleReply(comm)}
                         title="Reply to this communication"
                       >
@@ -478,6 +494,23 @@ export default function Communications() {
           </div>
         )}
       </div>
+
+      <NewCommunicationDialog
+        open={openNewCommDialog}
+        onOpenChange={setOpenNewCommDialog}
+        onSuccess={refetch}
+        prefilledCompanyId={replyToCompanyId || undefined}
+        prefilledContactId={replyToContactId || undefined}
+        prefilledPreviousContext={replyToPreviousContext || undefined}
+        prefilledCommunicationType={replyCommunicationType}
+      />
+
+      <EditCommunicationDialog
+        communication={editCommunication}
+        open={openEditDialog}
+        onOpenChange={setOpenEditDialog}
+        onSuccess={refetch}
+      />
     </div>
   );
 }

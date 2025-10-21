@@ -9,6 +9,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { AddActivityDialog } from "@/components/activities/AddActivityDialog";
 import { ActivityDetailsDialog } from "@/components/activities/ActivityDetailsDialog";
+import { EditActivityDialog } from "@/components/activities/EditActivityDialog";
 import { PerspectiveSelector } from "@/components/common/PerspectiveSelector";
 import { usePerspective } from "@/hooks/usePerspective";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -18,6 +19,8 @@ const Activities = () => {
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [followUpActivity, setFollowUpActivity] = useState<any>(null);
+  const [editActivity, setEditActivity] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { perspective, setPerspective } = usePerspective('my_records');
   const { data: userRoleData } = useUserRole();
   const [dateRange, setDateRange] = useState<{
@@ -35,6 +38,11 @@ const Activities = () => {
   const handleFollowUp = (activity: any) => {
     setFollowUpActivity(activity);
     setIsAddDialogOpen(true);
+  };
+
+  const handleEdit = (activity: any) => {
+    setEditActivity(activity);
+    setIsEditDialogOpen(true);
   };
 
   const buildFollowUpContext = () => {
@@ -253,6 +261,18 @@ const Activities = () => {
         open={isDetailsDialogOpen}
         onOpenChange={setIsDetailsDialogOpen}
         onFollowUp={handleFollowUp}
+        onEdit={handleEdit}
+      />
+
+      <EditActivityDialog
+        activity={editActivity}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSuccess={() => {
+          refetch();
+          setIsEditDialogOpen(false);
+          setEditActivity(null);
+        }}
       />
     </div>
   );

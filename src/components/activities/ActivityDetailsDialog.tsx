@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { Mail, Phone, Linkedin, Calendar, User, Building2, FileText, MessageSquare, Reply } from "lucide-react";
+import { Mail, Phone, Linkedin, Calendar, User, Building2, FileText, MessageSquare, Reply, Pencil } from "lucide-react";
 
 interface Activity {
   id: string;
@@ -33,13 +33,19 @@ interface ActivityDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onFollowUp?: (activity: Activity) => void;
+  onEdit?: (activity: Activity) => void;
 }
 
-export function ActivityDetailsDialog({ activity, open, onOpenChange, onFollowUp }: ActivityDetailsDialogProps) {
+export function ActivityDetailsDialog({ activity, open, onOpenChange, onFollowUp, onEdit }: ActivityDetailsDialogProps) {
   if (!activity) return null;
 
   const handleFollowUp = () => {
     onFollowUp?.(activity);
+    onOpenChange(false);
+  };
+
+  const handleEdit = () => {
+    onEdit?.(activity);
     onOpenChange(false);
   };
 
@@ -210,12 +216,20 @@ export function ActivityDetailsDialog({ activity, open, onOpenChange, onFollowUp
           </div>
         </div>
 
-        {onFollowUp && (
-          <DialogFooter>
-            <Button onClick={handleFollowUp} className="w-full sm:w-auto">
-              <Reply className="h-4 w-4 mr-2" />
-              Follow Up
-            </Button>
+        {(onFollowUp || onEdit) && (
+          <DialogFooter className="gap-2">
+            {onEdit && (
+              <Button onClick={handleEdit} variant="outline" className="w-full sm:w-auto">
+                <Pencil className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+            )}
+            {onFollowUp && (
+              <Button onClick={handleFollowUp} className="w-full sm:w-auto">
+                <Reply className="h-4 w-4 mr-2" />
+                Follow Up
+              </Button>
+            )}
           </DialogFooter>
         )}
       </DialogContent>

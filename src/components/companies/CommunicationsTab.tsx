@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mail, Phone, Linkedin, Loader2, Copy, Check, Trash2, ExternalLink, User, Reply, Calendar, Video, GraduationCap, MessageSquare } from 'lucide-react';
+import { Mail, Phone, Linkedin, Loader2, Copy, Check, Trash2, ExternalLink, User, Reply, Calendar, Video, GraduationCap, MessageSquare, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
+import { EditCommunicationDialog } from './EditCommunicationDialog';
 
 interface Communication {
   id: string;
@@ -55,6 +56,8 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [selectedOpportunityId, setSelectedOpportunityId] = useState<string>('none');
   const generatorRef = useRef<HTMLDivElement>(null);
+  const [editCommunication, setEditCommunication] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
     if (companyId) {
@@ -307,6 +310,11 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
     });
   };
 
+  const handleEdit = (comm: Communication) => {
+    setEditCommunication(comm);
+    setIsEditDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <Card ref={generatorRef}>
@@ -519,6 +527,14 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => handleEdit(comm)}
+                            title="Edit this communication"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleReply(comm)}
                             title="Reply or create follow-up"
                           >
@@ -686,6 +702,13 @@ export function CommunicationsTab({ companyId }: CommunicationsTabProps) {
           )}
         </CardContent>
       </Card>
+
+      <EditCommunicationDialog
+        communication={editCommunication}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSuccess={loadCommunications}
+      />
     </div>
   );
 }
