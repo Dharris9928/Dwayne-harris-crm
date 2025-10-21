@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Plus, Search } from "lucide-react";
 import { ContactTable } from "@/components/contacts/ContactTable";
 import { AddContactDialog } from "@/components/contacts/AddContactDialog";
 import { EditContactDialog } from "@/components/contacts/EditContactDialog";
@@ -19,6 +20,7 @@ const Contacts = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const { perspective, setPerspective } = usePerspective('my_records');
   const { data: userRoleData } = useUserRole();
 
@@ -68,6 +70,30 @@ const Contacts = () => {
     },
   });
 
+  // Filter contacts based on search term
+  const filteredContacts = useMemo(() => {
+    if (!contacts) return [];
+    if (!searchTerm.trim()) return contacts;
+
+    const term = searchTerm.toLowerCase();
+    return contacts.filter((contact: any) => {
+      const firstName = contact.first_name?.toLowerCase() || "";
+      const lastName = contact.last_name?.toLowerCase() || "";
+      const email = contact.email?.toLowerCase() || "";
+      const title = contact.title?.toLowerCase() || "";
+      const companyName = contact.companies?.company_name?.toLowerCase() || "";
+
+      return (
+        firstName.includes(term) ||
+        lastName.includes(term) ||
+        `${firstName} ${lastName}`.includes(term) ||
+        email.includes(term) ||
+        title.includes(term) ||
+        companyName.includes(term)
+      );
+    });
+  }, [contacts, searchTerm]);
+
   // Handle navigation from reports with editContactId
   useEffect(() => {
     const state = location.state as { editContactId?: string };
@@ -102,8 +128,19 @@ const Contacts = () => {
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search contacts by name, email, title, or company..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
       <ContactTable
-        contacts={contacts || []}
+        contacts={filteredContacts}
         isLoading={isLoading}
         onEdit={(contact) => {
           setSelectedContact(contact);
