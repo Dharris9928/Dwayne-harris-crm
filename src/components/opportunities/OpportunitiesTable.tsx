@@ -13,14 +13,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface Opportunity {
   id: string;
   opportunity_name: string;
-  status: string;
-  estimated_value: number | null;
+  stage: string;
+  amount: number | null;
   expected_close_date: string | null;
   notes: string | null;
   created_at: string;
-  companies: { company_name: string } | null;
-  profiles: { first_name: string; last_name: string } | null;
-  opportunity_products: any[];
+  companies?: { company_name: string } | null;
+  profiles?: { first_name: string; last_name: string } | null;
+  opportunity_products?: any[];
 }
 
 interface OpportunitiesTableProps {
@@ -29,11 +29,12 @@ interface OpportunitiesTableProps {
 }
 
 const statusColors: Record<string, string> = {
-  "Open": "bg-blue-500",
-  "Proposal": "bg-yellow-500",
-  "Committed": "bg-purple-500",
-  "Purchased": "bg-green-500",
-  "Declined": "bg-red-500",
+  prospecting: "bg-blue-500",
+  qualification: "bg-yellow-500",
+  proposal: "bg-purple-500",
+  negotiation: "bg-orange-500",
+  closed_won: "bg-green-500",
+  closed_lost: "bg-red-500",
 };
 
 export function OpportunitiesTable({ opportunities, isLoading }: OpportunitiesTableProps) {
@@ -65,9 +66,9 @@ export function OpportunitiesTable({ opportunities, isLoading }: OpportunitiesTa
           <TableRow>
             <TableHead>Opportunity Name</TableHead>
             <TableHead>Company</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>Stage</TableHead>
             <TableHead>Products</TableHead>
-            <TableHead>Estimated Value</TableHead>
+            <TableHead>Amount</TableHead>
             <TableHead>Assigned To</TableHead>
             <TableHead>Expected Close</TableHead>
             <TableHead>Notes</TableHead>
@@ -81,14 +82,14 @@ export function OpportunitiesTable({ opportunities, isLoading }: OpportunitiesTa
               </TableCell>
               <TableCell>{opportunity.companies?.company_name || "N/A"}</TableCell>
               <TableCell>
-                <Badge className={statusColors[opportunity.status]}>
-                  {opportunity.status}
+                <Badge className={statusColors[opportunity.stage] || "bg-muted"}>
+                  {opportunity.stage}
                 </Badge>
               </TableCell>
               <TableCell>
-                {opportunity.opportunity_products.length > 0 ? (
+                {opportunity.opportunity_products?.length ? (
                   <div className="text-sm">
-                    {opportunity.opportunity_products.map((p, i) => (
+                    {opportunity.opportunity_products?.map((p, i) => (
                       <div key={i}>
                         {p.quantity}x {p.product_type}
                         {p.model && ` (${p.model})`}
@@ -100,8 +101,8 @@ export function OpportunitiesTable({ opportunities, isLoading }: OpportunitiesTa
                 )}
               </TableCell>
               <TableCell>
-                {opportunity.estimated_value
-                  ? `$${opportunity.estimated_value.toLocaleString()}`
+                {opportunity.amount !== null && opportunity.amount !== undefined
+                  ? `$${Number(opportunity.amount).toLocaleString()}`
                   : "—"}
               </TableCell>
               <TableCell>

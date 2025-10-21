@@ -34,12 +34,7 @@ export default function Opportunities() {
 
       let query = supabase
         .from('opportunities' as any)
-        .select(`
-          *,
-          companies(company_name),
-          profiles!opportunities_assigned_to_fkey(first_name, last_name),
-          opportunity_products(*)
-        `);
+        .select('*');
 
       // Apply perspective filter
       if (perspective === 'my_records') {
@@ -67,7 +62,7 @@ export default function Opportunities() {
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) { console.error('Failed to fetch opportunities:', error); throw error; }
       return data as any;
     },
   });
