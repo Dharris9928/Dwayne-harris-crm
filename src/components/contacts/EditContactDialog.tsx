@@ -380,6 +380,7 @@ export function EditContactDialog({ open, onOpenChange, onSuccess, contact }: Ed
         onOpenChange={setOpenActivityDialog}
         companyId={contact.company_id}
         companyName={companyName}
+        contactId={contact.id}
         onSuccess={() => {
           toast.success("Activity logged successfully!");
           setOpenActivityDialog(false);
