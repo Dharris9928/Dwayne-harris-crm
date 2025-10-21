@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 interface EditActivityDialogProps {
   activity: any;
@@ -43,6 +44,23 @@ export function EditActivityDialog({
     outcome: "Completed" as const,
     completed_date: new Date().toISOString().split("T")[0],
     notes: "",
+    opportunity_id: "none" as string,
+  });
+
+  // Fetch opportunities for the company
+  const { data: opportunities = [] } = useQuery({
+    queryKey: ['opportunities', activity?.company_id],
+    queryFn: async () => {
+      if (!activity?.company_id) return [];
+      const { data, error } = await supabase
+        .from('opportunities')
+        .select('id, opportunity_name, stage')
+        .eq('company_id', activity.company_id)
+        .order('opportunity_name');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!activity?.company_id && open,
   });
 
   useEffect(() => {
@@ -54,6 +72,7 @@ export function EditActivityDialog({
         outcome: activity.outcome || "Completed",
         completed_date: activity.completed_date || new Date().toISOString().split("T")[0],
         notes: activity.notes || "",
+        opportunity_id: activity.opportunity_id || "none",
       });
     }
   }, [activity, open]);
@@ -74,6 +93,7 @@ export function EditActivityDialog({
           outcome: formData.outcome,
           completed_date: formData.completed_date,
           notes: formData.notes,
+          opportunity_id: formData.opportunity_id === "none" ? null : formData.opportunity_id,
         })
         .eq("id", activity.id);
 
@@ -125,6 +145,29 @@ export function EditActivityDialog({
                 <SelectItem value="Meeting">Meeting</SelectItem>
                 <SelectItem value="Demo">Demo</SelectItem>
                 <SelectItem value="Training">Training</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Opportunity */}
+          <div>
+            <Label htmlFor="opportunity">Opportunity (Optional)</Label>
+            <Select
+              value={formData.opportunity_id}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, opportunity_id: value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select opportunity (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {opportunities.map((opp: any) => (
+                  <SelectItem key={opp.id} value={opp.id}>
+                    {opp.opportunity_name} ({opp.stage})
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

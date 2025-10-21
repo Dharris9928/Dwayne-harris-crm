@@ -2837,6 +2837,7 @@ export type Database = {
           message_content: string | null
           next_action: string | null
           notes: string | null
+          opportunity_id: string | null
           outcome: Database["public"]["Enums"]["activity_outcome"] | null
           scheduled_date: string | null
           sequence_day: number | null
@@ -2859,6 +2860,7 @@ export type Database = {
           message_content?: string | null
           next_action?: string | null
           notes?: string | null
+          opportunity_id?: string | null
           outcome?: Database["public"]["Enums"]["activity_outcome"] | null
           scheduled_date?: string | null
           sequence_day?: number | null
@@ -2881,6 +2883,7 @@ export type Database = {
           message_content?: string | null
           next_action?: string | null
           notes?: string | null
+          opportunity_id?: string | null
           outcome?: Database["public"]["Enums"]["activity_outcome"] | null
           scheduled_date?: string | null
           sequence_day?: number | null
@@ -2951,6 +2954,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outreach_activities_opportunity_id_fkey"
+            columns: ["opportunity_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
             referencedColumns: ["id"]
           },
         ]

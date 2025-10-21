@@ -6,7 +6,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 interface EditCommunicationDialogProps {
   communication: any;
@@ -24,17 +26,37 @@ export function EditCommunicationDialog({
   const { toast } = useToast();
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
+    communication_type: 'email' as 'email' | 'call_script' | 'linkedin_message' | 'phone' | 'meeting' | 'demo' | 'training',
     subject: '',
     content: '',
     notes: '',
+    opportunity_id: 'none' as string,
+  });
+
+  // Fetch opportunities for the company
+  const { data: opportunities = [] } = useQuery({
+    queryKey: ['opportunities', communication?.company_id],
+    queryFn: async () => {
+      if (!communication?.company_id) return [];
+      const { data, error } = await supabase
+        .from('opportunities')
+        .select('id, opportunity_name, stage')
+        .eq('company_id', communication.company_id)
+        .order('opportunity_name');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!communication?.company_id && open,
   });
 
   useEffect(() => {
     if (communication && open) {
       setFormData({
+        communication_type: communication.communication_type || 'email',
         subject: communication.subject || '',
         content: communication.content || '',
         notes: communication.notes || '',
+        opportunity_id: communication.opportunity_id || 'none',
       });
     }
   }, [communication, open]);
@@ -47,9 +69,11 @@ export function EditCommunicationDialog({
       const { error } = await supabase
         .from('company_communications')
         .update({
+          communication_type: formData.communication_type,
           subject: formData.subject || null,
           content: formData.content,
           notes: formData.notes || null,
+          opportunity_id: formData.opportunity_id === 'none' ? null : formData.opportunity_id,
         })
         .eq('id', communication.id);
 
@@ -87,6 +111,53 @@ export function EditCommunicationDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Communication Type */}
+          <div className="space-y-2">
+            <Label htmlFor="communication_type">Communication Type *</Label>
+            <Select
+              value={formData.communication_type}
+              onValueChange={(value: any) =>
+                setFormData(prev => ({ ...prev, communication_type: value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="email">Email</SelectItem>
+                <SelectItem value="phone">Phone Call</SelectItem>
+                <SelectItem value="call_script">Call Script</SelectItem>
+                <SelectItem value="linkedin_message">LinkedIn Message</SelectItem>
+                <SelectItem value="meeting">Meeting</SelectItem>
+                <SelectItem value="demo">Demo</SelectItem>
+                <SelectItem value="training">Training</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Opportunity */}
+          <div className="space-y-2">
+            <Label htmlFor="opportunity">Opportunity (Optional)</Label>
+            <Select
+              value={formData.opportunity_id}
+              onValueChange={(value) =>
+                setFormData(prev => ({ ...prev, opportunity_id: value }))
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select opportunity (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                {opportunities.map((opp: any) => (
+                  <SelectItem key={opp.id} value={opp.id}>
+                    {opp.opportunity_name} ({opp.stage})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Subject Line */}
           <div className="space-y-2">
             <Label htmlFor="subject">Subject Line</Label>
