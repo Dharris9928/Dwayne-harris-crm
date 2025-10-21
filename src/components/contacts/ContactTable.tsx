@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Mail, Phone, Linkedin, Trash2 } from "lucide-react";
+import { Edit, Mail, Phone, Linkedin, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { DeleteRecordDialog } from "@/components/common/DeleteRecordDialog";
 import { useUserRole } from "@/hooks/useUserRole";
 
@@ -39,7 +39,77 @@ export function ContactTable({ contacts, isLoading, onEdit, onDelete }: ContactT
   const navigate = useNavigate();
   const { data: userData } = useUserRole();
   const [deleteContact, setDeleteContact] = useState<Contact | null>(null);
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      if (sortDirection === 'asc') {
+        setSortDirection('desc');
+      } else {
+        setSortField(null);
+        setSortDirection('asc');
+      }
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const sortedContacts = useMemo(() => {
+    if (!sortField) return contacts;
+
+    return [...contacts].sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case 'name':
+          aValue = `${a.first_name} ${a.last_name}`.toLowerCase();
+          bValue = `${b.first_name} ${b.last_name}`.toLowerCase();
+          break;
+        case 'title':
+          aValue = (a.title || '').toLowerCase();
+          bValue = (b.title || '').toLowerCase();
+          break;
+        case 'company':
+          aValue = (a.companies?.company_name || '').toLowerCase();
+          bValue = (b.companies?.company_name || '').toLowerCase();
+          break;
+        case 'decision_tier':
+          aValue = a.decision_tier.toLowerCase();
+          bValue = b.decision_tier.toLowerCase();
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [contacts, sortField, sortDirection]);
+
+  const renderSortIcon = (field: string) => {
+    if (sortField !== field) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    return sortDirection === 'asc' ? 
+      <ArrowUp className="ml-2 h-4 w-4" /> : 
+      <ArrowDown className="ml-2 h-4 w-4" />;
+  };
+
+  const SortableHeader = ({ field, children }: { field: string; children: React.ReactNode }) => (
+    <TableHead>
+      <Button
+        variant="ghost"
+        onClick={() => handleSort(field)}
+        className="h-auto p-0 hover:bg-transparent font-semibold"
+      >
+        {children}
+        {renderSortIcon(field)}
+      </Button>
+    </TableHead>
+  );
+
   const getTierColor = (tier: string) => {
     const tierMap: Record<string, string> = {
       Primary: "bg-priority-p1 text-priority-p1-foreground",
@@ -70,16 +140,16 @@ export function ContactTable({ contacts, isLoading, onEdit, onDelete }: ContactT
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>Company</TableHead>
-            <TableHead>Decision Tier</TableHead>
+            <SortableHeader field="name">Name</SortableHeader>
+            <SortableHeader field="title">Title</SortableHeader>
+            <SortableHeader field="company">Company</SortableHeader>
+            <SortableHeader field="decision_tier">Decision Tier</SortableHeader>
             <TableHead>Contact Info</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {contacts.map((contact) => (
+          {sortedContacts.map((contact) => (
             <TableRow key={contact.id}>
               <TableCell className="font-medium">
                 <Button
