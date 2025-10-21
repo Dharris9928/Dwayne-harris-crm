@@ -98,7 +98,7 @@ export function CompanySearchSelect({ value, onValueChange }: CompanySearchSelec
               {companies?.map((company) => (
                 <CommandItem
                   key={company.id}
-                  value={company.id}
+                  value={`${company.company_name} ${company.city || ''} ${company.state || ''}`}
                   onSelect={() => {
                     onValueChange(company.id);
                     setOpen(false);
