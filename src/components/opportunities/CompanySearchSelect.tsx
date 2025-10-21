@@ -27,6 +27,22 @@ export function CompanySearchSelect({ value, onValueChange }: CompanySearchSelec
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
 
+  // Fetch the selected company by ID
+  const { data: selectedCompanyData } = useQuery({
+    queryKey: ['company-by-id', value],
+    queryFn: async () => {
+      if (!value) return null;
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, company_name, city, state')
+        .eq('id', value)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!value,
+  });
+
   const { data: companies, isLoading } = useQuery({
     queryKey: ['companies-search', search],
     queryFn: async () => {
@@ -45,7 +61,7 @@ export function CompanySearchSelect({ value, onValueChange }: CompanySearchSelec
     },
   });
 
-  const selectedCompany = companies?.find((c) => c.id === value);
+  const selectedCompany = selectedCompanyData || companies?.find((c) => c.id === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
