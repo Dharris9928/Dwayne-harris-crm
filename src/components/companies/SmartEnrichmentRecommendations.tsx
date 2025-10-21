@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { EnrichmentConfirmDialog } from './EnrichmentConfirmDialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUserRole } from '@/hooks/useUserRole';
+import { usePerspective } from '@/hooks/usePerspective';
 
 interface SmartEnrichmentRecommendationsProps {
   onEnrichCompany: (companyId: string) => void;
@@ -17,6 +18,7 @@ interface SmartEnrichmentRecommendationsProps {
 
 export function SmartEnrichmentRecommendations({ onEnrichCompany }: SmartEnrichmentRecommendationsProps) {
   const { toast } = useToast();
+  const { perspective } = usePerspective('all_records');
   const [enriching, setEnriching] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
@@ -26,15 +28,27 @@ export function SmartEnrichmentRecommendations({ onEnrichCompany }: SmartEnrichm
   const canEnrich = userRole?.hasElevatedAccess || false;
 
   const recommendations = useQuery({
-    queryKey: ['enrichment-recommendations'],
+    queryKey: ['enrichment-recommendations', perspective],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       // Get companies that haven't been enriched yet or have low data quality
-      const { data: companies, error } = await supabase
+      let query = supabase
         .from('companies')
-        .select('id, company_name, industry_type, priority_tier, lead_score, website_url, primary_phone, primary_email, annual_volume, annual_revenue_range')
+        .select('id, company_name, industry_type, priority_tier, lead_score, website_url, primary_phone, primary_email, annual_volume, annual_revenue_range, created_by, assigned_to_sales_rep_id')
         .in('priority_tier', ['P1', 'P2'])
         .order('lead_score', { ascending: false })
         .limit(10);
+
+      // Apply perspective filtering
+      if (perspective === 'my_records') {
+        query = query.eq('created_by', user.id);
+      } else if (perspective === 'assigned_to_me') {
+        query = query.eq('assigned_to_sales_rep_id', user.id);
+      }
+
+      const { data: companies, error } = await query;
 
       if (error) throw error;
 

@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Target } from 'lucide-react';
+import { usePerspective } from '@/hooks/usePerspective';
 
 interface PriorityStats {
   P1: { count: number; percentage: number };
@@ -14,6 +15,7 @@ interface PriorityStats {
 
 export function PriorityDistributionCard() {
   const navigate = useNavigate();
+  const { perspective } = usePerspective('all_records');
   const [stats, setStats] = useState<PriorityStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -32,14 +34,26 @@ export function PriorityDistributionCard() {
     return () => {
       supabase.removeChannel(subscription);
     };
-  }, []);
+  }, [perspective]);
 
   const loadPriorityStats = async () => {
     try {
-      // Query all companies and count by score ranges
-      const { data: companies, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Query companies with perspective filtering
+      let query = supabase
         .from('companies')
-        .select('lead_score');
+        .select('lead_score, created_by, assigned_to_sales_rep_id');
+
+      // Apply perspective filtering
+      if (perspective === 'my_records') {
+        query = query.eq('created_by', user.id);
+      } else if (perspective === 'assigned_to_me') {
+        query = query.eq('assigned_to_sales_rep_id', user.id);
+      }
+
+      const { data: companies, error } = await query;
 
       if (error) throw error;
 
