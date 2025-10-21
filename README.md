@@ -1,4 +1,13 @@
-# Welcome to your Lovable project
+# Google Nest Pro CRM - Version 4.0
+
+A comprehensive CRM system built for managing Google Nest Pro partnerships with builders and contractors.
+
+## Latest Updates (v4.0)
+
+### New Features
+- **AI Error Helper**: Interactive chatbot in Settings that helps troubleshoot errors with image support
+- **Enhanced Perspective Filtering**: All dashboard components now respect user perspective filtering (My Records, Assigned to Me, All Records)
+- **Improved Data Views**: Consistent filtering across Priority Distribution, Segment Performance, and Smart Recommendations
 
 ## Project info
 
@@ -54,11 +63,26 @@ npm run dev
 
 This project is built with:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Frontend**: React 18.3.1 + TypeScript + Vite
+- **Backend**: Lovable Cloud (Supabase)
+- **UI Components**: shadcn-ui + Radix UI
+- **Styling**: Tailwind CSS
+- **State Management**: TanStack React Query
+- **AI Integration**: Lovable AI (Google Gemini)
+
+## Key Features
+
+- **Intelligent Lead Scoring**: Industry-specific scoring algorithms for builders and contractors
+- **Contact Management**: Track decision makers and influencers
+- **Activity Tracking**: Monitor outreach and engagement
+- **AI-Powered Features**: 
+  - Error troubleshooting assistant
+  - Lead prioritization
+  - Outreach strategy recommendations
+  - Contact scoring
+- **Advanced Security**: Field-level permissions, encryption, audit logs
+- **Data Enrichment**: Apollo.io integration for company data
+- **Comprehensive Reporting**: Priority distribution, segment performance analytics
 
 ## How can I deploy this project?
 

@@ -1,9 +1,28 @@
 # Google Nest Pro CRM - Technical Documentation
 
-## Overview
-A comprehensive CRM system built for managing Google Nest Pro partnerships with builders and contractors. Features intelligent lead scoring, user management with approval workflows, contact tracking, activity monitoring, AI-powered enrichment, and detailed import/export capabilities with error tracking.
+**Version:** 4.0  
+**Last Updated:** 2025-10-21
 
-## Recent Features & Enhancements
+## Overview
+A comprehensive CRM system built for managing Google Nest Pro partnerships with builders and contractors. Features intelligent lead scoring, user management with approval workflows, contact tracking, activity monitoring, AI-powered enrichment, detailed import/export capabilities with error tracking, and AI-powered error assistance.
+
+## Recent Features & Enhancements (v4.0)
+
+### AI Error Helper (NEW)
+- **AI-Powered Troubleshooting**: Interactive chatbot in Settings that helps users understand and resolve error messages
+- **Image Support**: Paste or upload screenshots of errors for visual analysis
+- **Conversation History**: Maintains context across multiple messages for better assistance
+- **Powered by Lovable AI**: Uses Google Gemini 2.5 Flash for fast, accurate responses
+- **Rate Limit Handling**: Graceful handling of API rate limits and credit exhaustion
+- **Available in**: Settings page → General tab
+
+### User Perspective Filtering (ENHANCED)
+- **Dashboard Components**: All dashboard components now respect user perspective filtering
+- **Consistent Data Views**: Priority Distribution, Segment Performance, and Smart Recommendations filter by:
+  - My Records: Shows only records created by the current user
+  - Assigned to Me: Shows records assigned to the current user
+  - All Records: Shows all records (Admin/Manager only)
+- **Fixed Components**: `PriorityDistributionCard`, `SmartEnrichmentRecommendations`, `SegmentPerformanceGrid`
 
 ### Import/Export Error Tracking
 - **Detailed Error Logging**: All import and export operations now capture detailed error information in the `import_export_logs` table
@@ -342,7 +361,20 @@ Common policy patterns:
 - UPDATE: Users can update their own records or elevated users can update all
 - DELETE: Only elevated users can delete
 
-## Edge Functions
+### Edge Functions
+
+#### `ai-error-helper`
+AI-powered error troubleshooting assistant
+- Uses Lovable AI (Google Gemini 2.5 Flash model)
+- Accepts text messages and image uploads (base64 encoded)
+- Maintains conversation history for context
+- Provides clear explanations and step-by-step solutions
+- Handles rate limits (429) and credit exhaustion (402) gracefully
+- Returns structured JSON responses
+- Input: `{ message: string, images?: string[], conversationHistory?: Message[] }`
+- Output: `{ response: string }` or `{ error: string }`
+
+**File:** `supabase/functions/ai-error-helper/index.ts`
 
 #### `get-user-emails`
 Retrieves user emails from auth.users table
@@ -608,5 +640,6 @@ Application is deployed via Lovable Cloud:
 ---
 
 **Last Updated:** 2025-10-01
-**Version:** 1.0
+**Version:** 4.0  
+**Last Updated:** 2025-10-21
 **Built with:** Lovable + React + Supabase

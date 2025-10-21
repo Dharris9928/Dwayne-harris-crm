@@ -39,8 +39,8 @@ const Help = () => {
   const [activeTab, setActiveTab] = useState('getting-started');
 
   // Version information
-  const documentVersion = "3.0";
-  const lastUpdated = "2025-10-16";
+  const documentVersion = "4.0";
+  const lastUpdated = "2025-10-21";
 
   const sections = [
     { value: 'getting-started', label: 'Getting Started', keywords: 'welcome quick start guide roles overview' },
@@ -51,7 +51,7 @@ const Help = () => {
     { value: 'activities', label: 'Activities', keywords: 'activities outreach types outcomes sequences calendar' },
     { value: 'ai-features', label: 'AI Features', keywords: 'ai features scoring prioritization outreach strategy batch usage logs' },
     { value: 'reports', label: 'Reports', keywords: 'reports analytics scoring breakdown distribution segment performance enrichment' },
-    { value: 'settings', label: 'Settings', keywords: 'settings user management security dashboard deletion approval integrations business context access controls audit logs encryption data warehouse sync bigquery suspension deactivation database management field permissions' },
+    { value: 'settings', label: 'Settings', keywords: 'settings user management security dashboard deletion approval integrations business context access controls audit logs encryption data warehouse sync bigquery suspension deactivation database management field permissions ai error helper troubleshooting' },
     { value: 'activity-logs', label: 'Activity Logs', keywords: 'logs import export enrichment ai usage monitoring tracking' },
     { value: 'diagnostics', label: 'System Diagnostics', keywords: 'diagnostics system test debug troubleshooting edge functions database webhook authentication' },
   ];
@@ -1485,6 +1485,51 @@ const Help = () => {
                         <li>Communication tools (Slack, Teams)</li>
                         <li>Document storage (Google Drive, Dropbox)</li>
                       </ul>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                <AccordionItem value="ai-error-helper">
+                  <AccordionTrigger>AI Error Helper</AccordionTrigger>
+                  <AccordionContent className="space-y-3">
+                    <p className="text-sm">
+                      Get instant AI-powered help to understand and resolve error messages
+                    </p>
+                    <div>
+                      <h4 className="font-medium mb-2">How It Works</h4>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                        <li>Interactive chatbot powered by Google Gemini 2.5 Flash</li>
+                        <li>Paste error messages or describe issues in plain language</li>
+                        <li>Upload or paste screenshots for visual error analysis</li>
+                        <li>Maintains conversation history for contextual assistance</li>
+                        <li>Provides clear explanations and step-by-step solutions</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">Features</h4>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                        <li><strong>Text & Image Support:</strong> Paste error messages or upload screenshots</li>
+                        <li><strong>Context Aware:</strong> Remembers previous messages in conversation</li>
+                        <li><strong>Direct Paste:</strong> Press Ctrl+V (Cmd+V on Mac) to paste images directly</li>
+                        <li><strong>Real-time Assistance:</strong> Get immediate troubleshooting guidance</li>
+                        <li><strong>CRM-Specific:</strong> Trained on common database, auth, and UI issues</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">When to Use</h4>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                        <li>Encountering database or authentication errors</li>
+                        <li>UI components not displaying correctly</li>
+                        <li>Import/export operations failing</li>
+                        <li>Need help understanding technical error messages</li>
+                        <li>Want quick troubleshooting without waiting for support</li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">Access Location</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Settings → General tab → AI Error Helper card
+                      </p>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
