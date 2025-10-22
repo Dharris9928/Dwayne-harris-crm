@@ -95,3 +95,6 @@ verify_jwt = false
 
 [functions.send-notification]
 verify_jwt = false
+
+[functions.prospect-chat]
+verify_jwt = true

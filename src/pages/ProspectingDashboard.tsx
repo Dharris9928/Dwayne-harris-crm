@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { SegmentCard } from '@/components/prospecting/SegmentCard';
 import { ApolloCSVImportDialog } from '@/components/prospecting/ApolloCSVImportDialog';
+import { ProspectingAIChatBubble } from '@/components/prospecting/ProspectingAIChatBubble';
 import { TrendingUp, Home, Wrench, Zap, Award, DollarSign, Building2, FileUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -176,6 +177,9 @@ export default function ProspectingDashboard() {
           // Could add refresh logic here if needed
         }}
       />
+
+      {/* AI Chat Bubble */}
+      <ProspectingAIChatBubble />
     </AppLayout>
   );
 }
