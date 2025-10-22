@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Search, AlertCircle, TrendingUp, Building2, MapPin } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Search, AlertCircle, TrendingUp, Building2, MapPin, Filter } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PermitGeographicSearchDialog } from "@/components/permits/PermitGeographicSearchDialog";
 import { PermitTable } from "@/components/permits/PermitTable";
@@ -15,6 +17,7 @@ import { usePerspective } from "@/hooks/usePerspective";
 const BuildingPermits = () => {
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
   const [perspective] = useState<'my_records' | 'all_records'>('my_records');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'filed' | 'approved' | 'issued' | 'under_review'>('all');
 
   const { data: user } = useQuery({
     queryKey: ['user'],
@@ -25,7 +28,7 @@ const BuildingPermits = () => {
   });
 
   const { data: permits, isLoading, refetch } = useQuery({
-    queryKey: ['building-permits', perspective, user?.id],
+    queryKey: ['building-permits', perspective, statusFilter, user?.id],
     queryFn: async () => {
       if (!user) return [];
 
@@ -39,6 +42,10 @@ const BuildingPermits = () => {
 
       if (perspective === 'my_records') {
         query = query.eq('created_by', user.id);
+      }
+
+      if (statusFilter !== 'all') {
+        query = query.eq('status', statusFilter);
       }
 
       const { data, error } = await query;
@@ -147,6 +154,36 @@ const BuildingPermits = () => {
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4" />
+                  <CardTitle className="text-lg">Filters</CardTitle>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <div className="flex-1 space-y-2">
+                  <Label>Permit Status</Label>
+                  <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="filed">Filed</SelectItem>
+                      <SelectItem value="under_review">Under Review</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="issued">Issued</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {!permits || permits.length === 0 ? (
             <Card>
               <CardHeader>
