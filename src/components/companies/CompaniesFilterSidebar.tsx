@@ -7,10 +7,12 @@ import { Slider } from "@/components/ui/slider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, MapPin } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { UserAssignmentSelect } from "./UserAssignmentSelect";
 import { SalesRepSelect } from "./SalesRepSelect";
+import { RegionalFilterDialog, RegionalFilters } from "@/components/common/RegionalFilterDialog";
+import { Badge } from "@/components/ui/badge";
 import { 
   INDUSTRY_TYPES,
   BUILDER_SEGMENTS, 
@@ -77,6 +79,7 @@ export function CompaniesFilterSidebar({ isCollapsed, onToggle }: CompaniesFilte
   const [leadScoreRange, setLeadScoreRange] = useState([0, 100]);
   const [stateFilter, setStateFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
+  const [isRegionalDialogOpen, setIsRegionalDialogOpen] = useState(false);
 
   const industryType = searchParams.get("industry_type");
   

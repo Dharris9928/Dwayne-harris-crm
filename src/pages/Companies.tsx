@@ -89,6 +89,8 @@ const Companies = () => {
   const industryTypeFilter = searchParams.get("industry_type");
   const stateFilter = searchParams.get("state");
   const cityFilter = searchParams.get("city");
+  const regionFilter = searchParams.get("region");
+  const statesFilter = searchParams.get("states");
   const hasWebsiteFilter = searchParams.get("has_website");
   const hasLinkedinFilter = searchParams.get("has_linkedin");
   const hasPartnerFilter = searchParams.get("has_partner");
@@ -155,10 +157,10 @@ const Companies = () => {
   useEffect(() => {
     setCurrentPage(1);
     setSelectedRows([]);
-  }, [debouncedSearch, statusFilter, priorityFilter, segmentFilter, industryTypeFilter, stateFilter, cityFilter, enrichmentStatusFilter, assignedToFilter, perspective]);
+  }, [debouncedSearch, statusFilter, priorityFilter, segmentFilter, industryTypeFilter, stateFilter, cityFilter, regionFilter, statesFilter, enrichmentStatusFilter, assignedToFilter, perspective]);
 
   const { data: companies, isLoading, refetch } = useQuery({
-    queryKey: ["companies", debouncedSearch, statusFilter, priorityFilter, segmentFilter, industryTypeFilter, stateFilter, cityFilter, enrichmentStatusFilter, assignedToFilter, perspective],
+    queryKey: ["companies", debouncedSearch, statusFilter, priorityFilter, segmentFilter, industryTypeFilter, stateFilter, cityFilter, regionFilter, statesFilter, enrichmentStatusFilter, assignedToFilter, perspective],
     queryFn: async () => {
       // Check for impersonation
       const impersonationData = sessionStorage.getItem('admin-impersonation');
@@ -227,6 +229,16 @@ const Companies = () => {
       if (statusFilter) query = query.eq('status', statusFilter);
       if (priorityFilter) query = query.eq('priority_tier', priorityFilter);
       if (segmentFilter) query = query.eq('segment', segmentFilter);
+      
+      // Regional filters
+      if (regionFilter) {
+        const regions = regionFilter.split(',');
+        query = query.in('region', regions);
+      }
+      if (statesFilter) {
+        const states = statesFilter.split(',');
+        query = query.in('state', states);
+      }
 
       // Apply assignee filter
       if (assignedToFilter) {
