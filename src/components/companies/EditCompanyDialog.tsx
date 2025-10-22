@@ -31,6 +31,7 @@ import { CommunicationsTab } from './CommunicationsTab';
 import { CompanyContactsList } from './CompanyContactsList';
 import { UserAssignmentSelect } from './UserAssignmentSelect';
 import { SalesRepSelect } from './SalesRepSelect';
+import { ParentCompanySearchSelect } from './ParentCompanySearchSelect';
 import { CompanyOpportunitiesTab } from '../opportunities/CompanyOpportunitiesTab';
 import { SimilarCompaniesTab } from './SimilarCompaniesTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -107,7 +108,6 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
   // Parent-Subsidiary Relationship
   const [companyType, setCompanyType] = useState<'standalone' | 'parent' | 'subsidiary'>('standalone');
   const [parentCompanyId, setParentCompanyId] = useState('');
-  const [parentCompanies, setParentCompanies] = useState<any[]>([]);
   
   // Contractor Specialty (only for contractors)
   const [contractorSpecialty, setContractorSpecialty] = useState('');
@@ -171,25 +171,8 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
   useEffect(() => {
     if (open && companyId) {
       loadCompanyData();
-      loadParentCompanies();
     }
   }, [open, companyId]);
-
-  const loadParentCompanies = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('companies')
-        .select('id, company_name, company_type')
-        .or('company_type.eq.parent,company_type.eq.standalone')
-        .neq('id', companyId) // Exclude current company
-        .order('company_name');
-
-      if (error) throw error;
-      setParentCompanies(data || []);
-    } catch (error) {
-      console.error('Error loading parent companies:', error);
-    }
-  };
 
   const loadCompanyData = async () => {
     setLoading(true);
@@ -643,24 +626,14 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
                   <Label htmlFor="parent_company">
                     Parent Company <span className="text-red-500">*</span>
                   </Label>
-                  <Select value={parentCompanyId} onValueChange={(v) => {
-                    setParentCompanyId(v);
-                    markChanged();
-                  }} required>
-                    <SelectTrigger id="parent_company">
-                      <SelectValue placeholder="Select parent company..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {parentCompanies.map(company => (
-                        <SelectItem key={company.id} value={company.id}>
-                          {company.company_name}
-                          {company.company_type === 'parent' && (
-                            <span className="text-xs text-muted-foreground ml-2">(Parent)</span>
-                          )}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <ParentCompanySearchSelect 
+                    value={parentCompanyId}
+                    onValueChange={(v) => {
+                      setParentCompanyId(v);
+                      markChanged();
+                    }}
+                    excludeCompanyId={companyId}
+                  />
                   <p className="text-xs text-muted-foreground mt-1">
                     Select the parent company this division belongs to
                   </p>
