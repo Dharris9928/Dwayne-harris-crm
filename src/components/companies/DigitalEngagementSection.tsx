@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Globe, Linkedin, Facebook, Instagram, Youtube, Star } from 'lucide-react';
+import { Globe, Linkedin, Facebook, Instagram, Youtube, Star, TrendingUp } from 'lucide-react';
 import { getFieldScoringOptions } from '@/lib/scoring/rangeScoringEngine';
 
 interface DigitalEngagementSectionProps {
@@ -47,6 +47,10 @@ interface DigitalEngagementSectionProps {
   onOffersSmartSecurityChange: (value: boolean) => void;
   offersHomeAutomation: boolean;
   onOffersHomeAutomationChange: (value: boolean) => void;
+
+  // Buying Intent (optional - for display only)
+  buyingIntentTopics?: string[];
+  buyingIntentLastDetected?: string | null;
 }
 
 export function DigitalEngagementSection(props: DigitalEngagementSectionProps) {
@@ -351,6 +355,29 @@ export function DigitalEngagementSection(props: DigitalEngagementSectionProps) {
           </div>
         </div>
       </div>
+
+      {/* BUYING INTENT TOPICS - Display only */}
+      {props.buyingIntentTopics && props.buyingIntentTopics.length > 0 && (
+        <div className="space-y-2 bg-background p-4 rounded-lg border">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-orange-500" />
+            Active Research Topics
+          </Label>
+          <div className="flex flex-wrap gap-2">
+            {props.buyingIntentTopics.map((topic: string) => (
+              <Badge key={topic} variant="secondary" className="text-xs">
+                🎯 {topic}
+              </Badge>
+            ))}
+          </div>
+          {props.buyingIntentLastDetected && (
+            <p className="text-xs text-muted-foreground">
+              Last detected: {new Date(props.buyingIntentLastDetected).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+

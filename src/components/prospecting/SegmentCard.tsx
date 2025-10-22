@@ -18,6 +18,7 @@ interface SegmentConfig {
     revenueRange?: string;
     states?: string[];
     countries?: string[];
+    buyingIntentTopics?: string[];
   };
   color: string;
   industryType: 'Builder' | 'Contractor';
@@ -43,6 +44,8 @@ interface ProspectCompany {
   description: string | null;
   logoUrl: string | null;
   technologies: string[];
+  buyingIntentStrength?: string;
+  buyingIntentTopics: string[];
   socialMediaUrls: {
     facebook: string | null;
     twitter: string | null;
@@ -72,6 +75,7 @@ export function SegmentCard({ segment }: SegmentCardProps) {
           revenueRange: segment.apolloFilters.revenueRange,
           states: segment.apolloFilters.states,
           countries: segment.apolloFilters.countries,
+          buyingIntentTopics: segment.apolloFilters.buyingIntentTopics,
           page: 1
         }
       });
@@ -133,6 +137,9 @@ export function SegmentCard({ segment }: SegmentCardProps) {
         status: 'Lead',
         notes: company.description,
         facebook_url: company.socialMediaUrls.facebook,
+        buying_intent_strength: company.buyingIntentStrength !== 'none' ? company.buyingIntentStrength : null,
+        buying_intent_topics: company.buyingIntentTopics.length > 0 ? company.buyingIntentTopics : null,
+        buying_intent_last_detected: company.buyingIntentStrength !== 'none' ? new Date().toISOString() : null,
         created_by: user.user?.id
       }));
 
@@ -256,6 +263,22 @@ export function SegmentCard({ segment }: SegmentCardProps) {
                       </span>
                     )}
                   </div>
+
+                  {company.buyingIntentTopics && company.buyingIntentTopics.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      <span className="text-xs text-muted-foreground">Researching:</span>
+                      {company.buyingIntentTopics.slice(0, 3).map((topic) => (
+                        <Badge key={topic} variant="outline" className="text-xs">
+                          {topic}
+                        </Badge>
+                      ))}
+                      {company.buyingIntentTopics.length > 3 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{company.buyingIntentTopics.length - 3} more
+                        </Badge>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <Button

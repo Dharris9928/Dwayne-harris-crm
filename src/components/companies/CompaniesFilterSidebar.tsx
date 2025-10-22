@@ -20,6 +20,7 @@ import {
   PARTNER_OTHER_SEGMENTS,
   STATUSES 
 } from './formOptions';
+import { BUYING_INTENT_TOPICS } from '@/lib/apollo/buyingIntentTopics';
 
 interface CompaniesFilterSidebarProps {
   isCollapsed: boolean;
@@ -488,6 +489,39 @@ export function CompaniesFilterSidebar({ isCollapsed, onToggle }: CompaniesFilte
                 </div>
               </RadioGroup>
             </div>
+          </div>
+        </FilterSection>
+
+        {/* Buying Intent Topics Filter */}
+        <FilterSection
+          title="Buying Intent Topics"
+          isCollapsed={collapsedSections.has('buying-intent')}
+          onToggle={() => toggleSection('buying-intent')}
+        >
+          <div>
+            <Label className="text-sm font-medium mb-2 block">Active Research Topics</Label>
+            <Select 
+              value={searchParams.get("buying_intent_topic") || "all"}
+              onValueChange={(value) => {
+                const newParams = new URLSearchParams(searchParams);
+                if (value !== 'all') {
+                  newParams.set("buying_intent_topic", value);
+                } else {
+                  newParams.delete("buying_intent_topic");
+                }
+                setSearchParams(newParams);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Any topic" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any topic</SelectItem>
+                {BUYING_INTENT_TOPICS.map((topic) => (
+                  <SelectItem key={topic} value={topic}>{topic}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </FilterSection>
 

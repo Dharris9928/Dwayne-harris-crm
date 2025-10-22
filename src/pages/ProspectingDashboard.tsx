@@ -18,7 +18,8 @@ const SEGMENT_CONFIGS = [
       employeeRange: '51,500',
       revenueRange: '10M-50M',
       states: undefined,
-      countries: ['United States', 'Canada']
+      countries: ['United States', 'Canada'],
+      buyingIntentTopics: ['Smart Home Technology', 'Home Automation', 'Energy Management']
     },
     color: 'border-l-primary',
     industryType: 'Builder' as const
@@ -33,7 +34,8 @@ const SEGMENT_CONFIGS = [
       employeeRange: '201,1000',
       revenueRange: '50M-100M',
       states: undefined,
-      countries: ['United States', 'Canada']
+      countries: ['United States', 'Canada'],
+      buyingIntentTopics: ['Construction Software', 'Project Management Tools', 'Building Permits']
     },
     color: 'border-l-blue-500',
     industryType: 'Builder' as const
@@ -48,7 +50,8 @@ const SEGMENT_CONFIGS = [
       employeeRange: '11,200',
       revenueRange: '1M-10M',
       states: undefined,
-      countries: ['United States', 'Canada']
+      countries: ['United States', 'Canada'],
+      buyingIntentTopics: ['Smart Home Technology', 'Home Automation', 'IoT Devices']
     },
     color: 'border-l-yellow-500',
     industryType: 'Contractor' as const
@@ -63,7 +66,8 @@ const SEGMENT_CONFIGS = [
       employeeRange: '11,100',
       revenueRange: '1M-10M',
       states: undefined,
-      countries: ['United States', 'Canada']
+      countries: ['United States', 'Canada'],
+      buyingIntentTopics: ['HVAC Systems', 'Energy Management', 'Smart Home Technology']
     },
     color: 'border-l-green-500',
     industryType: 'Contractor' as const
@@ -78,7 +82,8 @@ const SEGMENT_CONFIGS = [
       employeeRange: '11,50',
       revenueRange: '1M-10M',
       states: undefined,
-      countries: ['United States', 'Canada']
+      countries: ['United States', 'Canada'],
+      buyingIntentTopics: ['Field Service Management', 'Contractor Services', 'Safety Compliance']
     },
     color: 'border-l-purple-500',
     industryType: 'Contractor' as const
@@ -93,7 +98,8 @@ const SEGMENT_CONFIGS = [
       employeeRange: '51,200',
       revenueRange: '10M-50M',
       states: undefined,
-      countries: ['United States', 'Canada']
+      countries: ['United States', 'Canada'],
+      buyingIntentTopics: ['Construction Software', 'Building Materials', 'Green Building']
     },
     color: 'border-l-orange-500',
     industryType: 'Builder' as const

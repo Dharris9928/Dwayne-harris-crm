@@ -23,6 +23,7 @@ import { SegmentPerformanceGrid } from "@/components/dashboard/SegmentPerformanc
 import { PriorityDistributionCard } from "@/components/dashboard/PriorityDistributionCard";
 import { EnrichmentAnalyticsCard } from "@/components/dashboard/EnrichmentAnalyticsCard";
 import { SmartEnrichmentRecommendations } from "@/components/companies/SmartEnrichmentRecommendations";
+import { BuyingIntentAnalytics } from "@/components/dashboard/BuyingIntentAnalytics";
 
 const Dashboard = () => {
   const queryClient = useQueryClient();
@@ -479,6 +480,9 @@ const Dashboard = () => {
         <EnrichmentAnalyticsCard />
         <SmartEnrichmentRecommendations onEnrichCompany={(id) => navigate(`/companies?editCompanyId=${id}`)} />
       </div>
+
+      {/* Buying Intent Analytics */}
+      <BuyingIntentAnalytics />
 
       <AddCompanyDialog
         open={isAddCompanyOpen}

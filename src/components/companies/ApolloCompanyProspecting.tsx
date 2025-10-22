@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Building2, MapPin, DollarSign, Users, Plus, ExternalLink } from 'lucide-react';
+import { Search, Building2, MapPin, DollarSign, Users, Plus, ExternalLink, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BUYING_INTENT_TOPICS } from '@/lib/apollo/buyingIntentTopics';
 
 interface ProspectCompany {
   apolloId: string;
@@ -55,6 +56,8 @@ export function ApolloCompanyProspecting() {
   const [states, setStates] = useState<string[]>([]);
   const [stateInput, setStateInput] = useState('');
   const [buyingIntentStrength, setBuyingIntentStrength] = useState('all');
+  const [buyingIntentTopics, setBuyingIntentTopics] = useState<string[]>([]);
+  const [topicInput, setTopicInput] = useState('');
 
   const addKeyword = () => {
     if (keywordInput && !keywords.includes(keywordInput)) {
@@ -78,6 +81,17 @@ export function ApolloCompanyProspecting() {
     setStates(states.filter(s => s !== state));
   };
 
+  const addTopic = () => {
+    if (topicInput && !buyingIntentTopics.includes(topicInput)) {
+      setBuyingIntentTopics([...buyingIntentTopics, topicInput]);
+      setTopicInput('');
+    }
+  };
+
+  const removeTopic = (topic: string) => {
+    setBuyingIntentTopics(buyingIntentTopics.filter(t => t !== topic));
+  };
+
   const searchCompanies = async () => {
     setSearching(true);
     try {
@@ -88,6 +102,7 @@ export function ApolloCompanyProspecting() {
           revenueRange: revenueRange && revenueRange !== 'all' ? revenueRange : undefined,
           states: states.length > 0 ? states : undefined,
           buyingIntentStrength: buyingIntentStrength && buyingIntentStrength !== 'all' ? buyingIntentStrength : undefined,
+          buyingIntentTopics: buyingIntentTopics.length > 0 ? buyingIntentTopics : undefined,
           page: 1
         }
       });
@@ -348,6 +363,55 @@ export function ApolloCompanyProspecting() {
                   Filter companies by their buying intent signals from Apollo
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label>Buying Intent Topics</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select topics that companies are actively researching
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="e.g., Smart Home Technology"
+                    value={topicInput}
+                    onChange={(e) => setTopicInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addTopic()}
+                  />
+                  <Button onClick={addTopic} variant="outline">Add</Button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {buyingIntentTopics.map((topic) => (
+                    <Badge 
+                      key={topic} 
+                      variant="secondary" 
+                      className="cursor-pointer"
+                      onClick={() => removeTopic(topic)}
+                    >
+                      {topic} ×
+                    </Badge>
+                  ))}
+                </div>
+                
+                {/* Quick select recommended topics */}
+                <div className="pt-2">
+                  <p className="text-xs font-medium mb-2">Quick Add:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {BUYING_INTENT_TOPICS.slice(0, 6).map((topic) => (
+                      <Badge 
+                        key={topic}
+                        variant="outline"
+                        className="cursor-pointer hover:bg-accent"
+                        onClick={() => {
+                          if (!buyingIntentTopics.includes(topic)) {
+                            setBuyingIntentTopics([...buyingIntentTopics, topic]);
+                          }
+                        }}
+                      >
+                        + {topic}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
 
@@ -430,6 +494,17 @@ export function ApolloCompanyProspecting() {
                         {company.keywords.slice(0, 5).map((keyword, idx) => (
                           <Badge key={idx} variant="outline" className="text-xs">
                             {keyword}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    {company.buyingIntentTopics.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        <span className="text-xs text-muted-foreground">Researching:</span>
+                        {company.buyingIntentTopics.map((topic) => (
+                          <Badge key={topic} variant="outline" className="text-xs">
+                            🎯 {topic}
                           </Badge>
                         ))}
                       </div>
