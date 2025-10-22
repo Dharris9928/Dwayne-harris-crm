@@ -32,7 +32,7 @@ serve(async (req) => {
   }
 
   try {
-    const { companyId, deepEnrich = false, previewOnly = false, providers = ['apollo', 'gemini', 'claude', 'deepseek', 'perplexity'] } = await req.json();
+    const { companyId, deepEnrich = false, previewOnly = false, providers = ['apollo', 'gemini', 'claude'] } = await req.json();
 
     if (!companyId) {
       return new Response(
@@ -143,6 +143,7 @@ serve(async (req) => {
     }
 
     // Build list of available AI providers based on user selection
+    // Primary: Gemini, Backup: Claude
     const availableProviders = [];
     if (providers.includes('gemini')) availableProviders.push('gemini');
     if (providers.includes('claude')) availableProviders.push('claude');
