@@ -1100,9 +1100,11 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
                         <SelectValue placeholder="Select..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Local">Local (City/County)</SelectItem>
-                        <SelectItem value="Regional">Regional (Multi-county)</SelectItem>
-                        <SelectItem value="Multi-state">Multi-state</SelectItem>
+                        {SERVICE_AREA_TYPES.map(type => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
                         <SelectItem value="National">National</SelectItem>
                       </SelectContent>
                     </Select>
