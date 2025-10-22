@@ -118,8 +118,6 @@ function CompanyResultCard({
               tableName="companies"
               recordId={company.id}
               recordName={company.company_name}
-              className="w-full h-8"
-              size="sm"
             />
           </div>
         )}
@@ -216,68 +214,20 @@ export function ProspectingAIChatBubble() {
         throw new Error('Failed to get AI response');
       }
 
-      const reader = response.body!.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
+      const data = await response.json();
+      
+      assistantContent = data.message || '';
+      companyResults = data.companyResults;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const data = line.slice(6).trim();
-          if (data === '[DONE]') continue;
-
-          try {
-            const parsed = JSON.parse(data);
-
-            // Handle text delta
-            const delta = parsed.choices?.[0]?.delta?.content;
-            if (delta) {
-              assistantContent += delta;
-              setMessages(prev => {
-                const last = prev[prev.length - 1];
-                if (last?.role === 'assistant') {
-                  return [...prev.slice(0, -1), { ...last, content: assistantContent }];
-                }
-                return [...prev, { role: 'assistant', content: assistantContent }];
-              });
-            }
-
-            // Handle tool calls with company results
-            const toolCalls = parsed.choices?.[0]?.delta?.tool_calls;
-            if (toolCalls) {
-              for (const toolCall of toolCalls) {
-                if (toolCall?.function?.arguments) {
-                  const args = JSON.parse(toolCall.function.arguments);
-                  if (args.results) {
-                    companyResults = args.results;
-                  }
-                }
-              }
-            }
-          } catch (e) {
-            // Incomplete JSON, continue
-          }
+      // Add message with company results
+      setMessages(prev => [
+        ...prev,
+        { 
+          role: 'assistant', 
+          content: assistantContent,
+          companyResults: companyResults && companyResults.length > 0 ? companyResults : undefined
         }
-      }
-
-      // Add company results to final message
-      if (companyResults) {
-        setMessages(prev => [
-          ...prev.slice(0, -1),
-          { 
-            role: 'assistant', 
-            content: assistantContent || `I found ${companyResults.length} companies:`,
-            companyResults 
-          }
-        ]);
-      }
+      ]);
     } catch (error) {
       toast({
         title: 'Error',

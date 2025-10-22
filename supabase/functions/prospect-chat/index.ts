@@ -79,7 +79,7 @@ Examples:
 - "Find HVAC companies with good scores" → contractor_specialty: HVAC, min_score: 60
 - "Luxury builders I'm assigned to" → segment: luxury_custom, use assigned_to_me perspective`;
 
-    // Call Lovable AI with streaming
+    // Call Lovable AI without streaming for simpler implementation
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -92,7 +92,6 @@ Examples:
           { role: 'system', content: systemPrompt },
           ...messages
         ],
-        stream: true,
         tools: [{
           type: 'function',
           function: {
@@ -130,7 +129,8 @@ Examples:
               }
             }
           }
-        }]
+        }],
+        tool_choice: 'auto'
       }),
     });
 
@@ -150,141 +150,90 @@ Examples:
       throw new Error(`AI request failed: ${aiResponse.status}`);
     }
 
-    // Check for tool calls in the stream and execute company search
-    const reader = aiResponse.body!.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let toolCallBuffer = '';
-    let hasSearched = false;
-
-    const stream = new ReadableStream({
-      async start(controller) {
+    const aiData = await aiResponse.json();
+    const toolCalls = aiData.choices?.[0]?.message?.tool_calls;
+    
+    let companyResults: any[] = [];
+    
+    // Execute company search if tool was called
+    if (toolCalls && toolCalls.length > 0) {
+      const toolCall = toolCalls[0];
+      if (toolCall.function?.name === 'search_companies') {
         try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+          const filters = JSON.parse(toolCall.function.arguments);
+          
+          // Build query with perspective filter
+          let query = supabase
+            .from('companies')
+            .select('id, company_name, industry_type, segment, city, state, lead_score, priority_tier, website_url, total_employees, annual_revenue_range, created_by, assigned_to_sales_rep_id')
+            .order('lead_score', { ascending: false })
+            .limit(15);
 
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              if (!line.startsWith('data: ')) continue;
-              const data = line.slice(6).trim();
-              if (data === '[DONE]') continue;
-
-              try {
-                const parsed = JSON.parse(data);
-                
-                // Check for tool calls
-                const toolCalls = parsed.choices?.[0]?.delta?.tool_calls;
-                if (toolCalls && !hasSearched) {
-                  for (const toolCall of toolCalls) {
-                    if (toolCall.function?.arguments) {
-                      toolCallBuffer += toolCall.function.arguments;
-                    }
-                  }
-
-                  // Try to parse complete tool call
-                  if (toolCallBuffer.includes('}')) {
-                    try {
-                      const filters = JSON.parse(toolCallBuffer);
-                      hasSearched = true;
-
-                      // Build query with perspective filter
-                      let query = supabase
-                        .from('companies')
-                        .select('id, company_name, industry_type, segment, city, state, lead_score, priority_tier, website_url, total_employees, annual_revenue_range, created_by, assigned_to_sales_rep_id')
-                        .order('lead_score', { ascending: false, nullsLast: true })
-                        .limit(15);
-
-                      // Apply perspective filter
-                      switch (perspective) {
-                        case 'my_records':
-                          query = query.eq('created_by', user.id);
-                          break;
-                        case 'assigned_to_me':
-                          query = query.eq('assigned_to_sales_rep_id', user.id);
-                          break;
-                        case 'all_records':
-                          const { data: hasElevated } = await supabase.rpc('has_elevated_access', { _user_id: user.id });
-                          if (!hasElevated) {
-                            query = query.or(`created_by.eq.${user.id},assigned_to_sales_rep_id.eq.${user.id}`);
-                          }
-                          break;
-                      }
-
-                      // Apply extracted filters
-                      if (filters.industry_type) query = query.eq('industry_type', filters.industry_type);
-                      if (filters.segment) query = query.eq('segment', filters.segment);
-                      if (filters.state) query = query.eq('state', filters.state);
-                      if (filters.city) query = query.ilike('city', `%${filters.city}%`);
-                      if (filters.status) query = query.eq('status', filters.status);
-                      if (filters.priority_tier) query = query.eq('priority_tier', filters.priority_tier);
-                      if (filters.min_score) query = query.gte('lead_score', filters.min_score);
-                      if (filters.min_employees) query = query.gte('total_employees', filters.min_employees);
-                      if (filters.max_employees) query = query.lte('total_employees', filters.max_employees);
-                      if (filters.has_website) query = query.not('website_url', 'is', null);
-                      if (filters.contractor_specialty) query = query.ilike('contractor_specialty', `%${filters.contractor_specialty}%`);
-
-                      const { data: companies } = await query;
-
-                      // Check elevated access once
-                      const { data: hasElevatedAccess } = await supabase.rpc('has_elevated_access', { _user_id: user.id });
-
-                      // Add hasAccess flag to each company
-                      const results = (companies || []).map(company => ({
-                        ...company,
-                        hasAccess: company.created_by === user.id || 
-                                 company.assigned_to_sales_rep_id === user.id ||
-                                 hasElevatedAccess
-                      }));
-
-                      // Send company results as a custom event
-                      const resultEvent = {
-                        choices: [{
-                          delta: {
-                            tool_calls: [{
-                              function: {
-                                name: 'search_companies',
-                                arguments: JSON.stringify({ results })
-                              }
-                            }]
-                          }
-                        }]
-                      };
-
-                      controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(resultEvent)}\n\n`));
-                    } catch (e) {
-                      // Incomplete JSON, continue buffering
-                    }
-                  }
-                }
-
-                // Forward all chunks
-                controller.enqueue(new TextEncoder().encode(`data: ${data}\n\n`));
-              } catch (e) {
-                // Skip invalid JSON
+          // Apply perspective filter
+          switch (perspective) {
+            case 'my_records':
+              query = query.eq('created_by', user.id);
+              break;
+            case 'assigned_to_me':
+              query = query.eq('assigned_to_sales_rep_id', user.id);
+              break;
+            case 'all_records':
+              const { data: hasElevated } = await supabase.rpc('has_elevated_access', { _user_id: user.id });
+              if (!hasElevated) {
+                query = query.or(`created_by.eq.${user.id},assigned_to_sales_rep_id.eq.${user.id}`);
               }
-            }
+              break;
           }
 
-          controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
-          controller.close();
-        } catch (error) {
-          controller.error(error);
+          // Apply extracted filters
+          if (filters.industry_type) query = query.eq('industry_type', filters.industry_type);
+          if (filters.segment) query = query.eq('segment', filters.segment);
+          if (filters.state) query = query.eq('state', filters.state);
+          if (filters.city) query = query.ilike('city', `%${filters.city}%`);
+          if (filters.status) query = query.eq('status', filters.status);
+          if (filters.priority_tier) query = query.eq('priority_tier', filters.priority_tier);
+          if (filters.min_score) query = query.gte('lead_score', filters.min_score);
+          if (filters.min_employees) query = query.gte('total_employees', filters.min_employees);
+          if (filters.max_employees) query = query.lte('total_employees', filters.max_employees);
+          if (filters.has_website) query = query.not('website_url', 'is', null);
+          if (filters.contractor_specialty) query = query.ilike('contractor_specialty', `%${filters.contractor_specialty}%`);
+
+          const { data: companies } = await query;
+
+          // Check elevated access once
+          const { data: hasElevatedAccess } = await supabase.rpc('has_elevated_access', { _user_id: user.id });
+
+          // Add hasAccess flag to each company
+          companyResults = (companies || []).map((company: any) => ({
+            id: company.id,
+            company_name: company.company_name,
+            industry_type: company.industry_type,
+            segment: company.segment,
+            city: company.city,
+            state: company.state,
+            lead_score: company.lead_score,
+            priority_tier: company.priority_tier,
+            website_url: company.website_url,
+            total_employees: company.total_employees,
+            hasAccess: company.created_by === user.id || 
+                     company.assigned_to_sales_rep_id === user.id ||
+                     hasElevatedAccess
+          }));
+        } catch (parseError) {
+          console.error('Error parsing tool call arguments:', parseError);
         }
       }
-    });
+    }
 
-    return new Response(stream, {
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive'
-      }
-    });
+    const responseMessage = aiData.choices?.[0]?.message?.content || `I found ${companyResults.length} companies matching your criteria.`;
+
+    return new Response(
+      JSON.stringify({ 
+        message: responseMessage,
+        companyResults 
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (error) {
     console.error('Error in prospect-chat:', error);
