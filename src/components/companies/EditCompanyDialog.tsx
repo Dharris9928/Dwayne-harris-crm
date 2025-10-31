@@ -540,6 +540,28 @@ export function EditCompanyDialog({ open, onClose, onOpenChange, onSuccess, comp
                 </Select>
               </div>
 
+              {/* Conditional Notes Field for Lost/Inactive Status */}
+              {(status === 'lost' || status === 'inactive') && (
+                <div className="col-span-2">
+                  <Label htmlFor="status_notes" className="text-orange-600 dark:text-orange-400">
+                    Notes for {status === 'lost' ? 'Lost' : 'Inactive'} Status
+                  </Label>
+                  <Textarea
+                    id="status_notes"
+                    value={notes}
+                    onChange={(e) => {
+                      setNotes(e.target.value);
+                      markChanged();
+                    }}
+                    placeholder={`Please explain why this company is marked as ${status}...`}
+                    className="mt-2 min-h-[100px] border-orange-300 dark:border-orange-700 focus:border-orange-500"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Document the reason for this status change for future reference
+                  </p>
+                </div>
+              )}
+
               <div>
                 <Label htmlFor="assigned_to">Assigned To</Label>
                 <SalesRepSelect 

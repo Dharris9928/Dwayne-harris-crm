@@ -13,6 +13,7 @@ import { BulkActionBar } from "@/components/companies/BulkActionBar";
 import { TablePagination } from "@/components/companies/TablePagination";
 import { ExportDialog } from "@/components/companies/ExportDialog";
 import { ImportDialog } from "@/components/companies/ImportDialog";
+import { AIImportDialog } from "@/components/companies/AIImportDialog";
 import { ColumnCustomization, type ColumnVisibility } from "@/components/companies/ColumnCustomization";
 import { SavedFilters } from "@/components/companies/SavedFilters";
 import { AdvancedSearchDialog, type AdvancedFilter } from "@/components/companies/AdvancedSearchDialog";
@@ -41,6 +42,7 @@ const Companies = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isAIImportDialogOpen, setIsAIImportDialogOpen] = useState(false);
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilter[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<any>(null);
@@ -608,10 +610,20 @@ const Companies = () => {
             <Button 
               variant="outline" 
               size="sm"
+              onClick={() => setIsAIImportDialogOpen(true)}
+              className="border-primary/50 hover:bg-primary/5"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              AI Import
+            </Button>
+
+            <Button 
+              variant="outline" 
+              size="sm"
               onClick={() => setIsImportDialogOpen(true)}
             >
               <Upload className="h-4 w-4 mr-2" />
-              Import
+              Manual Import
             </Button>
 
             <Button onClick={() => setIsAddDialogOpen(true)}>
@@ -819,6 +831,16 @@ const Companies = () => {
           refetch();
           setIsImportDialogOpen(false);
         }}
+      />
+
+      <AIImportDialog
+        open={isAIImportDialogOpen}
+        onClose={() => setIsAIImportDialogOpen(false)}
+        onImportComplete={() => {
+          refetch();
+          setIsAIImportDialogOpen(false);
+        }}
+        targetTable="companies"
       />
     </div>
   );

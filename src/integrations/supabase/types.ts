@@ -1118,6 +1118,7 @@ export type Database = {
           primary_phone_encrypted: string | null
           priority_tier: string | null
           profitability_level: string | null
+          region: string | null
           revenue_growth_indicators: boolean | null
           revenue_growth_trend: string | null
           score_calculated_at: string | null
@@ -1206,6 +1207,7 @@ export type Database = {
           primary_phone_encrypted?: string | null
           priority_tier?: string | null
           profitability_level?: string | null
+          region?: string | null
           revenue_growth_indicators?: boolean | null
           revenue_growth_trend?: string | null
           score_calculated_at?: string | null
@@ -1294,6 +1296,7 @@ export type Database = {
           primary_phone_encrypted?: string | null
           priority_tier?: string | null
           profitability_level?: string | null
+          region?: string | null
           revenue_growth_indicators?: boolean | null
           revenue_growth_trend?: string | null
           score_calculated_at?: string | null
@@ -2699,6 +2702,57 @@ export type Database = {
           masking_pattern?: string | null
           min_role_required?: string
           table_name?: string
+        }
+        Relationships: []
+      }
+      import_ai_sessions: {
+        Row: {
+          ai_mappings: Json
+          completed_at: string | null
+          confidence_scores: Json
+          created_at: string | null
+          file_name: string
+          file_size: number
+          id: string
+          raw_headers: Json
+          rows_accepted: number | null
+          rows_parsed: number
+          rows_rejected: number | null
+          status: string | null
+          table_name: string
+          user_id: string
+        }
+        Insert: {
+          ai_mappings: Json
+          completed_at?: string | null
+          confidence_scores: Json
+          created_at?: string | null
+          file_name: string
+          file_size: number
+          id?: string
+          raw_headers: Json
+          rows_accepted?: number | null
+          rows_parsed: number
+          rows_rejected?: number | null
+          status?: string | null
+          table_name: string
+          user_id: string
+        }
+        Update: {
+          ai_mappings?: Json
+          completed_at?: string | null
+          confidence_scores?: Json
+          created_at?: string | null
+          file_name?: string
+          file_size?: number
+          id?: string
+          raw_headers?: Json
+          rows_accepted?: number | null
+          rows_parsed?: number
+          rows_rejected?: number | null
+          status?: string | null
+          table_name?: string
+          user_id?: string
         }
         Relationships: []
       }

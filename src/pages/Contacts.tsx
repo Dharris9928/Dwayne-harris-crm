@@ -10,6 +10,7 @@ import { AddContactDialog } from "@/components/contacts/AddContactDialog";
 import { EditContactDialog } from "@/components/contacts/EditContactDialog";
 import { ImportContactsDialogEnhanced } from "@/components/contacts/ImportContactsDialogEnhanced";
 import { ApolloContactImportDialog } from "@/components/contacts/ApolloContactImportDialog";
+import { AIImportDialog } from "@/components/companies/AIImportDialog";
 import { logBulkContactView } from "@/lib/contacts/logContactAccess";
 import { PerspectiveSelector } from "@/components/common/PerspectiveSelector";
 import { usePerspective } from "@/hooks/usePerspective";
@@ -19,6 +20,7 @@ const Contacts = () => {
   const location = useLocation();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAIImportDialogOpen, setIsAIImportDialogOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const { perspective, setPerspective } = usePerspective('my_records');
@@ -129,6 +131,14 @@ const Contacts = () => {
         </div>
         <div className="flex gap-2">
           <PerspectiveSelector value={perspective} onChange={setPerspective} />
+          <Button 
+            variant="outline"
+            onClick={() => setIsAIImportDialogOpen(true)}
+            className="border-primary/50 hover:bg-primary/5"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            AI Import
+          </Button>
           <ApolloContactImportDialog onSuccess={refetch} />
           <ImportContactsDialogEnhanced onSuccess={refetch} />
           <Button onClick={() => setIsAddDialogOpen(true)}>
@@ -182,6 +192,16 @@ const Contacts = () => {
           contact={selectedContact}
         />
       )}
+
+      <AIImportDialog
+        open={isAIImportDialogOpen}
+        onClose={() => setIsAIImportDialogOpen(false)}
+        onImportComplete={() => {
+          refetch();
+          setIsAIImportDialogOpen(false);
+        }}
+        targetTable="contacts"
+      />
     </div>
   );
 };

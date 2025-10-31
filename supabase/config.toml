@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.prospect-chat]
 verify_jwt = true
+
+[functions.ai-parse-import]
+verify_jwt = true
