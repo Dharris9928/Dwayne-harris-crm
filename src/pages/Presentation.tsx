@@ -298,6 +298,7 @@ Include contact info or next steps`);
   const [conversation, setConversation] = useState<any[]>([]);
   const [savedPresentationId, setSavedPresentationId] = useState<string | null>(null);
   const [shareableLink, setShareableLink] = useState('');
+  const [redesignInstruction, setRedesignInstruction] = useState('');
 
   // Redirect if not admin
   if (!roleLoading && roleData?.role !== 'admin') {
@@ -389,6 +390,47 @@ Include contact info or next steps`);
     }
   };
 
+  const handleRedesign = async () => {
+    if (!redesignInstruction.trim()) {
+      toast({
+        title: 'Instruction required',
+        description: 'Please provide instructions for redesigning the presentation',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      // Regenerate from scratch with new instructions
+      const fullPrompt = `${outline}\n\nREDESIGN INSTRUCTIONS:\n${redesignInstruction}\n\nPlease regenerate the entire presentation from the beginning with these new instructions in mind.`;
+      
+      const { data, error } = await supabase.functions.invoke('ai-generate-presentation', {
+        body: { outline: fullPrompt },
+      });
+
+      if (error) throw error;
+
+      setGeneratedSlides(data.slides);
+      setConversation(data.conversation);
+      setRedesignInstruction(''); // Clear the instruction field
+      
+      toast({
+        title: 'Presentation redesigned!',
+        description: `Regenerated ${data.slides.length} slides with your new instructions`,
+      });
+    } catch (error: any) {
+      console.error('Redesign error:', error);
+      toast({
+        title: 'Redesign failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const copyLink = () => {
     navigator.clipboard.writeText(shareableLink);
     toast({
@@ -444,6 +486,30 @@ Include contact info or next steps`);
                   </Button>
                 )}
               </div>
+
+              {generatedSlides.length > 0 && (
+                <div className="space-y-3 p-4 bg-muted/50 rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <Edit className="h-4 w-4 text-muted-foreground" />
+                    <h3 className="font-semibold font-google">Redesign Presentation</h3>
+                  </div>
+                  <Textarea
+                    placeholder="Enter instructions to redesign the presentation from scratch...&#10;&#10;Examples:&#10;- Make it more visual with charts and graphs&#10;- Use a darker color scheme&#10;- Simplify the content and focus on key points&#10;- Add more data visualizations&#10;- Make slides more engaging with storytelling"
+                    value={redesignInstruction}
+                    onChange={(e) => setRedesignInstruction(e.target.value)}
+                    className="min-h-[100px] font-google"
+                  />
+                  <Button 
+                    onClick={handleRedesign}
+                    disabled={isGenerating || !redesignInstruction.trim()}
+                    variant="outline"
+                    className="font-google"
+                  >
+                    {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Redesign from Start
+                  </Button>
+                </div>
+              )}
 
               {shareableLink && (
                 <Card className="bg-muted">
