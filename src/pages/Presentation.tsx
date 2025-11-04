@@ -14,8 +14,8 @@ import { AISlideBuilder } from '@/components/presentations/AISlideBuilder';
 import { PresentationAnalytics } from '@/components/presentations/PresentationAnalytics';
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 
-// Use the bundled worker from the package
-GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
+// Use the correct worker version to match the installed package
+GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.394/pdf.worker.min.js`;
 
 export default function Presentation() {
   const navigate = useNavigate();
