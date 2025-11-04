@@ -7,6 +7,8 @@ export function ImpersonationBanner() {
 
   if (!isImpersonating || !impersonation) return null;
 
+  const timeRemaining = impersonation.expiresAt ? Math.max(0, Math.floor((impersonation.expiresAt - Date.now()) / 1000 / 60)) : 0;
+
   return (
     <div className="bg-warning text-warning-foreground px-4 py-3 flex items-center justify-between border-b border-warning/20">
       <div className="flex items-center gap-3">
@@ -16,7 +18,7 @@ export function ImpersonationBanner() {
             Impersonation Mode Active
           </p>
           <p className="text-sm opacity-90">
-            Viewing as: {impersonation.userEmail} ({impersonation.userRole})
+            Viewing as: {impersonation.userEmail} ({impersonation.userRole}) • Expires in {timeRemaining}m
           </p>
         </div>
       </div>

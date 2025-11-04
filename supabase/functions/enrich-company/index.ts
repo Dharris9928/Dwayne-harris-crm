@@ -3,11 +3,20 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit } from '../_shared/rateLimiting.ts';
 import { enrichWithDeepseek } from "./enrichWithDeepseek.ts";
 import { determineSegment } from "./segmentLogic.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const requestSchema = z.object({
+  companyId: z.string().uuid('Invalid company ID format'),
+  deepEnrich: z.boolean().optional().default(false),
+  previewOnly: z.boolean().optional().default(false),
+  providers: z.array(z.enum(['apollo', 'gemini', 'claude', 'deepseek', 'perplexity'])).optional().default(['apollo', 'gemini', 'claude'])
+});
 
 // Normalize various enum-like values to database-accepted values
 function normalizeTechAdoption(value: any): string | undefined {
@@ -32,14 +41,21 @@ serve(async (req) => {
   }
 
   try {
-    const { companyId, deepEnrich = false, previewOnly = false, providers = ['apollo', 'gemini', 'claude'] } = await req.json();
-
-    if (!companyId) {
+    // Parse and validate request body
+    const body = await req.json();
+    const validation = requestSchema.safeParse(body);
+    
+    if (!validation.success) {
       return new Response(
-        JSON.stringify({ error: 'companyId is required' }),
+        JSON.stringify({ 
+          error: 'Invalid input parameters',
+          details: validation.error.format()
+        }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    const { companyId, deepEnrich, previewOnly, providers } = validation.data;
 
     // Create Supabase client with user's auth
     const authHeader = req.headers.get('Authorization');

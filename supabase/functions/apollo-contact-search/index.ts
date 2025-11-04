@@ -1,11 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { checkRateLimit } from '../_shared/rateLimiting.ts';
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const requestSchema = z.object({
+  companyId: z.string().uuid('Invalid company ID format').optional(),
+  companyName: z.string().min(1, 'Company name is required').max(200),
+  companyDomain: z.string().max(255).optional()
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -42,11 +50,21 @@ serve(async (req) => {
       return rateLimitResponse;
     }
 
-    const { companyId, companyName, companyDomain } = await req.json();
-
-    if (!companyName) {
-      throw new Error('Company name is required');
+    // Parse and validate request body
+    const body = await req.json();
+    const validation = requestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid input parameters',
+          details: validation.error.format()
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+    
+    const { companyId, companyName, companyDomain } = validation.data;
 
     console.log(`Searching Apollo for contacts at: ${companyName}`);
 
@@ -109,10 +127,17 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Apollo contact search error:', errorMessage);
+    // Log detailed error server-side only
+    console.error('Apollo contact search error:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Return generic error to client
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: 'Contact search failed. Please try again or contact support.' }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

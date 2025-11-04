@@ -1,11 +1,26 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit } from '../_shared/rateLimiting.ts';
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const requestSchema = z.object({
+  keywords: z.array(z.string().max(100)).max(20).optional(),
+  industryKeywords: z.array(z.string().max(100)).max(20).optional(),
+  employeeRange: z.string().max(50).optional(),
+  revenueRange: z.string().max(50).optional(),
+  states: z.array(z.string().max(100)).max(50).optional(),
+  countries: z.array(z.string().max(100)).max(50).optional(),
+  technologies: z.array(z.string().max(100)).max(50).optional(),
+  buyingIntentStrength: z.string().max(50).optional(),
+  buyingIntentTopics: z.array(z.string().max(100)).max(20).optional(),
+  page: z.number().int().min(1).max(1000).optional().default(1)
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -38,6 +53,20 @@ serve(async (req) => {
       }
     }
 
+    // Parse and validate request body
+    const body = await req.json();
+    const validation = requestSchema.safeParse(body);
+    
+    if (!validation.success) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid input parameters',
+          details: validation.error.format()
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const { 
       keywords,
       industryKeywords,
@@ -48,8 +77,8 @@ serve(async (req) => {
       technologies,
       buyingIntentStrength,
       buyingIntentTopics,
-      page = 1
-    } = await req.json();
+      page
+    } = validation.data;
 
     console.log('Apollo company search request:', { keywords, industryKeywords, employeeRange, revenueRange, states, technologies, page });
 
@@ -221,9 +250,17 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in apollo-company-search:', error);
+    // Log detailed error server-side only
+    console.error('Error in apollo-company-search:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Return generic error to client
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ error: 'Company search failed. Please try again or contact support.' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

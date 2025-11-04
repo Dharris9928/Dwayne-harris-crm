@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
 
+const MAX_PDF_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_MIME_TYPES = ['application/pdf'];
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -11,9 +14,54 @@ serve(async (req) => {
     const formData = await req.formData();
     const file = formData.get('file') as File;
 
+    // Validate file presence
     if (!file) {
       return new Response(
         JSON.stringify({ error: 'No file provided' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Validate file is actually a File object
+    if (!(file instanceof File)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid file upload' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Validate file type
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return new Response(
+        JSON.stringify({ error: 'File must be a PDF' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Validate file size
+    if (file.size > MAX_PDF_SIZE) {
+      return new Response(
+        JSON.stringify({ error: 'PDF file too large (max 10MB)' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Validate file has content
+    if (file.size === 0) {
+      return new Response(
+        JSON.stringify({ error: 'PDF file is empty' }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -55,11 +103,18 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('PDF parsing error:', error);
+    // Log detailed error server-side only
+    console.error('PDF parsing error:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Return generic error to client
     return new Response(
       JSON.stringify({ 
-        error: 'Failed to parse PDF',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: 'Failed to parse PDF. Please ensure the file is a valid PDF and try again.'
       }),
       { 
         status: 500,
