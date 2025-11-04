@@ -20,6 +20,8 @@ import Help from "./pages/Help";
 import Notifications from "./pages/Notifications";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Presentation from "./pages/Presentation";
+import PresentationView from "./pages/PresentationView";
 
 const queryClient = new QueryClient();
 
@@ -136,6 +138,15 @@ const App = () => (
               </AppLayout>
             }
           />
+          <Route
+            path="/presentation"
+            element={
+              <AppLayout>
+                <Presentation />
+              </AppLayout>
+            }
+          />
+          <Route path="/present/:token" element={<PresentationView />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

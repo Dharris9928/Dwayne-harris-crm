@@ -68,6 +68,11 @@ All colors MUST be HSL.
     --status-inactive: 215 14% 65%;
     --status-lost: 0 84% 60%;
   }
+  
+  --google-blue: 214 89% 60%;
+  --google-red: 4 90% 58%;
+  --google-yellow: 45 100% 51%;
+  --google-green: 142 69% 49%;
 }
 
 @layer base {

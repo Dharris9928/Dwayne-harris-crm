@@ -3723,6 +3723,88 @@ export type Database = {
           },
         ]
       }
+      presentation_access_logs: {
+        Row: {
+          accessed_at: string | null
+          duration_seconds: number | null
+          id: string
+          ip_address: string | null
+          presentation_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          accessed_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          ip_address?: string | null
+          presentation_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          accessed_at?: string | null
+          duration_seconds?: number | null
+          id?: string
+          ip_address?: string | null
+          presentation_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_access_logs_presentation_id_fkey"
+            columns: ["presentation_id"]
+            isOneToOne: false
+            referencedRelation: "presentations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presentations: {
+        Row: {
+          ai_conversation: Json | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          slides: Json
+          title: string
+          token: string
+          token_expires_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ai_conversation?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          slides?: Json
+          title: string
+          token?: string
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ai_conversation?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          slides?: Json
+          title?: string
+          token?: string
+          token_expires_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           account_status: string
@@ -5721,6 +5803,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_presentation_access: {
+        Args: {
+          _duration_seconds?: number
+          _ip_address: string
+          _presentation_id: string
+          _user_agent: string
+        }
+        Returns: string
+      }
       log_security_event: {
         Args: { _event_details?: Json; _event_type: string }
         Returns: undefined
@@ -5797,6 +5888,10 @@ export type Database = {
           permission_level: Database["public"]["Enums"]["api_permission"]
           user_id: string
         }[]
+      }
+      validate_presentation_token: {
+        Args: { token_text: string }
+        Returns: Json
       }
     }
     Enums: {
