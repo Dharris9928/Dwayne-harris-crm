@@ -2711,6 +2711,45 @@ export type Database = {
         }
         Relationships: []
       }
+      impersonation_sessions: {
+        Row: {
+          admin_user_id: string
+          created_at: string | null
+          ended_at: string | null
+          expires_at: string
+          id: string
+          impersonated_user_id: string
+          ip_address: unknown
+          is_active: boolean | null
+          session_token: string
+          user_agent: string | null
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string | null
+          ended_at?: string | null
+          expires_at: string
+          id?: string
+          impersonated_user_id: string
+          ip_address?: unknown
+          is_active?: boolean | null
+          session_token: string
+          user_agent?: string | null
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string | null
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          impersonated_user_id?: string
+          ip_address?: unknown
+          is_active?: boolean | null
+          session_token?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       import_ai_sessions: {
         Row: {
           ai_mappings: Json
@@ -3775,6 +3814,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      presentation_token_attempts: {
+        Row: {
+          attempted_at: string | null
+          id: string
+          ip_address: unknown
+          success: boolean | null
+          token_attempted: string
+          user_agent: string | null
+        }
+        Insert: {
+          attempted_at?: string | null
+          id?: string
+          ip_address: unknown
+          success?: boolean | null
+          token_attempted: string
+          user_agent?: string | null
+        }
+        Update: {
+          attempted_at?: string | null
+          id?: string
+          ip_address?: unknown
+          success?: boolean | null
+          token_attempted?: string
+          user_agent?: string | null
+        }
+        Relationships: []
       }
       presentations: {
         Row: {
@@ -5564,6 +5630,10 @@ export type Database = {
         Args: { _record_id: string; _table_name: string; _user_id: string }
         Returns: boolean
       }
+      check_and_alert_brute_force: {
+        Args: { _ip_address: unknown }
+        Returns: undefined
+      }
       check_api_key_rate_limit: {
         Args: { _api_key_id: string; _endpoint: string }
         Returns: Json
@@ -5584,6 +5654,14 @@ export type Database = {
           is_due: boolean
           next_rotation_date: string
         }[]
+      }
+      check_presentation_token_rate_limit: {
+        Args: {
+          _ip_address: unknown
+          _max_attempts?: number
+          _window_minutes?: number
+        }
+        Returns: Json
       }
       check_rate_limit: {
         Args: { _endpoint: string; _user_id: string; _window_minutes?: number }
@@ -5841,6 +5919,15 @@ export type Database = {
           _record_id: string
           _table_name: string
           _user_id: string
+        }
+        Returns: undefined
+      }
+      log_token_validation_attempt: {
+        Args: {
+          _ip_address: unknown
+          _success: boolean
+          _token_attempted: string
+          _user_agent?: string
         }
         Returns: undefined
       }

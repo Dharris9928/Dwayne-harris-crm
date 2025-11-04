@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { Button } from '@/components/ui/button';
 import { Bold, Italic, List, ListOrdered, Heading1, Heading2, Heading3, Undo, Redo } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -12,37 +13,79 @@ interface RichTextEditorProps {
 
 export function RichTextEditor({ value, onChange, placeholder, className }: RichTextEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
+  
+  const MAX_CONTENT_LENGTH = 50000; // 50KB limit
 
   useEffect(() => {
     if (editorRef.current && !editorRef.current.innerHTML && value) {
+      // Escape HTML entities to prevent XSS
+      const escapeHtml = (text: string) => {
+        return text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      };
+      
       // Convert plain text to HTML with basic formatting
       const htmlContent = value
         .split('\n')
         .map(line => {
-          if (line.startsWith('# ')) {
-            return `<h1>${line.substring(2)}</h1>`;
-          } else if (line.startsWith('## ')) {
-            return `<h2>${line.substring(3)}</h2>`;
-          } else if (line.startsWith('### ')) {
-            return `<h3>${line.substring(4)}</h3>`;
-          } else if (line.startsWith('- ')) {
-            return `<li>${line.substring(2)}</li>`;
-          } else if (line.match(/^\d+\. /)) {
-            return `<li>${line.substring(line.indexOf(' ') + 1)}</li>`;
-          } else if (line.trim()) {
-            return `<p>${line}</p>`;
+          const escaped = escapeHtml(line);
+          
+          if (escaped.startsWith('# ')) {
+            return `<h1>${escaped.substring(2)}</h1>`;
+          } else if (escaped.startsWith('## ')) {
+            return `<h2>${escaped.substring(3)}</h2>`;
+          } else if (escaped.startsWith('### ')) {
+            return `<h3>${escaped.substring(4)}</h3>`;
+          } else if (escaped.startsWith('- ')) {
+            return `<li>${escaped.substring(2)}</li>`;
+          } else if (escaped.match(/^\d+\. /)) {
+            return `<li>${escaped.substring(escaped.indexOf(' ') + 1)}</li>`;
+          } else if (escaped.trim()) {
+            return `<p>${escaped}</p>`;
           }
           return '<br>';
         })
         .join('');
       
-      editorRef.current.innerHTML = htmlContent;
+      // Sanitize HTML before rendering to prevent XSS
+      const sanitized = DOMPurify.sanitize(htmlContent, {
+        ALLOWED_TAGS: ['h1', 'h2', 'h3', 'p', 'ul', 'ol', 'li', 'br', 'strong', 'em', 'b', 'i'],
+        ALLOWED_ATTR: [],
+        KEEP_CONTENT: true,
+        RETURN_DOM: false,
+        RETURN_DOM_FRAGMENT: false
+      });
+      
+      editorRef.current.innerHTML = sanitized;
     }
-  }, []);
+  }, [value]);
 
   const handleInput = () => {
     if (editorRef.current) {
-      onChange(editorRef.current.innerText);
+      // Get HTML content
+      const htmlContent = editorRef.current.innerHTML;
+      
+      // Check content length
+      if (htmlContent.length > MAX_CONTENT_LENGTH) {
+        console.warn('[RichTextEditor] Content exceeds maximum length');
+        return;
+      }
+      
+      // Sanitize HTML content before passing to parent
+      const sanitized = DOMPurify.sanitize(htmlContent, {
+        ALLOWED_TAGS: ['h1', 'h2', 'h3', 'p', 'ul', 'ol', 'li', 'br', 'strong', 'em', 'b', 'i'],
+        ALLOWED_ATTR: [],
+        KEEP_CONTENT: true
+      });
+      
+      // Convert back to plain text for storage
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = sanitized;
+      onChange(tempDiv.innerText);
     }
   };
 

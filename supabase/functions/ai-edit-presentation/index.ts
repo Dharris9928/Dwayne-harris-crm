@@ -107,10 +107,58 @@ Return ONLY valid JSON with updated sections array in format: { "sections": [...
       const jsonStr = jsonMatch ? jsonMatch[0] : aiContent;
       const parsed = JSON.parse(jsonStr);
       updatedSections = parsed.sections || parsed;
+      
+      // Server-side sanitization to prevent XSS
+      updatedSections = updatedSections.map((section: any) => {
+        const sanitized: any = { ...section };
+        
+        // Sanitize text fields by removing HTML tags
+        const stripHtml = (text: string) => {
+          if (!text) return text;
+          return text
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+            .replace(/<[^>]+>/g, '')
+            .replace(/javascript:/gi, '')
+            .replace(/on\w+\s*=/gi, '');
+        };
+        
+        if (sanitized.title) sanitized.title = stripHtml(sanitized.title);
+        if (sanitized.subtitle) sanitized.subtitle = stripHtml(sanitized.subtitle);
+        if (sanitized.content) sanitized.content = stripHtml(sanitized.content);
+        if (sanitized.leftContent) sanitized.leftContent = stripHtml(sanitized.leftContent);
+        if (sanitized.rightContent) sanitized.rightContent = stripHtml(sanitized.rightContent);
+        
+        if (sanitized.bullets && Array.isArray(sanitized.bullets)) {
+          sanitized.bullets = sanitized.bullets.map(stripHtml);
+        }
+        
+        if (sanitized.questions && Array.isArray(sanitized.questions)) {
+          sanitized.questions = sanitized.questions.map(stripHtml);
+        }
+        
+        if (sanitized.items && Array.isArray(sanitized.items)) {
+          sanitized.items = sanitized.items.map((item: any) => ({
+            ...item,
+            title: stripHtml(item.title || ''),
+            description: stripHtml(item.description || '')
+          }));
+        }
+        
+        if (sanitized.columns && Array.isArray(sanitized.columns)) {
+          sanitized.columns = sanitized.columns.map((col: any) => ({
+            ...col,
+            title: stripHtml(col.title || ''),
+            items: col.items ? col.items.map(stripHtml) : []
+          }));
+        }
+        
+        return sanitized;
+      });
+      
     } catch (parseError) {
-      console.error('Failed to parse AI response:', aiContent);
+      console.error('[AI Edit] Failed to parse AI response:', parseError);
       return new Response(
-        JSON.stringify({ error: 'Failed to parse AI response' }),
+        JSON.stringify({ error: 'Failed to parse AI response. Please try again.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
