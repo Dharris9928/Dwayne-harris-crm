@@ -4,10 +4,11 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Copy, Eye, Edit } from 'lucide-react';
+import { Loader2, Copy, Eye, Edit, Upload } from 'lucide-react';
 import { PresentationWebView } from '@/components/presentations/PresentationWebView';
 import { PresentationTable } from '@/components/presentations/PresentationTable';
 import { AISlideBuilder } from '@/components/presentations/AISlideBuilder';
@@ -26,6 +27,7 @@ export default function Presentation() {
   const [savedPresentationId, setSavedPresentationId] = useState<string | null>(null);
   const [shareableLink, setShareableLink] = useState('');
   const [redesignInstruction, setRedesignInstruction] = useState('');
+  const [isUploadingPDF, setIsUploadingPDF] = useState(false);
 
   if (!roleLoading && roleData?.role !== 'admin') {
     navigate('/');
@@ -118,6 +120,50 @@ export default function Presentation() {
     }
   };
 
+  const handlePDFUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload a PDF file',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUploadingPDF(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const { data, error } = await supabase.functions.invoke('parse-pdf-upload', {
+        body: formData,
+      });
+
+      if (error) throw error;
+
+      if (data?.text) {
+        setOutline(data.text);
+        toast({
+          title: 'PDF uploaded successfully',
+          description: `Extracted content from ${data.pageCount} pages`,
+        });
+      }
+    } catch (error) {
+      console.error('PDF upload error:', error);
+      toast({
+        title: 'Failed to parse PDF',
+        description: 'Please try again or enter content manually',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploadingPDF(false);
+      event.target.value = '';
+    }
+  };
+
   const handleRedesign = async () => {
     if (!redesignInstruction.trim()) {
       toast({
@@ -186,11 +232,33 @@ export default function Presentation() {
               <CardDescription>Enter your outline to create a scrollable webpage presentation</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <RichTextEditor
-                placeholder="Paste your presentation outline here..."
-                value={outline}
-                onChange={setOutline}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="pdf-upload">Upload PDF (Optional)</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="pdf-upload"
+                    type="file"
+                    accept=".pdf"
+                    onChange={handlePDFUpload}
+                    disabled={isUploadingPDF || isGenerating}
+                    className="cursor-pointer"
+                  />
+                  {isUploadingPDF && (
+                    <Button disabled size="icon" variant="outline">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="outline">Presentation Outline</Label>
+                <RichTextEditor
+                  placeholder="Paste your presentation outline here..."
+                  value={outline}
+                  onChange={setOutline}
+                />
+              </div>
 
               <div className="flex gap-2">
                 <Button 
@@ -217,10 +285,10 @@ export default function Presentation() {
                     <Edit className="h-4 w-4 text-muted-foreground" />
                     <h3 className="font-semibold">Redesign Presentation</h3>
                   </div>
-                  <Textarea
+                  <RichTextEditor
                     placeholder="Enter instructions to redesign..."
                     value={redesignInstruction}
-                    onChange={(e) => setRedesignInstruction(e.target.value)}
+                    onChange={setRedesignInstruction}
                     className="min-h-[100px]"
                   />
                   <Button 
