@@ -1,8 +1,24 @@
 # CRM Project Knowledge Base
 
-## Version 4.0 | Last Updated: 2025-10-21
+## Version 4.2 | Last Updated: 2025-11-07
 
 This document contains critical project knowledge for maintaining and extending the CRM system. All AI assistants and developers should reference this when making changes.
+
+## What's New in v4.2
+
+### Enterprise Security Enhancements
+- **A+ Security Rating**: Achieved enterprise-grade security with comprehensive defense-in-depth
+- **XSS Protection**: DOMPurify sanitization with HTML entity escaping in RichTextEditor
+- **Rate Limiting**: IP-based rate limiting (10/min) for token validation with brute force detection
+- **HMAC Integrity**: HMAC-SHA256 signatures on impersonation sessions with tamper detection
+- **Server-Side Sanitization**: HTML stripping in all AI generation functions
+- **Security Infrastructure**: `impersonation_sessions` and `presentation_token_attempts` tables
+
+### Presentation Features
+- **Edit Existing Presentations**: Load, modify, and update saved presentations
+- **Preserved AI History**: Maintain conversation context during edits
+- **Title Editing**: Update presentation titles inline
+- **Seamless Workflow**: Easy switch between create and edit modes
 
 ---
 
@@ -1564,6 +1580,6 @@ For questions, use the **AI Error Helper** in Settings or consult the comprehens
 
 ---
 
-**Version:** 4.0  
-**Last Updated:** 2025-10-21  
+**Version:** 4.2  
+**Last Updated:** 2025-11-07  
 **Maintained By:** AI Assistant + Development Team

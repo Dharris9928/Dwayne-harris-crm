@@ -39,8 +39,8 @@ const Help = () => {
   const [activeTab, setActiveTab] = useState('getting-started');
 
   // Version information
-  const documentVersion = "4.1";
-  const lastUpdated = "2025-10-22";
+  const documentVersion = "4.2";
+  const lastUpdated = "2025-11-07";
 
   const sections = [
     { value: 'getting-started', label: 'Getting Started', keywords: 'welcome quick start guide roles overview' },
