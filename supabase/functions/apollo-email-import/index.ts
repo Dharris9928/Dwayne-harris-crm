@@ -116,54 +116,81 @@ serve(async (req) => {
     }
 
     if (action === 'fetch-emails') {
-      // Fetch sent emails
+      // Fetch sent emails with pagination support
       console.log('Fetching Apollo sent emails...');
       
-      const url = new URL('https://api.apollo.io/api/v1/emailer_messages/search');
-      url.searchParams.set('page', String(page));
-      url.searchParams.set('per_page', String(perPage));
+      const allEmails: ApolloEmailActivity[] = [];
+      let currentPage = 1;
+      let hasMorePages = true;
+      let totalEntries = 0;
+      
+      while (hasMorePages) {
+        const url = new URL('https://api.apollo.io/api/v1/emailer_messages/search');
+        url.searchParams.set('page', String(currentPage));
+        url.searchParams.set('per_page', String(perPage));
 
-      // Use Apollo's documented date range parameters
-      if (dateFrom || dateTo) {
-        url.searchParams.set('emailer_message_date_range_mode', 'completed_at');
-        if (dateFrom) {
-          url.searchParams.set('emailerMessageDateRange[min]', dateFrom);
+        // Use Apollo's documented date range parameters
+        if (dateFrom || dateTo) {
+          url.searchParams.set('emailer_message_date_range_mode', 'completed_at');
+          if (dateFrom) {
+            url.searchParams.set('emailerMessageDateRange[min]', dateFrom);
+          }
+          if (dateTo) {
+            url.searchParams.set('emailerMessageDateRange[max]', dateTo);
+          }
         }
-        if (dateTo) {
-          url.searchParams.set('emailerMessageDateRange[max]', dateTo);
+        
+        // Filter by sequence if selected
+        if (sequenceId) {
+          url.searchParams.append('emailer_campaign_ids[]', sequenceId);
+        }
+
+        console.log(`Fetching page ${currentPage} from URL:`, url.toString());
+
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache',
+            'accept': 'application/json',
+            'X-Api-Key': apolloApiKey
+          }
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Apollo emails API error:', response.status, errorText);
+          throw new Error(`Apollo API error: ${response.status} - ${errorText}`);
+        }
+
+        const data = await response.json();
+        const emails: ApolloEmailActivity[] = data.emailer_messages || [];
+        
+        console.log(`Page ${currentPage}: Found ${emails.length} emails`);
+        allEmails.push(...emails);
+        
+        // Update pagination info
+        totalEntries = data.pagination?.total_entries || allEmails.length;
+        const totalPages = data.pagination?.total_pages || 1;
+        
+        // Check if there are more pages
+        if (currentPage >= totalPages || emails.length === 0) {
+          hasMorePages = false;
+        } else {
+          currentPage++;
+        }
+        
+        // Safety limit to prevent infinite loops
+        if (currentPage > 50) {
+          console.log('Reached safety limit of 50 pages');
+          hasMorePages = false;
         }
       }
       
-      // Filter by sequence if selected
-      if (sequenceId) {
-        url.searchParams.append('emailer_campaign_ids[]', sequenceId);
-      }
-
-      console.log('Fetching from URL:', url.toString());
-
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'accept': 'application/json',
-          'X-Api-Key': apolloApiKey
-        }
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Apollo emails API error:', response.status, errorText);
-        throw new Error(`Apollo API error: ${response.status} - ${errorText}`);
-      }
-
-      const data = await response.json();
-      const emails: ApolloEmailActivity[] = data.emailer_messages || [];
-      
-      console.log(`Found ${emails.length} emails`);
+      console.log(`Total emails fetched across all pages: ${allEmails.length}`);
 
       // Transform to our format
-      const transformedEmails = emails.map(email => ({
+      const transformedEmails = allEmails.map(email => ({
         apolloId: email.id,
         sequenceId: email.emailer_campaign_id,
         sequenceName: email.emailer_campaign_name,
@@ -197,8 +224,7 @@ serve(async (req) => {
         JSON.stringify({
           success: true,
           emails: transformedEmails,
-          pagination: data.pagination,
-          totalCount: data.pagination?.total_entries || emails.length
+          totalCount: totalEntries
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
