@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Mail, Building2, User, CheckCircle2, XCircle, Clock, Loader2, Download, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { Mail, Building2, User, CheckCircle2, XCircle, Clock, Loader2, Download, RefreshCw, Eye, EyeOff, Filter, X } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 
 interface ApolloEmailImportDialogProps {
@@ -68,6 +68,27 @@ interface ImportResult {
 
 type Step = 'config' | 'preview' | 'importing' | 'results';
 
+type EmailStatus = 'all' | 'delivered' | 'not_opened' | 'opened' | 'clicked' | 'replied' | 'bounced';
+
+const STATUS_OPTIONS: { value: EmailStatus; label: string }[] = [
+  { value: 'all', label: 'All' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'not_opened', label: 'Not Opened' },
+  { value: 'opened', label: 'Opened' },
+  { value: 'clicked', label: 'Clicked' },
+  { value: 'replied', label: 'Replied' },
+  { value: 'bounced', label: 'Bounced' },
+];
+
+const getEmailStatus = (email: ApolloEmail): EmailStatus => {
+  if (email.bouncedAt) return 'bounced';
+  if (email.repliedAt) return 'replied';
+  if (email.clickedAt) return 'clicked';
+  if (email.openedAt) return 'opened';
+  if (email.sentAt) return 'delivered';
+  return 'delivered';
+};
+
 export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }: ApolloEmailImportDialogProps) {
   const { toast } = useToast();
   const [step, setStep] = useState<Step>('config');
@@ -83,10 +104,31 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
   const [emails, setEmails] = useState<ApolloEmail[]>([]);
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
   const [totalCount, setTotalCount] = useState(0);
+  const [statusFilter, setStatusFilter] = useState<EmailStatus>('all');
   
   // Import state
   const [importProgress, setImportProgress] = useState(0);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+
+  // Compute status counts
+  const statusCounts = emails.reduce((acc, email) => {
+    const status = getEmailStatus(email);
+    acc[status] = (acc[status] || 0) + 1;
+    // Track "not_opened" separately
+    if (email.sentAt && !email.openedAt && !email.bouncedAt) {
+      acc['not_opened'] = (acc['not_opened'] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Filter emails based on status
+  const filteredEmails = emails.filter(email => {
+    if (statusFilter === 'all') return true;
+    if (statusFilter === 'not_opened') {
+      return email.sentAt && !email.openedAt && !email.bouncedAt;
+    }
+    return getEmailStatus(email) === statusFilter;
+  });
 
   // Fetch sequences on open
   useEffect(() => {
@@ -99,6 +141,7 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
       setSelectedEmails(new Set());
       setImportProgress(0);
       setImportResult(null);
+      setStatusFilter('all');
     }
   }, [open]);
 
@@ -166,11 +209,25 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
   };
 
   const selectAll = () => {
-    setSelectedEmails(new Set(emails.map(e => e.apolloId)));
+    setSelectedEmails(new Set(filteredEmails.map(e => e.apolloId)));
   };
 
   const deselectAll = () => {
-    setSelectedEmails(new Set());
+    // Only deselect filtered emails
+    const filteredIds = new Set(filteredEmails.map(e => e.apolloId));
+    const newSelection = new Set([...selectedEmails].filter(id => !filteredIds.has(id)));
+    setSelectedEmails(newSelection);
+  };
+
+  const selectByStatus = (status: EmailStatus) => {
+    const emailsToSelect = emails.filter(email => {
+      if (status === 'all') return true;
+      if (status === 'not_opened') {
+        return email.sentAt && !email.openedAt && !email.bouncedAt;
+      }
+      return getEmailStatus(email) === status;
+    });
+    setSelectedEmails(new Set(emailsToSelect.map(e => e.apolloId)));
   };
 
   const importEmails = async () => {
@@ -434,23 +491,61 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
 
         {step === 'preview' && (
           <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Status Filter Bar */}
+            <div className="flex flex-wrap gap-2 mb-4 p-3 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2 mr-2">
+                <Filter className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Filter by status:</span>
+              </div>
+              {STATUS_OPTIONS.map(option => {
+                const count = option.value === 'all' 
+                  ? emails.length 
+                  : (statusCounts[option.value] || 0);
+                const isActive = statusFilter === option.value;
+                return (
+                  <Button
+                    key={option.value}
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter(option.value)}
+                    className="gap-1"
+                  >
+                    {option.label}
+                    <Badge variant={isActive ? "secondary" : "outline"} className="ml-1 px-1.5 py-0 text-xs">
+                      {count}
+                    </Badge>
+                  </Button>
+                );
+              })}
+              {statusFilter !== 'all' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setStatusFilter('all')}
+                  className="gap-1"
+                >
+                  <X className="h-3 w-3" /> Clear
+                </Button>
+              )}
+            </div>
+
             <div className="flex items-center justify-between mb-4">
               <div className="text-sm text-muted-foreground">
-                Found {totalCount} emails • {selectedEmails.size} selected
+                Showing {filteredEmails.length} of {totalCount} emails • {selectedEmails.size} selected
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={selectAll}>
-                  <Eye className="h-4 w-4 mr-1" /> Select All
+                  <Eye className="h-4 w-4 mr-1" /> Select Visible
                 </Button>
                 <Button variant="outline" size="sm" onClick={deselectAll}>
-                  <EyeOff className="h-4 w-4 mr-1" /> Deselect All
+                  <EyeOff className="h-4 w-4 mr-1" /> Deselect Visible
                 </Button>
               </div>
             </div>
 
             <ScrollArea className="flex-1 border rounded-md">
               <div className="divide-y">
-                {emails.map(email => (
+                {filteredEmails.map(email => (
                   <div
                     key={email.apolloId}
                     className="p-3 flex items-start gap-3 hover:bg-muted/50"
