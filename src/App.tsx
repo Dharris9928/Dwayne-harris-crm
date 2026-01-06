@@ -23,6 +23,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Presentation from "./pages/Presentation";
 import PresentationView from "./pages/PresentationView";
+import PipelineAnalytics from "./pages/PipelineAnalytics";
 
 const queryClient = new QueryClient();
 
@@ -149,6 +150,14 @@ const App = () => (
             }
           />
           <Route path="/present/:token" element={<PresentationView />} />
+          <Route
+            path="/pipeline-analytics"
+            element={
+              <AppLayout>
+                <PipelineAnalytics />
+              </AppLayout>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
