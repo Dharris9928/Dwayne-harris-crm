@@ -423,14 +423,23 @@ serve(async (req) => {
         if (status === 'unsubscribed') return 'unsubscribed';
         if (!!email.failed_at || status === 'failed' || status === 'error') return 'failed';
 
-        // Engagement states (most to least advanced)
-        if (email.replied || !!email.replied_at || (email.reply_count ?? 0) > 0 || engagement.replyCount > 0 || status === 'replied' || status === 'reply') return 'replied';
-        if (!!email.clicked_at || (email.click_count ?? 0) > 0 || engagement.clickCount > 0 || status === 'clicked' || status === 'click') return 'clicked';
-        if (!!email.opened_at || (email.open_count ?? 0) > 0 || engagement.openCount > 0 || status === 'opened' || status === 'open') return 'opened';
+        // Engagement states (most to least advanced) - these take priority
+        const hasReply = email.replied || !!email.replied_at || (email.reply_count ?? 0) > 0 || engagement.replyCount > 0 || status === 'replied' || status === 'reply';
+        const hasClick = !!email.clicked_at || (email.click_count ?? 0) > 0 || engagement.clickCount > 0 || status === 'clicked' || status === 'click';
+        const hasOpen = !!email.opened_at || (email.open_count ?? 0) > 0 || engagement.openCount > 0 || status === 'opened' || status === 'open';
 
-        // Delivery states - distinguish between sent and delivered
-        if (status === 'delivered') return 'delivered';
-        if (email.completed_at || email.sent_at || status === 'sent' || status === 'active') return 'sent';
+        if (hasReply) return 'replied';
+        if (hasClick) return 'clicked';
+        if (hasOpen) return 'opened';
+
+        // Check if email was delivered/sent (completed) but not opened = "not_opened" in Apollo terms
+        const wasDelivered = email.completed_at || email.sent_at || status === 'sent' || status === 'delivered' || status === 'active';
+        
+        if (wasDelivered) {
+          // Apollo calls delivered-but-not-opened emails as "not_opened"
+          // We map this to 'not_opened' status to match Apollo's breakdown
+          return 'not_opened';
+        }
 
         // Pre-send states
         if (status === 'scheduled' || status === 'queued' || status === 'paused') return 'scheduled';
