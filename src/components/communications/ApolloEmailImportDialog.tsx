@@ -73,15 +73,14 @@ interface ImportResult {
 
 type Step = 'config' | 'preview' | 'importing' | 'results';
 
-type EmailStatus = 'all' | 'draft' | 'scheduled' | 'sent' | 'delivered' | 'not_opened' | 'opened' | 'clicked' | 'replied' | 'bounced' | 'failed' | 'spam_blocked' | 'unsubscribed';
+type EmailStatus = 'all' | 'draft' | 'scheduled' | 'not_opened' | 'opened' | 'clicked' | 'replied' | 'bounced' | 'failed' | 'spam_blocked' | 'unsubscribed';
 
+// Status options ordered to match Apollo's breakdown (no separate sent/delivered - they use not_opened)
 const STATUS_OPTIONS: { value: EmailStatus; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'draft', label: 'Draft' },
   { value: 'scheduled', label: 'Scheduled' },
-  { value: 'sent', label: 'Sent' },
-  { value: 'delivered', label: 'Delivered' },
-  { value: 'not_opened', label: 'Not Opened' },
+  { value: 'not_opened', label: 'Not Opened' },  // Delivered but not opened (Apollo's terminology)
   { value: 'opened', label: 'Opened' },
   { value: 'clicked', label: 'Clicked' },
   { value: 'replied', label: 'Replied' },
@@ -91,20 +90,15 @@ const STATUS_OPTIONS: { value: EmailStatus; label: string }[] = [
   { value: 'spam_blocked', label: 'Spam Blocked' },
 ];
 
-// Map the normalized status (plus timestamps/counts) from the API to our filter status
+// Map the normalized status from the API to our filter status (matching Apollo's breakdown)
 const getEmailStatus = (email: ApolloEmail): EmailStatus => {
   const status = (email.status || '').toLowerCase();
 
   // Failure states first
-  const isBounced = status === 'bounced' || !!email.bouncedAt;
-  const isSpamBlocked = status === 'spam_blocked' || !!email.spamBlocked;
-  const isUnsubscribed = status === 'unsubscribed';
-  const isFailed = status === 'failed';
-
-  if (isBounced) return 'bounced';
-  if (isSpamBlocked) return 'spam_blocked';
-  if (isUnsubscribed) return 'unsubscribed';
-  if (isFailed) return 'failed';
+  if (status === 'bounced' || !!email.bouncedAt) return 'bounced';
+  if (status === 'spam_blocked' || !!email.spamBlocked) return 'spam_blocked';
+  if (status === 'unsubscribed') return 'unsubscribed';
+  if (status === 'failed') return 'failed';
 
   // Engagement states (most to least advanced)
   const isReplied = status === 'replied' || !!email.repliedAt || (email.replyCount ?? 0) > 0;
@@ -115,16 +109,13 @@ const getEmailStatus = (email: ApolloEmail): EmailStatus => {
   if (isClicked) return 'clicked';
   if (isOpened) return 'opened';
 
-  // Delivery states
-  if (status === 'delivered') return 'delivered';
-  if (status === 'sent' || email.sentAt) return 'sent';
+  // not_opened = delivered/sent but never opened (matches Apollo's "Not Opened" category)
+  if (status === 'not_opened' || email.sentAt) return 'not_opened';
 
   // Pre-send states
   if (status === 'scheduled') return 'scheduled';
-  if (status === 'draft') return 'draft';
-
-  // Default to draft if no send timestamp
-  return email.sentAt ? 'sent' : 'draft';
+  
+  return 'draft';
 };
 
 export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }: ApolloEmailImportDialogProps) {
@@ -137,12 +128,14 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
   const [selectedSequence, setSelectedSequence] = useState<string>('all');
   const [dateFrom, setDateFrom] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [dateTo, setDateTo] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [lastImportDate, setLastImportDate] = useState<string | null>(null);
   
   // Preview state
   const [emails, setEmails] = useState<ApolloEmail[]>([]);
   const [selectedEmails, setSelectedEmails] = useState<Set<string>>(new Set());
   const [totalCount, setTotalCount] = useState(0);
   const [statusFilter, setStatusFilter] = useState<EmailStatus>('all');
+  const [alreadyImportedIds, setAlreadyImportedIds] = useState<Set<string>>(new Set());
   
   // Import state
   const [importProgress, setImportProgress] = useState(0);
@@ -152,28 +145,20 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
   const statusCounts = emails.reduce((acc, email) => {
     const status = getEmailStatus(email);
     acc[status] = (acc[status] || 0) + 1;
-    // Track "not_opened" separately - emails that were delivered but not opened
-    if (status === 'delivered') {
-      acc['not_opened'] = (acc['not_opened'] || 0) + 1;
-    }
     return acc;
   }, {} as Record<string, number>);
 
   // Filter emails based on status
   const filteredEmails = emails.filter(email => {
     if (statusFilter === 'all') return true;
-    if (statusFilter === 'not_opened') {
-      // Not opened means delivered but not opened, clicked, or replied
-      const status = getEmailStatus(email);
-      return status === 'delivered';
-    }
     return getEmailStatus(email) === statusFilter;
   });
 
-  // Fetch sequences on open
+  // Fetch sequences and last import date on open
   useEffect(() => {
     if (open) {
       fetchSequences();
+      fetchLastImportDate();
     } else {
       // Reset state when dialog closes
       setStep('config');
@@ -182,8 +167,28 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
       setImportProgress(0);
       setImportResult(null);
       setStatusFilter('all');
+      setAlreadyImportedIds(new Set());
     }
   }, [open]);
+
+  const fetchLastImportDate = async () => {
+    try {
+      const { data } = await supabase
+        .from('import_export_logs')
+        .select('created_at')
+        .eq('activity_type', 'import')
+        .eq('table_name', 'company_communications')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (data?.created_at) {
+        setLastImportDate(data.created_at);
+      }
+    } catch (error) {
+      console.error('Error fetching last import date:', error);
+    }
+  };
 
   const fetchSequences = async () => {
     setLoading(true);
@@ -221,10 +226,27 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
 
       if (error) throw error;
       
-      const fetchedEmails = data.emails || [];
+      const fetchedEmails: ApolloEmail[] = data.emails || [];
+      
+      // Check which emails have already been imported using apollo_email_activities table
+      const apolloIds = fetchedEmails.map(e => e.apolloId).filter(Boolean);
+      const { data: existingActivities } = await supabase
+        .from('apollo_email_activities')
+        .select('apollo_activity_id')
+        .in('apollo_activity_id', apolloIds);
+      
+      const importedIds = new Set((existingActivities || []).map(a => a.apollo_activity_id));
+      setAlreadyImportedIds(importedIds);
+      
       setEmails(fetchedEmails);
       setTotalCount(data.totalCount || fetchedEmails.length);
-      setSelectedEmails(new Set(fetchedEmails.map((e: ApolloEmail) => e.apolloId)));
+      
+      // Only pre-select emails that haven't been imported yet
+      const newEmailIds = fetchedEmails
+        .filter(e => !importedIds.has(e.apolloId))
+        .map(e => e.apolloId);
+      setSelectedEmails(new Set(newEmailIds));
+      
       setStep('preview');
     } catch (error) {
       console.error('Error fetching emails:', error);
@@ -262,12 +284,10 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
   const selectByStatus = (status: EmailStatus) => {
     const emailsToSelect = emails.filter(email => {
       if (status === 'all') return true;
-      if (status === 'not_opened') {
-        return getEmailStatus(email) === 'delivered';
-      }
       return getEmailStatus(email) === status;
     });
     setSelectedEmails(new Set(emailsToSelect.map(e => e.apolloId)));
+  };
   };
 
   const importEmails = async () => {
@@ -387,7 +407,13 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
           }
         }
 
-        // Check for duplicate communication
+        // Skip if already imported (check apollo_email_activities)
+        if (alreadyImportedIds.has(email.apolloId)) {
+          result.skipped++;
+          continue;
+        }
+
+        // Check for duplicate communication by subject/sent_at as fallback
         const { data: existingComm } = await supabase
           .from('company_communications')
           .select('id')
@@ -423,6 +449,29 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
           result.errors.push(`Failed to create communication: ${commError.message}`);
         } else {
           result.communicationsCreated++;
+          
+          // Also record in apollo_email_activities for duplicate prevention
+          await supabase.from('apollo_email_activities').insert({
+            company_id: companyId,
+            contact_id: contactId,
+            created_by: user.id,
+            activity_type: 'email',
+            subject: email.subject,
+            content: email.bodyText || email.bodyHtml || '',
+            activity_date: email.sentAt || new Date().toISOString(),
+            sent_at: email.sentAt,
+            opened_at: email.openedAt,
+            clicked_at: email.clickedAt,
+            replied_at: email.repliedAt,
+            sequence_name: email.sequenceName,
+            sequence_step: email.stepPosition,
+            open_count: email.openCount || 0,
+            click_count: email.clickCount || 0,
+            reply_count: email.replyCount || 0,
+            status: email.status,
+            apollo_activity_id: email.apolloId,
+            apollo_contact_email: email.contact?.email
+          }).catch(err => console.error('Failed to log apollo activity:', err));
         }
 
       } catch (error) {
@@ -461,10 +510,8 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
         return <Badge className="bg-blue-500">Clicked</Badge>;
       case 'opened':
         return <Badge className="bg-yellow-500 text-black">Opened</Badge>;
-      case 'delivered':
-        return <Badge className="bg-emerald-600">Delivered</Badge>;
-      case 'sent':
-        return <Badge variant="secondary">Sent</Badge>;
+      case 'not_opened':
+        return <Badge className="bg-emerald-600">Not Opened</Badge>;
       case 'scheduled':
         return <Badge className="bg-purple-500">Scheduled</Badge>;
       case 'bounced':
@@ -528,6 +575,13 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
                 </SelectContent>
               </Select>
             </div>
+
+            {lastImportDate && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
+                <Clock className="h-4 w-4" />
+                <span>Last import: {format(new Date(lastImportDate), 'MMM d, yyyy h:mm a')}</span>
+              </div>
+            )}
 
             <div className="flex gap-2 justify-end">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
@@ -606,19 +660,25 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
 
             <ScrollArea className="flex-1 border rounded-md">
               <div className="divide-y">
-                {filteredEmails.map(email => (
+                {filteredEmails.map(email => {
+                  const isAlreadyImported = alreadyImportedIds.has(email.apolloId);
+                  return (
                   <div
                     key={email.apolloId}
-                    className="p-3 flex items-start gap-3 hover:bg-muted/50"
+                    className={`p-3 flex items-start gap-3 hover:bg-muted/50 ${isAlreadyImported ? 'opacity-60' : ''}`}
                   >
                     <Checkbox
                       checked={selectedEmails.has(email.apolloId)}
                       onCheckedChange={() => toggleEmailSelection(email.apolloId)}
+                      disabled={isAlreadyImported}
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium truncate">{email.subject || '(No subject)'}</span>
                         {getStatusBadge(email)}
+                        {isAlreadyImported && (
+                          <Badge variant="outline" className="text-xs bg-muted">Already Imported</Badge>
+                        )}
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         {email.contact?.companyName && (
@@ -647,7 +707,8 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
                       )}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </ScrollArea>
 
