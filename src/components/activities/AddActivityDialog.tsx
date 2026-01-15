@@ -63,13 +63,25 @@ export function AddActivityDialog({
   const [openCombobox, setOpenCombobox] = useState(false);
   const debouncedSearch = useDebounce(companySearch, 300);
   const [selectedContactIds, setSelectedContactIds] = useState<string[]>([]);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    company_id: string;
+    activity_type: string;
+    subject_line: string;
+    message_content: string;
+    outcome: string;
+    completed_date: string;
+    scheduled_date: string;
+    email_opened_at: string;
+    email_responded_at: string;
+    notes: string;
+  }>({
     company_id: "",
-    activity_type: "Email" as const,
+    activity_type: "Email",
     subject_line: "",
     message_content: "",
-    outcome: "Completed" as const,
+    outcome: "Completed",
     completed_date: new Date().toISOString().split("T")[0],
+    scheduled_date: "",
     email_opened_at: "",
     email_responded_at: "",
     notes: "",
@@ -94,6 +106,7 @@ export function AddActivityDialog({
           message_content: "",
           outcome: "Completed",
           completed_date: new Date().toISOString().split("T")[0],
+          scheduled_date: "",
           email_opened_at: "",
           email_responded_at: "",
           notes: followUpContext || "",
@@ -152,11 +165,12 @@ export function AddActivityDialog({
         .from("outreach_activities")
         .insert({
           company_id: formData.company_id,
-          activity_type: formData.activity_type,
+          activity_type: formData.activity_type as "Email" | "Phone" | "LinkedIn Connection" | "LinkedIn Message" | "Meeting" | "Demo" | "Training",
           subject_line: formData.subject_line,
           message_content: formData.message_content,
-          outcome: formData.outcome,
+          outcome: formData.outcome as any,
           completed_date: formData.completed_date,
+          scheduled_date: formData.scheduled_date || null,
           email_opened_at: formData.email_opened_at || null,
           email_responded_at: formData.email_responded_at || null,
           notes: formData.notes,
@@ -193,6 +207,7 @@ export function AddActivityDialog({
         message_content: "",
         outcome: "Completed",
         completed_date: new Date().toISOString().split("T")[0],
+        scheduled_date: "",
         email_opened_at: "",
         email_responded_at: "",
         notes: "",
@@ -291,9 +306,15 @@ export function AddActivityDialog({
             <Label htmlFor="activity_type">Activity Type *</Label>
             <Select
               value={formData.activity_type}
-              onValueChange={(value: any) =>
-                setFormData((prev) => ({ ...prev, activity_type: value }))
-              }
+              onValueChange={(value: any) => {
+                // Auto-set outcome to "Scheduled" for meetings
+                const isMeetingType = value === "Meeting" || value === "Demo";
+                setFormData((prev) => ({ 
+                  ...prev, 
+                  activity_type: value,
+                  outcome: isMeetingType ? "Scheduled" : prev.outcome
+                }));
+              }}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -309,6 +330,28 @@ export function AddActivityDialog({
               </SelectContent>
             </Select>
           </div>
+
+          {/* Show scheduled date for meetings/demos */}
+          {(formData.activity_type === "Meeting" || formData.activity_type === "Demo") && (
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <Label htmlFor="scheduled_date" className="text-blue-700 dark:text-blue-300">
+                Scheduled Date *
+              </Label>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mb-2">
+                You'll receive a notification after this date to update the activity status.
+              </p>
+              <Input
+                id="scheduled_date"
+                type="datetime-local"
+                value={formData.scheduled_date}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, scheduled_date: e.target.value }))
+                }
+                className="border-blue-300 dark:border-blue-700"
+                required
+              />
+            </div>
+          )}
 
           <div>
             <Label htmlFor="subject_line">Subject Line</Label>
@@ -348,6 +391,7 @@ export function AddActivityDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="Completed">Completed</SelectItem>
+                <SelectItem value="Scheduled">Scheduled</SelectItem>
                 <SelectItem value="Sent">Sent</SelectItem>
                 <SelectItem value="Opened">Opened</SelectItem>
                 <SelectItem value="Clicked">Clicked</SelectItem>
@@ -355,6 +399,7 @@ export function AddActivityDialog({
                 <SelectItem value="Connected">Connected</SelectItem>
                 <SelectItem value="No Answer">No Answer</SelectItem>
                 <SelectItem value="Bounced">Bounced</SelectItem>
+                <SelectItem value="Cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
           </div>
