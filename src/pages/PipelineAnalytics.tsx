@@ -16,6 +16,7 @@ import { MeetingAnalyticsCard } from "@/components/pipeline/MeetingAnalyticsCard
 import { LeadHandoffCard } from "@/components/pipeline/LeadHandoffCard";
 import { ClosedDealsCard } from "@/components/pipeline/ClosedDealsCard";
 import { RegionToggle, RegionFilter } from "@/components/pipeline/RegionToggle";
+import { CommunicationsFunnel } from "@/components/communications/CommunicationsFunnel";
 import { RegionComparisonCard } from "@/components/pipeline/RegionComparisonCard";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -189,6 +190,9 @@ export default function PipelineAnalytics() {
             <LeadHandoffCard metrics={metrics} isLoading={isLoading} />
             <ClosedDealsCard metrics={metrics} isLoading={isLoading} />
           </div>
+
+          {/* Communications Funnel */}
+          <CommunicationsFunnel />
         </>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
