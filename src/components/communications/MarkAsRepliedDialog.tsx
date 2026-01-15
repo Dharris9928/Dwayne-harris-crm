@@ -21,7 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { MessageCircle, Calendar, Plus } from "lucide-react";
+import { MessageCircle, Calendar, Plus, Handshake } from "lucide-react";
+import { UnifiedAssignmentSelect } from "@/components/companies/UnifiedAssignmentSelect";
 
 interface MarkAsRepliedDialogProps {
   open: boolean;
@@ -48,6 +49,9 @@ export function MarkAsRepliedDialog({
   const [replyContent, setReplyContent] = useState("");
   const [replyNotes, setReplyNotes] = useState("");
   const [createFollowUp, setCreateFollowUp] = useState(false);
+  const [createHandoff, setCreateHandoff] = useState(false);
+  const [handoffAssignee, setHandoffAssignee] = useState("");
+  const [handoffNotes, setHandoffNotes] = useState("");
   const [followUpData, setFollowUpData] = useState({
     activity_type: "Meeting",
     subject_line: "",
@@ -63,19 +67,66 @@ export function MarkAsRepliedDialog({
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error("Not authenticated");
 
-      // Update communication as replied
+      // Parse handoff assignee ID
+      let actualAssigneeId = handoffAssignee;
+      if (handoffAssignee.startsWith('user:')) {
+        actualAssigneeId = handoffAssignee.replace('user:', '');
+      } else if (handoffAssignee.startsWith('salesrep:')) {
+        actualAssigneeId = handoffAssignee.replace('salesrep:', '');
+      }
+
+      // Update communication as replied (and optionally assign handoff)
+      const updateData: any = {
+        email_responded_at: new Date().toISOString(),
+        email_opened_at: new Date().toISOString(),
+        notes: replyNotes 
+          ? `${communication.subject ? 'Reply received: ' : ''}${replyContent}\n\nNotes: ${replyNotes}`
+          : `Reply received: ${replyContent}`,
+      };
+
+      // Add handoff assignment if requested
+      if (createHandoff && actualAssigneeId && actualAssigneeId !== 'unassigned') {
+        updateData.assigned_to = actualAssigneeId;
+        if (handoffNotes) {
+          updateData.notes = `${updateData.notes}\n\nHandoff Notes: ${handoffNotes}`;
+        }
+      }
+
       const { error: commError } = await supabase
         .from("company_communications")
-        .update({
-          email_responded_at: new Date().toISOString(),
-          email_opened_at: new Date().toISOString(), // Also mark as opened
-          notes: replyNotes 
-            ? `${communication.subject ? 'Reply received: ' : ''}${replyContent}\n\nNotes: ${replyNotes}`
-            : `Reply received: ${replyContent}`,
-        })
+        .update(updateData)
         .eq("id", communication.id);
 
       if (commError) throw commError;
+
+      // Handle handoff: update/create opportunity and send notification
+      if (createHandoff && actualAssigneeId && actualAssigneeId !== 'unassigned') {
+        // Check for existing opportunity
+        const { data: existingOpportunity } = await supabase
+          .from('opportunities')
+          .select('id')
+          .eq('company_id', communication.company_id)
+          .single();
+
+        if (existingOpportunity) {
+          await supabase
+            .from('opportunities')
+            .update({ assigned_to: actualAssigneeId })
+            .eq('id', existingOpportunity.id);
+        }
+
+        // Send notification to assignee
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: actualAssigneeId,
+            title: 'New Communication Handoff',
+            message: `You've been assigned a communication for ${communication.companies?.company_name || 'a company'}${communication.subject ? `: ${communication.subject}` : ''}`,
+            type: 'handoff',
+            link: '/communications',
+            read: false,
+          });
+      }
 
       // Create follow-up activity if requested
       if (createFollowUp && followUpData.scheduled_date) {
@@ -95,10 +146,15 @@ export function MarkAsRepliedDialog({
         if (activityError) throw activityError;
       }
 
+      // Build success message
+      const actions = [];
+      if (createFollowUp) actions.push("follow-up scheduled");
+      if (createHandoff) actions.push("handed off");
+      
       toast({
         title: "Success",
-        description: createFollowUp 
-          ? "Email marked as replied and follow-up activity created"
+        description: actions.length > 0 
+          ? `Email marked as replied, ${actions.join(" and ")}`
           : "Email marked as replied",
       });
 
@@ -106,6 +162,9 @@ export function MarkAsRepliedDialog({
       setReplyContent("");
       setReplyNotes("");
       setCreateFollowUp(false);
+      setCreateHandoff(false);
+      setHandoffAssignee("");
+      setHandoffNotes("");
       setFollowUpData({
         activity_type: "Meeting",
         subject_line: "",
@@ -180,6 +239,54 @@ export function MarkAsRepliedDialog({
               rows={2}
             />
           </div>
+
+          {/* Handoff Toggle */}
+          <div className="flex items-center space-x-2 p-3 border rounded-lg bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800">
+            <Checkbox
+              id="createHandoff"
+              checked={createHandoff}
+              onCheckedChange={(checked) => setCreateHandoff(checked === true)}
+            />
+            <div className="flex-1">
+              <Label htmlFor="createHandoff" className="text-sm font-medium cursor-pointer flex items-center gap-2">
+                <Handshake className="h-4 w-4" />
+                Hand Off to Team Member
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Assign this lead to someone for follow-up
+              </p>
+            </div>
+          </div>
+
+          {/* Handoff Form */}
+          {createHandoff && (
+            <div className="space-y-3 p-4 border rounded-lg bg-purple-50/50 dark:bg-purple-950/10">
+              <div className="flex items-center gap-2 text-sm font-medium text-purple-600 dark:text-purple-400">
+                <Handshake className="h-4 w-4" />
+                Handoff Details
+              </div>
+
+              <div>
+                <Label>Assign To *</Label>
+                <UnifiedAssignmentSelect
+                  value={handoffAssignee}
+                  onValueChange={setHandoffAssignee}
+                  placeholder="Select team member..."
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="handoffNotes">Handoff Notes (Optional)</Label>
+                <Textarea
+                  id="handoffNotes"
+                  value={handoffNotes}
+                  onChange={(e) => setHandoffNotes(e.target.value)}
+                  placeholder="Add any context for the assignee..."
+                  rows={2}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Follow-up Activity Toggle */}
           <div className="flex items-center space-x-2 p-3 border rounded-lg bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
