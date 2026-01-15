@@ -23,6 +23,7 @@ export default function Communications() {
   const [industryTypeFilter, setIndustryTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [communicationTypeFilter, setCommunicationTypeFilter] = useState('all');
+  const [emailStatusFilter, setEmailStatusFilter] = useState('all');
   const [conversationStatusFilter, setConversationStatusFilter] = useState<string>('active');
   const [openNewCommDialog, setOpenNewCommDialog] = useState(false);
   const [replyToCompanyId, setReplyToCompanyId] = useState<string | null>(null);
@@ -92,6 +93,28 @@ export default function Communications() {
       filtered = filtered.filter((comm) => comm.communication_type === communicationTypeFilter);
     }
 
+    // Email status filter
+    if (emailStatusFilter !== 'all') {
+      filtered = filtered.filter((comm) => {
+        const hasResponded = !!comm.email_responded_at;
+        const hasOpened = !!comm.email_opened_at;
+        const hasSent = !!comm.sent_at;
+        
+        switch (emailStatusFilter) {
+          case 'draft':
+            return !hasSent;
+          case 'sent':
+            return hasSent && !hasOpened && !hasResponded;
+          case 'opened':
+            return hasOpened && !hasResponded;
+          case 'responded':
+            return hasResponded;
+          default:
+            return true;
+        }
+      });
+    }
+
     // Conversation status filter
     if (conversationStatusFilter === 'active') {
       filtered = filtered.filter((comm) => comm.conversation_active !== false);
@@ -100,7 +123,7 @@ export default function Communications() {
     }
 
     return filtered;
-  }, [communications, searchQuery, industryTypeFilter, statusFilter, communicationTypeFilter, conversationStatusFilter]);
+  }, [communications, searchQuery, industryTypeFilter, statusFilter, communicationTypeFilter, emailStatusFilter, conversationStatusFilter]);
 
   const handleReply = (comm: any) => {
     setReplyToCompanyId(comm.company_id);
@@ -234,10 +257,11 @@ export default function Communications() {
     setIndustryTypeFilter('all');
     setStatusFilter('all');
     setCommunicationTypeFilter('all');
+    setEmailStatusFilter('all');
     setConversationStatusFilter('active');
   };
 
-  const hasActiveFilters = searchQuery || industryTypeFilter !== 'all' || statusFilter !== 'all' || communicationTypeFilter !== 'all';
+  const hasActiveFilters = searchQuery || industryTypeFilter !== 'all' || statusFilter !== 'all' || communicationTypeFilter !== 'all' || emailStatusFilter !== 'all';
 
   return (
     <div className="flex flex-col h-screen">
@@ -285,7 +309,7 @@ export default function Communications() {
         </div>
 
         {/* Filters */}
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-6 gap-4">
           <div className="col-span-2">
             <Label>Search</Label>
             <div className="relative">
@@ -355,6 +379,22 @@ export default function Communications() {
                 <SelectItem value="email">Email</SelectItem>
                 <SelectItem value="call_script">Call Script</SelectItem>
                 <SelectItem value="linkedin_message">LinkedIn Message</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Email Status</Label>
+            <Select value={emailStatusFilter} onValueChange={setEmailStatusFilter}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Email Statuses</SelectItem>
+                <SelectItem value="draft">Draft (Not Sent)</SelectItem>
+                <SelectItem value="sent">Sent</SelectItem>
+                <SelectItem value="opened">Opened</SelectItem>
+                <SelectItem value="responded">Responded</SelectItem>
               </SelectContent>
             </Select>
           </div>
