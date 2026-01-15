@@ -5974,6 +5974,7 @@ export type Database = {
           next_rotation_date: string
         }[]
       }
+      check_past_due_meetings: { Args: never; Returns: undefined }
       check_presentation_token_rate_limit: {
         Args: {
           _ip_address: unknown
@@ -6328,6 +6329,8 @@ export type Database = {
         | "Completed"
         | "No Answer"
         | "Bounced"
+        | "Scheduled"
+        | "Cancelled"
       activity_type:
         | "Email"
         | "Phone"
@@ -6504,6 +6507,8 @@ export const Constants = {
         "Completed",
         "No Answer",
         "Bounced",
+        "Scheduled",
+        "Cancelled",
       ],
       activity_type: [
         "Email",
