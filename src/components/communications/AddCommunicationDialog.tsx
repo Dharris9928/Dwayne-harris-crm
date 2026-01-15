@@ -83,6 +83,7 @@ export function AddCommunicationDialog({ onSuccess, open, onOpenChange }: AddCom
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      const now = new Date().toISOString();
       const { error } = await supabase
         .from('company_communications')
         .insert({
@@ -93,7 +94,8 @@ export function AddCommunicationDialog({ onSuccess, open, onOpenChange }: AddCom
           content: formData.content,
           notes: formData.notes || null,
           user_id: user.id,
-          generated_at: new Date().toISOString(),
+          generated_at: now,
+          sent_at: now, // Required for pipeline analytics tracking
           ai_model: null, // Manually created, not AI generated
         });
 
