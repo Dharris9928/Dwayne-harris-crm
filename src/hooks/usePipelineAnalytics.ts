@@ -178,13 +178,11 @@ export function usePipelineAnalytics(
         }
       }
 
-      // Fetch all activities (Meeting, Demo, Phone) - include created_at for upcoming meetings
+      // Fetch all activities (Meeting, Demo, Phone) - include upcoming regardless of date range
       let activitiesQuery = supabase
         .from("outreach_activities")
         .select("id, activity_type, outcome, scheduled_date, completed_date, created_at, company_id")
-        .in("activity_type", ["Meeting", "Demo", "Phone"])
-        .or(`scheduled_date.gte.${fromDate},completed_date.gte.${fromDate},created_at.gte.${fromDate}`)
-        .or(`scheduled_date.lte.${toDate},completed_date.lte.${toDate},created_at.lte.${toDate}`);
+        .in("activity_type", ["Meeting", "Demo", "Phone"]);
       
       activitiesQuery = buildPerspectiveFilter(activitiesQuery);
       const { data: activitiesDataRaw, error: activitiesError } = await activitiesQuery;
@@ -192,25 +190,28 @@ export function usePipelineAnalytics(
       if (activitiesError) throw activitiesError;
 
       let activitiesData = activitiesDataRaw || [];
+      const currentDate = new Date();
+      currentDate.setHours(0, 0, 0, 0);
+      const from = new Date(fromDate);
+      from.setHours(0, 0, 0, 0);
+      const to = new Date(toDate);
+      to.setHours(23, 59, 59, 999);
       
-      // Filter by date range - include activities created within range OR scheduled for future
+      // Filter activities: include those in date range OR upcoming future meetings
       activitiesData = activitiesData.filter(a => {
         const schedDate = a.scheduled_date ? new Date(a.scheduled_date) : null;
         const compDate = a.completed_date ? new Date(a.completed_date) : null;
         const createdDate = a.created_at ? new Date(a.created_at) : null;
-        const from = new Date(fromDate);
-        from.setHours(0, 0, 0, 0);
-        const to = new Date(toDate);
-        to.setHours(23, 59, 59, 999);
-        const today = new Date();
         
-        // Include if: created within range, completed within range, OR scheduled for future (upcoming)
+        // Include if: created within range, completed within range, scheduled within range
         const createdInRange = createdDate && createdDate >= from && createdDate <= to;
         const completedInRange = compDate && compDate >= from && compDate <= to;
         const scheduledInRange = schedDate && schedDate >= from && schedDate <= to;
-        const scheduledForFuture = schedDate && schedDate >= today && !a.completed_date && a.outcome !== "Completed";
         
-        return createdInRange || completedInRange || scheduledInRange || scheduledForFuture;
+        // ALWAYS include upcoming meetings (scheduled for future, not completed)
+        const isUpcoming = schedDate && schedDate >= currentDate && !a.completed_date && a.outcome !== "Completed";
+        
+        return createdInRange || completedInRange || scheduledInRange || isUpcoming;
       });
 
       if (filterStates && activitiesData.length > 0) {
