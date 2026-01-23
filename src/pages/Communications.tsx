@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { NewCommunicationDialog } from '@/components/companies/NewCommunicationDialog';
 import { EditCommunicationDialog } from '@/components/companies/EditCommunicationDialog';
 import { ApolloEmailImportDialog } from '@/components/communications/ApolloEmailImportDialog';
+import { ApolloEngagementImportDialog } from '@/components/communications/ApolloEngagementImportDialog';
 import { AddCommunicationDialog } from '@/components/communications/AddCommunicationDialog';
 import { MarkAsRepliedDialog } from '@/components/communications/MarkAsRepliedDialog';
 import { HandoffDialog } from '@/components/communications/HandoffDialog';
@@ -38,6 +39,7 @@ export default function Communications() {
   const [editCommunication, setEditCommunication] = useState<any>(null);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openApolloImport, setOpenApolloImport] = useState(false);
+  const [openEngagementImport, setOpenEngagementImport] = useState(false);
   const [replyDialogComm, setReplyDialogComm] = useState<any>(null);
   const [openReplyDialog, setOpenReplyDialog] = useState(false);
   const [openManualDialog, setOpenManualDialog] = useState(false);
@@ -436,10 +438,26 @@ export default function Communications() {
             <p className="text-muted-foreground">View and manage all generated communications</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => setOpenApolloImport(true)}>
-              <Download className="h-4 w-4 mr-2" />
-              Import from Apollo
-            </Button>
+            {/* Import Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Download className="h-4 w-4 mr-2" />
+                  Import
+                  <ChevronDown className="h-4 w-4 ml-2" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-card z-50">
+                <DropdownMenuItem onClick={() => setOpenApolloImport(true)}>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Import Emails from Apollo
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setOpenEngagementImport(true)}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  Import Opened Emails (CSV)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             
             {/* Combined New Communication Dropdown */}
             <DropdownMenu>
@@ -813,6 +831,12 @@ export default function Communications() {
       <ApolloEmailImportDialog
         open={openApolloImport}
         onOpenChange={setOpenApolloImport}
+        onImportComplete={refetch}
+      />
+
+      <ApolloEngagementImportDialog
+        open={openEngagementImport}
+        onOpenChange={setOpenEngagementImport}
         onImportComplete={refetch}
       />
 
