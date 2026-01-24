@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import Papa from 'papaparse';
+import { useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -34,6 +35,7 @@ export function ApolloEngagementImportDialog({
   onImportComplete,
 }: ApolloEngagementImportDialogProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>('upload');
   const [file, setFile] = useState<File | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -250,9 +252,15 @@ export function ApolloEngagementImportDialog({
       setStep('complete');
 
       if (result.updated > 0) {
+        // Invalidate all related queries for immediate dashboard refresh
+        queryClient.invalidateQueries({ queryKey: ["pipeline-analytics"] });
+        queryClient.invalidateQueries({ queryKey: ["communications-funnel"] });
+        queryClient.invalidateQueries({ queryKey: ["all-communications"] });
+        queryClient.invalidateQueries({ queryKey: ["apollo-email-activities"] });
+
         toast({
           title: 'Import complete',
-          description: `Successfully updated ${result.updated} email records`,
+          description: `Successfully updated ${result.updated} email records. Dashboard metrics will refresh automatically.`,
         });
         onImportComplete?.();
       }
