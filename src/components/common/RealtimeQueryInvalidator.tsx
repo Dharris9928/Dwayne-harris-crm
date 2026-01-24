@@ -8,6 +8,14 @@ const TABLE_TO_QUERY_KEYS: Record<string, QueryKeyLike[]> = {
   // Pages whose query keys don't match the table name
   company_communications: [["all-communications"], ["communications-funnel"], ["pipeline-analytics"]],
   building_permits: [["building-permits"], ["permit-stats"]],
+  
+  // Apollo engagement data affects multiple dashboards
+  apollo_email_activities: [
+    ["all-communications"],
+    ["communications-funnel"],
+    ["pipeline-analytics"],
+    ["apollo-email-activities"],
+  ],
 
   // Convenience invalidations (dashboards / aggregates)
   companies: [
