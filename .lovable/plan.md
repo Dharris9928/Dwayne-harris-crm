@@ -1,119 +1,168 @@
 
 
-# Updated Apollo Email Import - Adapting to Real CSV Format
+# Ensure Apollo CSV Import Updates All Dashboards
 
 ## Problem
-The current implementation expects an "Opened At" timestamp column, but the actual Apollo export uses a **boolean `Open` column** (true/false). We need to adapt the logic to work with your real CSV format.
+When the Apollo opened emails CSV is imported, it updates `apollo_email_activities` and `company_communications` tables. However, the realtime invalidation system only has mappings for `company_communications`, not `apollo_email_activities`. This means some dashboard updates may be missed.
 
-## Apollo CSV Columns (Actual)
-| Column | Example | Used For |
-|--------|---------|----------|
-| `To Email` | john@acme.com | Match to contact |
-| `Subject` | "Follow up..." | Match to email record |
-| `Sent At (PST)` | "January 09, 2026 07:32" | Fallback for opened_at |
-| `Open` | true/false | Filter opened emails |
-| `Click` | true/false | Track link clicks |
-| `Replied` | true/false | Track replies |
-| `To Company` | "Acme Corp" | Company context |
+## Current State
 
-## Updated Matching Flow
+### Tables Updated by Import
+| Table | Fields Updated |
+|-------|---------------|
+| `apollo_email_activities` | `opened_at`, `open_count`, `status`, `clicked_at`, `replied_at` |
+| `company_communications` | `email_opened_at`, `email_responded_at` |
+
+### Current Realtime Mappings
+```text
+company_communications → ["all-communications"], ["communications-funnel"], ["pipeline-analytics"]
+apollo_email_activities → ❌ NOT MAPPED
+```
+
+### Dashboards That Should Refresh
+- **Pipeline Analytics Page** (`/pipeline-analytics`)
+  - `PipelineKPICards` - Shows emails opened, responses received
+  - `PipelineFunnelChart` - Shows funnel conversion rates
+  - `EmailPerformanceCard` - Shows open rate, response rate
+  - `CommunicationsFunnel` - Shows email engagement breakdown
+- **Communications Page** (`/communications`)
+  - Communications list with opened/replied badges
+- **Dashboard** (`/`)
+  - Any email engagement summary cards
+
+## Solution
+
+### Step 1: Add `apollo_email_activities` to Realtime Invalidator
+
+**File:** `src/components/common/RealtimeQueryInvalidator.tsx`
+
+Add the missing table mapping:
 
 ```text
-Step 1: Upload CSV
+┌─────────────────────────────────────────────────────────────────────┐
+│  TABLE_TO_QUERY_KEYS additions:                                     │
+│                                                                     │
+│  apollo_email_activities: [                                         │
+│    ["all-communications"],      // Comm list shows engagement      │
+│    ["communications-funnel"],   // Funnel uses engagement data     │
+│    ["pipeline-analytics"],      // KPIs depend on opened emails    │
+│    ["apollo-email-activities"], // Direct table query key          │
+│  ]                                                                  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Step 2: Add Manual Invalidation After Import
+
+**File:** `src/components/communications/ApolloEngagementImportDialog.tsx`
+
+Currently the dialog only calls `onImportComplete?.()` which triggers `refetch()` for `["all-communications"]`.
+
+We need to add explicit query invalidation directly in the dialog to ensure all related queries are refreshed immediately after import:
+
+```text
+After successful import:
+  1. queryClient.invalidateQueries({ queryKey: ["pipeline-analytics"] })
+  2. queryClient.invalidateQueries({ queryKey: ["communications-funnel"] })
+  3. queryClient.invalidateQueries({ queryKey: ["all-communications"] })
+  4. queryClient.invalidateQueries({ queryKey: ["apollo-email-activities"] })
+  5. Call onImportComplete?.() as before
+```
+
+This ensures that:
+- The user sees immediate updates without waiting for realtime events
+- All dashboards refresh regardless of which page they're on
+- The manual refresh button on Pipeline Analytics isn't needed after import
+
+### Step 3: Add Toast Notification for Dashboard Update
+
+**File:** `src/components/communications/ApolloEngagementImportDialog.tsx`
+
+After invalidating queries, show a toast confirming dashboards will update:
+
+```text
+Toast: "Dashboard metrics will update shortly with the new engagement data"
+```
+
+---
+
+## Data Flow After Fix
+
+```text
+User uploads Apollo CSV
          │
          ▼
-Step 2: Auto-detect columns
-         │ - "To Email" → email
-         │ - "Subject" → subject  
-         │ - "Open" → opened (boolean)
-         │ - "Sent At (PST)" → sentAt
-         ▼
-Step 3: Filter rows where Open = "true"
+Parse and match emails
          │
          ▼
-Step 4: Match to apollo_email_activities
-         │ - By Email + Subject (85% confidence)
-         │ - By Email only if unique (60% confidence)
+Update apollo_email_activities
+         │
+         ├──────────────────────────────────────────────┐
+         │                                              │
+         ▼                                              ▼
+Update company_communications              Realtime listener detects
+         │                                  apollo_email_activities change
+         │                                              │
+         │                                              ▼
+         │                                  Invalidates: pipeline-analytics,
+         │                                  communications-funnel, etc.
+         │
          ▼
-Step 5: Update matched records
-         │ - opened_at = Sent At timestamp (best available)
-         │ - open_count = 1
-         │ - status = "opened"
+Manual invalidation in dialog
+(immediate refresh guarantee)
+         │
+         ▼
+All dashboards show updated metrics
 ```
 
-## Changes Required
-
-### File 1: `src/lib/apollo/importOpenedEmails.ts`
-
-1. **Update column mappings** to detect Apollo's actual format:
-   - Add `"to email"` to email variations
-   - Add `"open"` as boolean field
-   - Handle `"Sent At (PST)"` format with partial matching
-
-2. **Change parseOpenedEmails logic**:
-   - Filter by `Open = "true"` (boolean string)
-   - Use `Sent At` as the `openedAt` timestamp (since Apollo doesn't provide exact open time)
-   - Make `openedAt` column optional (derive from `sentAt`)
-
-3. **Add click/reply tracking** (bonus):
-   - Track `Click`, `Replied` columns too
-   - Update `clicked_at`, `replied_at` fields
-
-### File 2: `src/components/communications/ApolloEngagementImportDialog.tsx`
-
-1. **Update required field validation**:
-   - Change from requiring `openedAt` to requiring `opened` (boolean) OR `email`
-   - Make the flow work with boolean open status
-
-2. **Improve column mapping UI**:
-   - Show "Open Status (Boolean)" option
-   - Allow `Sent At` to be used as fallback timestamp
-
-3. **Update preview display**:
-   - Show count of rows where `Open = true`
-   - Clarify that `Sent At` will be used as `opened_at` timestamp
-
-## Technical Details
-
-### Column Detection Updates
-```typescript
-// Add to APOLLO_COLUMN_MAPPINGS
-email: [...existing, 'to email', 'to'],
-sentAt: [...existing, 'sent at (pst)', 'sent at (utc)'],
-opened: ['open', 'opened', 'is opened', 'was opened'],
-clicked: ['click', 'clicked', 'is clicked'],
-replied: ['replied', 'reply', 'is replied'],
-```
-
-### Boolean Filtering Logic
-```typescript
-// Instead of checking for openedAt timestamp:
-const openedValue = columnMapping.opened 
-  ? row[columnMapping.opened]?.toLowerCase().trim() 
-  : null;
-
-// Skip if not opened
-if (openedValue !== 'true') continue;
-
-// Use sentAt as the opened timestamp (best available)
-const openedAt = columnMapping.sentAt 
-  ? row[columnMapping.sentAt]?.trim() 
-  : new Date().toISOString();
-```
-
-### Matching Logic (Unchanged)
-The matching by email+subject against `apollo_email_activities` remains the same - we just change how we identify which rows to process.
-
-## Expected Result
-
-After import:
-- **856 rows** in your CSV
-- Filter to rows where `Open = true` (e.g., ~200+ opened emails)
-- Match those against your **1,643 records** in `apollo_email_activities`
-- Update `opened_at`, `open_count`, `status` for matched records
-- Also sync `email_opened_at` in `company_communications`
+---
 
 ## Files to Modify
-1. `src/lib/apollo/importOpenedEmails.ts` - Core logic updates
-2. `src/components/communications/ApolloEngagementImportDialog.tsx` - UI updates
+
+| File | Change |
+|------|--------|
+| `src/components/common/RealtimeQueryInvalidator.tsx` | Add `apollo_email_activities` table mapping |
+| `src/components/communications/ApolloEngagementImportDialog.tsx` | Add `useQueryClient` and manual invalidation after successful import |
+
+---
+
+## Technical Implementation
+
+### RealtimeQueryInvalidator.tsx Changes
+
+```typescript
+const TABLE_TO_QUERY_KEYS: Record<string, QueryKeyLike[]> = {
+  // ... existing mappings ...
+  
+  // Add apollo_email_activities mapping
+  apollo_email_activities: [
+    ["all-communications"],
+    ["communications-funnel"],
+    ["pipeline-analytics"],
+    ["apollo-email-activities"],
+  ],
+};
+```
+
+### ApolloEngagementImportDialog.tsx Changes
+
+1. Import `useQueryClient` from `@tanstack/react-query`
+2. Get queryClient instance: `const queryClient = useQueryClient()`
+3. After `updateOpenedEmails()` succeeds, call:
+
+```typescript
+// Invalidate all related queries for immediate dashboard refresh
+queryClient.invalidateQueries({ queryKey: ["pipeline-analytics"] });
+queryClient.invalidateQueries({ queryKey: ["communications-funnel"] });
+queryClient.invalidateQueries({ queryKey: ["all-communications"] });
+queryClient.invalidateQueries({ queryKey: ["apollo-email-activities"] });
+```
+
+---
+
+## Benefits
+
+1. **Immediate Updates** - Dashboards refresh right after import completes
+2. **Consistent Data** - All views show the same engagement metrics
+3. **No Manual Refresh Needed** - Users don't have to click "Refresh" button
+4. **Future-Proofed** - Any new dashboard using these query keys will auto-update
 
