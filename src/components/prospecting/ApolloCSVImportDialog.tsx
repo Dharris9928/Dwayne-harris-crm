@@ -17,6 +17,7 @@ import {
   type CompanyWithContacts
 } from '@/lib/prospecting/importApolloCSV';
 import { supabase } from '@/integrations/supabase/client';
+import { generateBatchId } from '@/lib/import/batchTracking';
 
 interface ApolloCSVImportDialogProps {
   open: boolean;
@@ -125,20 +126,25 @@ export function ApolloCSVImportDialog({
       setImportResults(results);
       setStep('complete');
 
-      // Log the import activity
+      // Log the import activity with batch tracking
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        const batchId = generateBatchId();
         try {
           const totalRecords = groupedData.reduce((sum, g) => sum + g.contacts.length + 1, 0);
           await supabase.from('import_export_logs').insert({
             user_id: user.id,
-            activity_type: 'import',
+            batch_id: batchId,
+            file_name: file?.name || 'Apollo CSV',
+            activity_type: 'IMPORT',
             table_name: 'companies',
+            affected_tables: ['companies', 'contacts'],
             record_count: totalRecords,
             successful_count: results.companiesCreated + results.contactsCreated,
             failed_count: results.errors.length,
             duplicate_count: results.duplicatesSkipped,
             file_format: file?.name.split('.').pop()?.toUpperCase(),
+            rollback_available: true,
             error_summary: results.errors.length > 0 
               ? `${results.errors.length} errors occurred` 
               : null,

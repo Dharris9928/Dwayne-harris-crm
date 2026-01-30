@@ -439,8 +439,10 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          import_batch_id: string | null
           open_count: number | null
           opened_at: string | null
+          previous_engagement_values: Json | null
           replied_at: string | null
           reply_count: number | null
           sent_at: string | null
@@ -464,8 +466,10 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          import_batch_id?: string | null
           open_count?: number | null
           opened_at?: string | null
+          previous_engagement_values?: Json | null
           replied_at?: string | null
           reply_count?: number | null
           sent_at?: string | null
@@ -489,8 +493,10 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          import_batch_id?: string | null
           open_count?: number | null
           opened_at?: string | null
+          previous_engagement_values?: Json | null
           replied_at?: string | null
           reply_count?: number | null
           sent_at?: string | null
@@ -1209,6 +1215,7 @@ export type Database = {
           has_google_business_profile: boolean | null
           hvac_monitoring: string | null
           id: string
+          import_batch_id: string | null
           industry_awards_recognition: boolean | null
           industry_specialties: string[] | null
           industry_type: string
@@ -1298,6 +1305,7 @@ export type Database = {
           has_google_business_profile?: boolean | null
           hvac_monitoring?: string | null
           id?: string
+          import_batch_id?: string | null
           industry_awards_recognition?: boolean | null
           industry_specialties?: string[] | null
           industry_type: string
@@ -1387,6 +1395,7 @@ export type Database = {
           has_google_business_profile?: boolean | null
           hvac_monitoring?: string | null
           id?: string
+          import_batch_id?: string | null
           industry_awards_recognition?: boolean | null
           industry_specialties?: string[] | null
           industry_type?: string
@@ -1643,6 +1652,7 @@ export type Database = {
           email_responded_at: string | null
           generated_at: string | null
           id: string
+          import_batch_id: string | null
           notes: string | null
           opportunity_id: string | null
           previous_context: string | null
@@ -1665,6 +1675,7 @@ export type Database = {
           email_responded_at?: string | null
           generated_at?: string | null
           id?: string
+          import_batch_id?: string | null
           notes?: string | null
           opportunity_id?: string | null
           previous_context?: string | null
@@ -1687,6 +1698,7 @@ export type Database = {
           email_responded_at?: string | null
           generated_at?: string | null
           id?: string
+          import_batch_id?: string | null
           notes?: string | null
           opportunity_id?: string | null
           previous_context?: string | null
@@ -1952,6 +1964,7 @@ export type Database = {
           encryption_version: number | null
           first_name: string
           id: string
+          import_batch_id: string | null
           last_name: string
           linkedin_activity_score: number | null
           linkedin_connections: number | null
@@ -1977,6 +1990,7 @@ export type Database = {
           encryption_version?: number | null
           first_name: string
           id?: string
+          import_batch_id?: string | null
           last_name: string
           linkedin_activity_score?: number | null
           linkedin_connections?: number | null
@@ -2002,6 +2016,7 @@ export type Database = {
           encryption_version?: number | null
           first_name?: string
           id?: string
+          import_batch_id?: string | null
           last_name?: string
           linkedin_activity_score?: number | null
           linkedin_connections?: number | null
@@ -2942,45 +2957,63 @@ export type Database = {
       import_export_logs: {
         Row: {
           activity_type: string
+          affected_tables: string[] | null
+          batch_id: string | null
           created_at: string
           detailed_errors: Json | null
           duplicate_count: number
           error_summary: string | null
           failed_count: number
           file_format: string | null
+          file_name: string | null
           filters_applied: Json | null
           id: string
           record_count: number
+          rollback_available: boolean | null
+          rolled_back_at: string | null
+          rolled_back_by: string | null
           successful_count: number
           table_name: string
           user_id: string
         }
         Insert: {
           activity_type: string
+          affected_tables?: string[] | null
+          batch_id?: string | null
           created_at?: string
           detailed_errors?: Json | null
           duplicate_count?: number
           error_summary?: string | null
           failed_count?: number
           file_format?: string | null
+          file_name?: string | null
           filters_applied?: Json | null
           id?: string
           record_count?: number
+          rollback_available?: boolean | null
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
           successful_count?: number
           table_name: string
           user_id: string
         }
         Update: {
           activity_type?: string
+          affected_tables?: string[] | null
+          batch_id?: string | null
           created_at?: string
           detailed_errors?: Json | null
           duplicate_count?: number
           error_summary?: string | null
           failed_count?: number
           file_format?: string | null
+          file_name?: string | null
           filters_applied?: Json | null
           id?: string
           record_count?: number
+          rollback_available?: boolean | null
+          rolled_back_at?: string | null
+          rolled_back_by?: string | null
           successful_count?: number
           table_name?: string
           user_id?: string

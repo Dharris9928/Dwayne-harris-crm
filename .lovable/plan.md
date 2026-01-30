@@ -2,6 +2,18 @@
 
 # Upload Log - Batch Tracking & Rollback System
 
+## Status: ✅ Phase 1-4 Complete, Phase 5 In Progress
+
+### Completed:
+- ✅ Phase 1: Database schema changes (migration applied)
+- ✅ Phase 2: Utility files created (`batchTracking.ts`, `rollbackImport.ts`)
+- ✅ Phase 4: UploadLogViewer component created
+- ✅ Phase 5.1: Settings page updated with UploadLogViewer in Data tab
+
+### Remaining:
+- ⬜ Phase 3: Update import dialogs to use batch tracking (8 dialogs)
+- ⬜ Phase 5.2: Remove redundant ImportExportLogsViewer from other tabs
+
 ## Overview
 
 Add an "Upload Log" section to the Settings > Data tab that provides:
