@@ -13,6 +13,7 @@ import * as XLSX from 'xlsx';
 import { AIImportReviewStep } from './AIImportReviewStep';
 import { createCompany } from '@/lib/companies/createCompany';
 import { createContact } from '@/lib/contacts/createContact';
+import { generateBatchId } from '@/lib/import/batchTracking';
 
 interface AIImportDialogProps {
   open: boolean;
@@ -211,6 +212,30 @@ export function AIImportDialog({ open, onClose, onImportComplete, targetTable }:
     }
 
     setStep('complete');
+    
+    // Log import activity with batch tracking
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const batchId = generateBatchId();
+      try {
+        await supabase.from('import_export_logs').insert({
+          user_id: user.id,
+          batch_id: batchId,
+          file_name: file?.name || 'AI Import',
+          activity_type: 'IMPORT',
+          table_name: targetTable,
+          affected_tables: targetTable === 'companies' ? ['companies', 'contacts'] : ['contacts'],
+          record_count: acceptedRows.length,
+          successful_count: successCount,
+          failed_count: failedCount,
+          file_format: file?.name.split('.').pop()?.toUpperCase(),
+          rollback_available: true,
+        });
+      } catch (error) {
+        console.error('Failed to log import activity:', error);
+      }
+    }
+    
     onImportComplete();
   };
 

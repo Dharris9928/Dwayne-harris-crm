@@ -15,6 +15,7 @@ import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { Upload, Download, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { generateBatchId } from "@/lib/import/batchTracking";
 
 interface ImportDialogProps {
   open: boolean;
@@ -415,18 +416,23 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
     setImportResults(results);
     setStep('complete');
 
-    // Log the import activity
+    // Log the import activity with batch tracking
     if (user) {
+      const batchId = generateBatchId();
       try {
         await supabase.from('import_export_logs').insert({
           user_id: user.id,
-          activity_type: 'import',
+          batch_id: batchId,
+          file_name: file?.name || null,
+          activity_type: 'IMPORT',
           table_name: 'companies',
+          affected_tables: ['companies'],
           record_count: parsedData.length,
           successful_count: results.success,
           failed_count: results.failed,
           duplicate_count: results.duplicates,
           file_format: file?.name.split('.').pop()?.toUpperCase(),
+          rollback_available: true,
           error_summary: results.errors.length > 0 
             ? `${results.errors.length} errors occurred` 
             : null,

@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import Papa from 'papaparse';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { generateBatchId } from '@/lib/import/batchTracking';
 
 interface ImportResult {
   total: number;
@@ -186,14 +187,19 @@ Jane,Doe,VP Operations,jane@contractor.com,555-8765,555-4321,https://linkedin.co
             }
           }
 
+          const batchId = generateBatchId();
           await supabase.from('import_export_logs').insert({
             user_id: user.id,
+            batch_id: batchId,
+            file_name: file.name,
             activity_type: 'IMPORT',
             table_name: 'contacts',
+            affected_tables: ['contacts', 'companies'],
             record_count: importResult.total,
             successful_count: importResult.successful,
             failed_count: importResult.failed,
             file_format: 'CSV',
+            rollback_available: true,
             detailed_errors: importResult.errors.length > 0 ? importResult.errors : null,
           });
 
