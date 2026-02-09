@@ -88,12 +88,12 @@ export function usePipelineAnalytics(
     queryKey: ["pipeline-analytics", dateRange.from, dateRange.to, perspective, userId, regionFilter],
     queryFn: async (): Promise<PipelineMetrics> => {
       const fromDate = format(dateRange.from, "yyyy-MM-dd");
-      const toDate = format(dateRange.to, "yyyy-MM-dd");
+      const toDate = format(dateRange.to, "yyyy-MM-dd") + "T23:59:59";
       
       // Calculate previous period for comparison
       const periodDays = Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24));
       const prevFrom = format(subDays(dateRange.from, periodDays), "yyyy-MM-dd");
-      const prevTo = format(subDays(dateRange.to, periodDays), "yyyy-MM-dd");
+      const prevTo = format(subDays(dateRange.to, periodDays), "yyyy-MM-dd") + "T23:59:59";
 
       const filterStates = getFilterStates(regionFilter);
 
