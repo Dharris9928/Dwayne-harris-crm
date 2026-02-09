@@ -56,22 +56,32 @@ export function HandoffDialog({
       // Parse the assignedTo value to get the actual user ID
       // Format is either "user:uuid" or "salesrep:uuid" or just "uuid"
       let actualUserId = assignedTo;
+      let isSalesRep = false;
       if (assignedTo.startsWith('user:')) {
         actualUserId = assignedTo.replace('user:', '');
       } else if (assignedTo.startsWith('salesrep:')) {
         actualUserId = assignedTo.replace('salesrep:', '');
+        isSalesRep = true;
       }
 
-      // Update the communication with the assigned_to field
-      const { error: updateError } = await supabase
-        .from('company_communications')
-        .update({
-          assigned_to: actualUserId,
-          notes: notes ? `Handoff Notes: ${notes}` : undefined,
-        })
-        .eq('id', communication.id);
+      // Update the communication - only set assigned_to for system users (profiles FK constraint)
+      const updateData: Record<string, any> = {};
+      if (!isSalesRep) {
+        updateData.assigned_to = actualUserId;
+      }
+      if (notes) {
+        updateData.notes = `Handoff Notes: ${notes}`;
+      }
 
-      if (updateError) throw updateError;
+      if (Object.keys(updateData).length > 0) {
+        const { error: updateError } = await supabase
+          .from('company_communications')
+          .update(updateData)
+          .eq('id', communication.id);
+
+        if (updateError) throw updateError;
+      }
+
 
       // Check if there's an existing opportunity for this company
       const { data: existingOpportunity } = await supabase
