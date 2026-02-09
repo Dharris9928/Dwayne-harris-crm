@@ -62,10 +62,12 @@ export function ActivityHandoffDialog({
 
       // Parse the assignedTo value to get the actual user ID
       let actualUserId = assignedTo;
+      let isSalesRep = false;
       if (assignedTo.startsWith('user:')) {
         actualUserId = assignedTo.replace('user:', '');
       } else if (assignedTo.startsWith('salesrep:')) {
         actualUserId = assignedTo.replace('salesrep:', '');
+        isSalesRep = true;
       }
 
       // Update the activity with handoff notes
