@@ -103,8 +103,18 @@ const Contacts = () => {
 
       // Apply server-side search filter when search term exists
       if (debouncedSearch.trim()) {
-        const term = `%${debouncedSearch.trim()}%`;
-        query = query.or(`first_name.ilike.${term},last_name.ilike.${term},email.ilike.${term},title.ilike.${term}`);
+        const words = debouncedSearch.trim().split(/\s+/);
+        if (words.length > 1) {
+          // Multi-word: match each word against name fields (e.g. "Aaron Wells")
+          const conditions = words.map(w => {
+            const t = `%${w}%`;
+            return `first_name.ilike.${t},last_name.ilike.${t}`;
+          }).join(',');
+          query = query.or(conditions);
+        } else {
+          const term = `%${words[0]}%`;
+          query = query.or(`first_name.ilike.${term},last_name.ilike.${term},email.ilike.${term},title.ilike.${term}`);
+        }
       }
 
       const { data, error } = await query.order("created_at", { ascending: false }).limit(1000);
