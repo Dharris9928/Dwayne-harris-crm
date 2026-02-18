@@ -563,35 +563,49 @@ serve(async (req) => {
         if (hasClick) return 'clicked';
         if (hasOpen) return 'opened';
 
-        // Check if email was delivered/sent (completed) but not opened = "not_opened" in Apollo terms
-        const wasDelivered = email.completed_at || email.sent_at || status === 'sent' || status === 'delivered' || status === 'active';
+        // Check if email was delivered/sent
+        // Apollo uses many status values: 'sent', 'delivered', 'active', 'finished', 'complete', etc.
+        // If completed_at is set and in the past, the email was sent regardless of status string
+        if (email.completed_at) {
+          try {
+            const completedDate = new Date(email.completed_at);
+            if (completedDate.getTime() <= Date.now()) {
+              return 'not_opened';
+            }
+          } catch { /* ignore */ }
+        }
         
-        if (wasDelivered) {
-          // Apollo calls delivered-but-not-opened emails as "not_opened"
-          // We map this to 'not_opened' status to match Apollo's breakdown
+        if (email.sent_at) return 'not_opened';
+        
+        // Check status strings for sent indicators
+        if (status === 'sent' || status === 'delivered' || status === 'active' || 
+            status === 'finished' || status === 'complete' || status === 'completed') {
           return 'not_opened';
         }
 
-        // Pre-send states — but only if completed_at is NOT set.
-        // Apollo sometimes keeps status as "scheduled" even after the email was sent.
-        // If completed_at exists AND is in the past, treat it as delivered (not_opened).
+        // Pre-send states — only if no completed_at timestamp exists
         if (status === 'scheduled' || status === 'queued' || status === 'paused') {
-          // Double-check: if completed_at is set and in the past, it was actually sent
-          if (email.completed_at) {
-            try {
-              const completedDate = new Date(email.completed_at);
-              if (completedDate.getTime() <= Date.now()) {
-                return 'not_opened';
-              }
-            } catch { /* ignore parse errors */ }
-          }
           return 'scheduled';
         }
         if (status === 'draft' || status === 'pending' || status === 'not_sent') return 'draft';
 
-        // Default to draft if nothing else matches (no send timestamp)
-        return 'draft';
+        // Default: if we have NO evidence of sending, mark as scheduled (not draft)
+        // to be more permissive — the filter will decide what to include
+        return 'scheduled';
       };
+
+      // Log raw status distribution for debugging
+      const rawStatusDist = allEmails.reduce((acc, e) => {
+        const s = e.status || 'null';
+        acc[s] = (acc[s] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      console.log("Raw Apollo status distribution:", JSON.stringify(rawStatusDist));
+
+      // Log completed_at presence
+      const withCompletedAt = allEmails.filter(e => !!e.completed_at).length;
+      const withSentAt = allEmails.filter(e => !!e.sent_at).length;
+      console.log(`Emails with completed_at: ${withCompletedAt}, with sent_at: ${withSentAt}`);
 
       const transformedEmails = allEmails.map((email) => {
         const contact = email.contact_id ? contactMap.get(email.contact_id) : null;
@@ -700,17 +714,24 @@ serve(async (req) => {
         };
       });
 
-      // Filter to only exclude clear drafts (keep scheduled since Apollo sometimes
-      // misclassifies sent emails as scheduled)
+      // Log derived status distribution
+      const derivedStatusDist = transformedEmails.reduce((acc, e) => {
+        acc[e.status] = (acc[e.status] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      console.log("Derived status distribution:", JSON.stringify(derivedStatusDist));
+
+      // Only exclude emails with NO evidence of being sent
       const sentEmails = transformedEmails.filter((email) => {
-        // Only exclude drafts — scheduled emails with a sentAt timestamp should be included
+        // Exclude only if truly a draft with no send evidence
         if (email.status === 'draft') return false;
+        // Exclude scheduled only if no sentAt (completed_at) timestamp
         if (email.status === 'scheduled' && !email.sentAt) return false;
         return true;
       });
 
       const excludedCount = transformedEmails.length - sentEmails.length;
-      console.log(`Filtered to ${sentEmails.length} sent emails (excluded ${excludedCount} draft/scheduled)`);
+      console.log(`Filtered to ${sentEmails.length} sent emails (excluded ${excludedCount} draft/unsent)`);
 
       return new Response(
         JSON.stringify({
