@@ -116,6 +116,21 @@ export function AddOpportunityDialog({ open, onOpenChange, prefilledCompanyId }:
     mutationFn: async (values: z.infer<typeof opportunitySchema>) => {
       if (!currentUser) throw new Error("User not authenticated");
 
+      // Parse the unified assignment value to route to correct column
+      let assignedTo: string | null = null;
+      let assignedToSalesRepId: string | null = null;
+      const assignedValue = values.assigned_to;
+      if (assignedValue && assignedValue !== "unassigned") {
+        if (assignedValue.startsWith("user:")) {
+          assignedTo = assignedValue.replace("user:", "");
+        } else if (assignedValue.startsWith("salesrep:")) {
+          assignedToSalesRepId = assignedValue.replace("salesrep:", "");
+        } else {
+          // Raw UUID fallback — treat as profile ID
+          assignedTo = assignedValue;
+        }
+      }
+
       // Create opportunity
       const { data: opportunity, error: oppError } = await supabase
         .from('opportunities' as any)
@@ -125,7 +140,8 @@ export function AddOpportunityDialog({ open, onOpenChange, prefilledCompanyId }:
           stage: values.stage,
           amount: values.amount ? parseFloat(values.amount) : null,
           confidence: values.confidence ? parseInt(values.confidence) : null,
-          assigned_to: values.assigned_to === "unassigned" ? null : (values.assigned_to || null),
+          assigned_to: assignedTo,
+          assigned_to_sales_rep_id: assignedToSalesRepId,
           contractor_id: values.contractor_id || null,
           expected_close_date: values.expected_close_date || null,
           unit_needed_date: values.unit_needed_date || null,
@@ -274,7 +290,6 @@ export function AddOpportunityDialog({ open, onOpenChange, prefilledCompanyId }:
                         value={field.value}
                         onValueChange={field.onChange}
                         placeholder="Select assignee..."
-                        rawIds={true}
                       />
                     </FormControl>
                     <FormMessage />
