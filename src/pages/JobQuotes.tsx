@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, AlertTriangle, Filter } from "lucide-react";
+import { Plus, AlertTriangle, Filter, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AddJobQuoteDialog } from "@/components/job-quotes/AddJobQuoteDialog";
 import { EditJobQuoteDialog } from "@/components/job-quotes/EditJobQuoteDialog";
@@ -22,6 +22,7 @@ export default function JobQuotes() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [quarterFilter, setQuarterFilter] = useState<string>("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -34,7 +35,7 @@ export default function JobQuotes() {
   });
 
   const { data: quotes = [], isLoading } = useQuery({
-    queryKey: ["job-quotes", statusFilter],
+    queryKey: ["job-quotes", statusFilter, quarterFilter],
     queryFn: async () => {
       let query = supabase
         .from("job_quotes")
@@ -55,6 +56,25 @@ export default function JobQuotes() {
       // Apply status filter
       if (statusFilter !== "all") {
         query = query.eq("status", statusFilter);
+      }
+
+      // Apply quarterly filter
+      if (quarterFilter !== "all") {
+        const year = new Date().getFullYear();
+        const quarterMap: Record<string, [string, string]> = {
+          Q1: [`${year}-01-01`, `${year}-03-31`],
+          Q2: [`${year}-04-01`, `${year}-06-30`],
+          Q3: [`${year}-07-01`, `${year}-09-30`],
+          Q4: [`${year}-10-01`, `${year}-12-31`],
+          "Q1-prev": [`${year - 1}-01-01`, `${year - 1}-03-31`],
+          "Q2-prev": [`${year - 1}-04-01`, `${year - 1}-06-30`],
+          "Q3-prev": [`${year - 1}-07-01`, `${year - 1}-09-30`],
+          "Q4-prev": [`${year - 1}-10-01`, `${year - 1}-12-31`],
+        };
+        const range = quarterMap[quarterFilter];
+        if (range) {
+          query = query.gte("date_received", range[0]).lte("date_received", range[1]);
+        }
       }
 
       const { data, error } = await query;
@@ -118,6 +138,30 @@ export default function JobQuotes() {
   const pendingCount = quotes.filter((q: any) => q.status === "pending").length;
   const wonCount = quotes.filter((q: any) => q.status === "won").length;
   const lostCount = quotes.filter((q: any) => q.status === "lost").length;
+
+  // Avg Time to Close (days) - for won quotes
+  const wonQuotes = quotes.filter((q: any) => q.status === "won" && q.date_received && q.date_won);
+  const avgTimeToClose = wonQuotes.length > 0
+    ? Math.round(wonQuotes.reduce((sum: number, q: any) => {
+        const received = new Date(q.date_received);
+        const won = new Date(q.date_won);
+        return sum + (won.getTime() - received.getTime()) / (1000 * 60 * 60 * 24);
+      }, 0) / wonQuotes.length)
+    : null;
+
+  // Avg Time Pending (days) - for pending quotes
+  const pendingQuotes = quotes.filter((q: any) => q.status === "pending" && q.date_received);
+  const avgTimePending = pendingQuotes.length > 0
+    ? Math.round(pendingQuotes.reduce((sum: number, q: any) => {
+        const received = new Date(q.date_received);
+        return sum + (Date.now() - received.getTime()) / (1000 * 60 * 60 * 24);
+      }, 0) / pendingQuotes.length)
+    : null;
+
+  // Win/Loss Ratio
+  const winLossRatio = (wonCount + lostCount) > 0
+    ? (wonCount / (wonCount + lostCount) * 100).toFixed(1)
+    : null;
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -200,20 +244,81 @@ export default function JobQuotes() {
         </Card>
       </div>
 
-      {/* Filter */}
-      <div className="flex items-center gap-2">
-        <Filter className="h-4 w-4 text-muted-foreground" />
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="won">Won</SelectItem>
-            <SelectItem value="lost">Lost</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* Secondary Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Avg Time to Close
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">
+              {avgTimeToClose !== null ? `${avgTimeToClose} days` : "—"}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Avg Time Pending
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-warning">
+              {avgTimePending !== null ? `${avgTimePending} days` : "—"}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Win/Loss Ratio
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-success">
+              {winLossRatio !== null ? `${winLossRatio}%` : "—"}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="won">Won</SelectItem>
+              <SelectItem value="lost">Lost</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <Select value={quarterFilter} onValueChange={setQuarterFilter}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by quarter" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Quarters</SelectItem>
+              <SelectItem value="Q1">Q1 ({new Date().getFullYear()})</SelectItem>
+              <SelectItem value="Q2">Q2 ({new Date().getFullYear()})</SelectItem>
+              <SelectItem value="Q3">Q3 ({new Date().getFullYear()})</SelectItem>
+              <SelectItem value="Q4">Q4 ({new Date().getFullYear()})</SelectItem>
+              <SelectItem value="Q1-prev">Q1 ({new Date().getFullYear() - 1})</SelectItem>
+              <SelectItem value="Q2-prev">Q2 ({new Date().getFullYear() - 1})</SelectItem>
+              <SelectItem value="Q3-prev">Q3 ({new Date().getFullYear() - 1})</SelectItem>
+              <SelectItem value="Q4-prev">Q4 ({new Date().getFullYear() - 1})</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Table */}
