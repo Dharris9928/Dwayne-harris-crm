@@ -128,6 +128,7 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
   const [dateFrom, setDateFrom] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [dateTo, setDateTo] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [lastImportDate, setLastImportDate] = useState<string | null>(null);
+  const [fetchEngagement, setFetchEngagement] = useState(false);
   
   // Preview state
   const [emails, setEmails] = useState<ApolloEmail[]>([]);
@@ -196,6 +197,7 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
       setStatusFilter('all');
       setAlreadyImportedIds(new Set());
       setManualOpenedIds(new Set());
+      setFetchEngagement(false);
     }
   }, [open]);
 
@@ -257,8 +259,8 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
           dateTo,
           sequenceId: selectedSequence !== 'all' ? selectedSequence : undefined,
           perPage: 100,
-          maxPages: 10, // Limit to 10 pages (1000 emails) for faster response
-          skipEngagementFetch: true // Skip individual engagement fetches for speed
+          maxPages: 50, // Fetch all pages (up to 5000 emails)
+          skipEngagementFetch: !fetchEngagement
         }
       });
 
@@ -718,6 +720,17 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="fetchEngagement"
+                checked={fetchEngagement}
+                onCheckedChange={(checked) => setFetchEngagement(!!checked)}
+              />
+              <Label htmlFor="fetchEngagement" className="text-sm font-normal cursor-pointer">
+                Fetch engagement data (opens, clicks, replies) — slower but shows accurate metrics
+              </Label>
             </div>
 
             {lastImportDate && (
