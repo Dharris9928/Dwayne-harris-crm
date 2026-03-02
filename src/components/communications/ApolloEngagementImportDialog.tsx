@@ -10,8 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, XCircle, Mail, Eye, MousePointerClick, MessageSquare } from 'lucide-react';
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, XCircle, Mail, Eye, MousePointerClick, MessageSquare, Info, User } from 'lucide-react';
 import {
   autoDetectColumns,
   parseOpenedEmails,
@@ -50,6 +51,8 @@ export function ApolloEngagementImportDialog({
     opened: null,
     clicked: null,
     replied: null,
+    firstName: null,
+    lastName: null,
   });
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
   const [importProgress, setImportProgress] = useState(0);
@@ -70,6 +73,8 @@ export function ApolloEngagementImportDialog({
       opened: null,
       clicked: null,
       replied: null,
+      firstName: null,
+      lastName: null,
     });
     setMatchResult(null);
     setImportProgress(0);
@@ -77,7 +82,7 @@ export function ApolloEngagementImportDialog({
   }, []);
 
   const handleClose = useCallback(() => {
-    if (step === 'importing') return; // Prevent closing during import
+    if (step === 'importing') return;
     resetDialog();
     onOpenChange(false);
   }, [step, resetDialog, onOpenChange]);
@@ -116,7 +121,6 @@ export function ApolloEngagementImportDialog({
         setHeaders(csvHeaders);
         setRawData(csvData);
         
-        // Auto-detect column mappings
         const detected = autoDetectColumns(csvHeaders);
         setColumnMapping(detected);
         
@@ -139,7 +143,6 @@ export function ApolloEngagementImportDialog({
     }));
   }, []);
 
-  // Check if we have a valid open indicator (either boolean or timestamp)
   const hasOpenIndicator = columnMapping.opened || columnMapping.openedAt;
 
   const sentAtLooksBoolean = useMemo(() => {
@@ -151,7 +154,6 @@ export function ApolloEngagementImportDialog({
     return v === 'true' || v === 'false' || v === 'yes' || v === 'no' || v === '1' || v === '0';
   }, [columnMapping.sentAt, rawData]);
 
-  // Count rows where Open = true for preview
   const openedRowsCount = useMemo(() => {
     if (!rawData.length) return 0;
     
@@ -169,7 +171,6 @@ export function ApolloEngagementImportDialog({
     return 0;
   }, [rawData, columnMapping.opened, columnMapping.openedAt]);
 
-  // Count clicked and replied
   const engagementCounts = useMemo(() => {
     if (!rawData.length) return { clicked: 0, replied: 0 };
     
@@ -215,7 +216,6 @@ export function ApolloEngagementImportDialog({
     try {
       setStep('preview');
       
-      // Parse the CSV data with current mappings
       const parsedRows = parseOpenedEmails(rawData, columnMapping);
       
       if (parsedRows.length === 0) {
@@ -228,7 +228,6 @@ export function ApolloEngagementImportDialog({
         return;
       }
 
-      // Match against database
       const result = await matchOpenedEmails(parsedRows);
       setMatchResult(result);
     } catch (error: any) {
@@ -248,7 +247,6 @@ export function ApolloEngagementImportDialog({
     setImportProgress(0);
 
     try {
-      // Simulate progress for better UX
       const progressInterval = setInterval(() => {
         setImportProgress(prev => Math.min(prev + 5, 90));
       }, 100);
@@ -261,7 +259,6 @@ export function ApolloEngagementImportDialog({
       setStep('complete');
 
       if (result.updated > 0) {
-        // Invalidate all related queries for immediate dashboard refresh
         queryClient.invalidateQueries({ queryKey: ["pipeline-analytics"] });
         queryClient.invalidateQueries({ queryKey: ["communications-funnel"] });
         queryClient.invalidateQueries({ queryKey: ["all-communications"] });
@@ -283,13 +280,14 @@ export function ApolloEngagementImportDialog({
     }
   }, [matchResult, toast, onImportComplete]);
 
-  // Stats for preview
   const previewStats = useMemo(() => {
     if (!matchResult) return null;
     
     const byApolloId = matchResult.matched.filter(m => m.matchType === 'apollo_id').length;
     const byEmailSubject = matchResult.matched.filter(m => m.matchType === 'email_subject').length;
+    const byEmailName = matchResult.matched.filter(m => m.matchType === 'email_name').length;
     const byEmailOnly = matchResult.matched.filter(m => m.matchType === 'email_only').length;
+    const byNameDisambiguate = matchResult.matched.filter(m => m.matchType === 'email_name_disambiguate').length;
     const withClicks = matchResult.matched.filter(m => m.csvRow.clicked).length;
     const withReplies = matchResult.matched.filter(m => m.csvRow.replied).length;
     
@@ -299,11 +297,38 @@ export function ApolloEngagementImportDialog({
       unmatched: matchResult.unmatched.length,
       byApolloId,
       byEmailSubject,
+      byEmailName,
       byEmailOnly,
+      byNameDisambiguate,
       withClicks,
       withReplies,
     };
   }, [matchResult]);
+
+  const getMatchTypeBadge = (match: typeof matchResult extends { matched: (infer T)[] } ? T : never) => {
+    const typeMap: Record<string, { label: string; className: string }> = {
+      apollo_id: { label: 'ID', className: 'bg-green-500/10 text-green-700' },
+      email_subject: { label: 'Email+Subj', className: 'bg-blue-500/10 text-blue-700' },
+      email_name: { label: 'Email+Name', className: 'bg-cyan-500/10 text-cyan-700' },
+      email_only: { label: 'Email', className: 'bg-amber-500/10 text-amber-700' },
+      email_name_disambiguate: { label: 'Name Disamb.', className: 'bg-purple-500/10 text-purple-700' },
+    };
+    const info = typeMap[match.matchType] || { label: match.matchType, className: '' };
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Badge variant="outline" className={`text-xs ${info.className}`}>
+              {info.label}
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">
+            <p className="text-xs">{match.matchReason}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -346,7 +371,7 @@ export function ApolloEngagementImportDialog({
                 <Mail className="h-4 w-4" />
                 <AlertDescription>
                   Export your messages from Apollo with Open, Click, and Replied columns.
-                  We'll match emails by subject line and email address.
+                  We'll match emails by subject line, email address, and contact name.
                 </AlertDescription>
               </Alert>
             </div>
@@ -455,11 +480,59 @@ export function ApolloEngagementImportDialog({
                       <Alert className="mt-2">
                         <AlertCircle className="h-4 w-4" />
                         <AlertDescription className="text-xs">
-                          The selected “Sent At” column looks like true/false (e.g., “Sent”).
-                          Please choose “Sent At (PST)” so timestamps can be parsed correctly.
+                          The selected "Sent At" column looks like true/false (e.g., "Sent").
+                          Please choose "Sent At (PST)" so timestamps can be parsed correctly.
                         </AlertDescription>
                       </Alert>
                     )}
+                  </div>
+                </div>
+
+                {/* Name Fields for improved matching */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="first-name-col" className="flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      First Name Column
+                    </Label>
+                    <Select
+                      value={columnMapping.firstName || '_none_'}
+                      onValueChange={(v) => handleColumnChange('firstName', v)}
+                    >
+                      <SelectTrigger id="first-name-col">
+                        <SelectValue placeholder="Select column" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none_">-- Not mapped --</SelectItem>
+                        {headers.map(h => (
+                          <SelectItem key={h} value={h}>{h}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Helps disambiguate contacts with same email
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="last-name-col" className="flex items-center gap-1">
+                      <User className="h-3 w-3" />
+                      Last Name Column
+                    </Label>
+                    <Select
+                      value={columnMapping.lastName || '_none_'}
+                      onValueChange={(v) => handleColumnChange('lastName', v)}
+                    >
+                      <SelectTrigger id="last-name-col">
+                        <SelectValue placeholder="Select column" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="_none_">-- Not mapped --</SelectItem>
+                        {headers.map(h => (
+                          <SelectItem key={h} value={h}>{h}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
@@ -567,9 +640,21 @@ export function ApolloEngagementImportDialog({
                 <Badge variant="outline" className="bg-blue-500/10">
                   Email+Subject: {previewStats.byEmailSubject}
                 </Badge>
+                {previewStats.byEmailName > 0 && (
+                  <Badge variant="outline" className="bg-cyan-500/10">
+                    <User className="h-3 w-3 mr-1" />
+                    Email+Name: {previewStats.byEmailName}
+                  </Badge>
+                )}
                 <Badge variant="outline" className="bg-amber-500/10">
                   Email only: {previewStats.byEmailOnly}
                 </Badge>
+                {previewStats.byNameDisambiguate > 0 && (
+                  <Badge variant="outline" className="bg-purple-500/10">
+                    <User className="h-3 w-3 mr-1" />
+                    Name disambig: {previewStats.byNameDisambiguate}
+                  </Badge>
+                )}
                 {previewStats.withClicks > 0 && (
                   <Badge variant="outline" className="bg-purple-500/10">
                     <MousePointerClick className="h-3 w-3 mr-1" />
@@ -593,6 +678,7 @@ export function ApolloEngagementImportDialog({
                       <TableHead>Subject</TableHead>
                       <TableHead>Engagement</TableHead>
                       <TableHead>Match Type</TableHead>
+                      <TableHead>Match Reason</TableHead>
                       <TableHead className="text-right">Confidence</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -602,7 +688,7 @@ export function ApolloEngagementImportDialog({
                         <TableCell className="font-mono text-xs truncate max-w-[120px]">
                           {match.csvRow.email}
                         </TableCell>
-                        <TableCell className="truncate max-w-[120px]">
+                        <TableCell className="truncate max-w-[100px]">
                           {match.csvRow.subject || '-'}
                         </TableCell>
                         <TableCell>
@@ -613,13 +699,22 @@ export function ApolloEngagementImportDialog({
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="text-xs">
-                            {match.matchType === 'apollo_id' ? 'ID' : 
-                             match.matchType === 'email_subject' ? 'Email+Subj' : 'Email'}
-                          </Badge>
+                          {getMatchTypeBadge(match)}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground truncate max-w-[160px]">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span className="cursor-help">{match.matchReason}</span>
+                              </TooltipTrigger>
+                              <TooltipContent className="max-w-xs">
+                                <p className="text-xs">{match.matchReason}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="text-right">
-                          <span className={match.confidence >= 85 ? 'text-green-600' : 'text-amber-600'}>
+                          <span className={match.confidence >= 85 ? 'text-green-600' : match.confidence >= 70 ? 'text-blue-600' : 'text-amber-600'}>
                             {match.confidence}%
                           </span>
                         </TableCell>
@@ -627,7 +722,7 @@ export function ApolloEngagementImportDialog({
                     ))}
                     {matchResult.matched.length > 50 && (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground">
                           ... and {matchResult.matched.length - 50} more
                         </TableCell>
                       </TableRow>

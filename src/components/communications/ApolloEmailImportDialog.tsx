@@ -460,6 +460,102 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
 
         // Skip if already imported (check apollo_email_activities)
         if (alreadyImportedIds.has(email.apolloId)) {
+          // Upsert engagement data on existing records instead of skipping entirely
+          const hasEngagement = (email.openCount ?? 0) > 0 || (email.clickCount ?? 0) > 0 || (email.replyCount ?? 0) > 0;
+          if (hasEngagement) {
+            try {
+              // Fetch existing record to store previous values for rollback
+              const { data: existingRecord } = await supabase
+                .from('apollo_email_activities')
+                .select('id, open_count, click_count, reply_count, opened_at, clicked_at, replied_at, status, company_id, contact_id, subject, apollo_metadata, previous_engagement_values')
+                .eq('apollo_activity_id', email.apolloId)
+                .maybeSingle();
+
+              if (existingRecord) {
+                // Save previous values for rollback
+                const previousValues = {
+                  open_count: existingRecord.open_count,
+                  click_count: existingRecord.click_count,
+                  reply_count: existingRecord.reply_count,
+                  opened_at: existingRecord.opened_at,
+                  clicked_at: existingRecord.clicked_at,
+                  replied_at: existingRecord.replied_at,
+                  status: existingRecord.status,
+                };
+
+                // Build engagement update
+                const engagementUpdate: Record<string, any> = {
+                  open_count: Math.max(email.openCount || 0, existingRecord.open_count || 0),
+                  click_count: Math.max(email.clickCount || 0, existingRecord.click_count || 0),
+                  reply_count: Math.max(email.replyCount || 0, existingRecord.reply_count || 0),
+                  updated_at: new Date().toISOString(),
+                  previous_engagement_values: previousValues,
+                };
+
+                // Update timestamps if not already set
+                if (!existingRecord.opened_at && email.openedAt) {
+                  engagementUpdate.opened_at = email.openedAt;
+                }
+                if (!existingRecord.clicked_at && email.clickedAt) {
+                  engagementUpdate.clicked_at = email.clickedAt;
+                }
+                if (!existingRecord.replied_at && email.repliedAt) {
+                  engagementUpdate.replied_at = email.repliedAt;
+                }
+
+                // Upgrade status if engagement is higher
+                const statusPriority: Record<string, number> = { sent: 0, not_opened: 1, opened: 2, clicked: 3, replied: 4 };
+                let newStatus = existingRecord.status || 'sent';
+                if ((email.replyCount ?? 0) > 0 && (statusPriority['replied'] > (statusPriority[newStatus] ?? 0))) {
+                  newStatus = 'replied';
+                } else if ((email.clickCount ?? 0) > 0 && (statusPriority['clicked'] > (statusPriority[newStatus] ?? 0))) {
+                  newStatus = 'clicked';
+                } else if ((email.openCount ?? 0) > 0 && (statusPriority['opened'] > (statusPriority[newStatus] ?? 0))) {
+                  newStatus = 'opened';
+                }
+                engagementUpdate.status = newStatus;
+
+                // Store match reasoning in metadata
+                const contactName = [email.contact?.firstName, email.contact?.lastName].filter(Boolean).join(' ');
+                const matchReason = contactName
+                  ? `Engagement upsert via Apollo ID; contact '${contactName}' verified`
+                  : 'Engagement upsert via Apollo ID';
+                const existingMetadata = (existingRecord.apollo_metadata as Record<string, any>) || {};
+                engagementUpdate.apollo_metadata = {
+                  ...existingMetadata,
+                  last_engagement_sync: new Date().toISOString(),
+                  engagement_match_reason: matchReason,
+                };
+
+                await supabase
+                  .from('apollo_email_activities')
+                  .update(engagementUpdate)
+                  .eq('id', existingRecord.id);
+
+                // Also update company_communications if linked
+                if (existingRecord.company_id && existingRecord.contact_id) {
+                  const commUpdate: Record<string, any> = {};
+                  if (email.openedAt) commUpdate.email_opened_at = email.openedAt;
+                  if (email.repliedAt) commUpdate.email_responded_at = email.repliedAt;
+
+                  if (Object.keys(commUpdate).length > 0) {
+                    await supabase
+                      .from('company_communications')
+                      .update(commUpdate)
+                      .eq('company_id', existingRecord.company_id)
+                      .eq('contact_id', existingRecord.contact_id)
+                      .ilike('subject', existingRecord.subject || '')
+                      .is('email_opened_at', null);
+                  }
+                }
+
+                // Count as engagement updated (reuse communicationsCreated for simplicity)
+                result.communicationsCreated++;
+              }
+            } catch (err) {
+              console.error('Failed to upsert engagement:', err);
+            }
+          }
           result.skipped++;
           continue;
         }

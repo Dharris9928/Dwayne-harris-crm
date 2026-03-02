@@ -9,6 +9,8 @@ export interface OpenedEmailRow {
   sentAt?: string;
   clicked?: boolean;
   replied?: boolean;
+  firstName?: string;
+  lastName?: string;
 }
 
 export interface MatchedRecord {
@@ -21,8 +23,11 @@ export interface MatchedRecord {
     sent_at: string | null;
     company_id: string | null;
     contact_id: string | null;
+    contact_first_name?: string | null;
+    contact_last_name?: string | null;
   };
-  matchType: 'apollo_id' | 'email_subject' | 'email_only';
+  matchType: 'apollo_id' | 'email_subject' | 'email_name' | 'email_only' | 'email_name_disambiguate';
+  matchReason: string;
   confidence: number;
 }
 
@@ -37,22 +42,20 @@ export interface UpdateResult {
   errors: string[];
 }
 
-// Common Apollo CSV column name variations - updated for actual Apollo export format
+// Common Apollo CSV column name variations
 export const APOLLO_COLUMN_MAPPINGS = {
-  // "To Email" is the standard Apollo export column name
   email: ['to email', 'email', 'contact email', 'contact_email', 'email address', 'recipient email', 'to'],
   subject: ['subject', 'email subject', 'subject line', 'email_subject'],
   openedAt: ['opened at', 'opened_at', 'first opened at', 'first_opened_at', 'open date', 'opened date'],
   openCount: ['open count', 'open_count', 'total opens', 'opens', 'times opened'],
   apolloId: ['message id', 'message_id', 'email id', 'email_id', 'activity id', 'activity_id', 'id'],
-  // Prioritize specific timestamp formats over the ambiguous "sent" (which could be boolean)
   sentAt: ['sent at (pst)', 'sent at (utc)', 'sent at (est)', 'sent at', 'sent_at', 'sent date', 'date sent'],
-  // Boolean status columns from Apollo exports
   opened: ['open', 'opened', 'is opened', 'was opened', 'is open'],
   clicked: ['click', 'clicked', 'is clicked', 'was clicked', 'link clicked'],
   replied: ['replied', 'reply', 'is replied', 'was replied', 'has replied'],
-  // "Sent" as boolean (separate from timestamp)
   sent: ['sent'],
+  firstName: ['first name', 'first_name', 'contact first name', 'contact_first_name', 'firstname'],
+  lastName: ['last name', 'last_name', 'contact last name', 'contact_last_name', 'lastname'],
 };
 
 function isBooleanLike(value: string | null | undefined): boolean {
@@ -79,6 +82,49 @@ function firstTimestampCandidate(...values: Array<string | null | undefined>): s
 }
 
 /**
+ * Normalize a name for comparison
+ */
+function normalizeName(name: string | null | undefined): string {
+  return (name || '').trim().toLowerCase();
+}
+
+/**
+ * Check if CSV row name matches a DB contact's name
+ */
+function namesMatch(
+  csvFirstName: string | undefined,
+  csvLastName: string | undefined,
+  dbFirstName: string | null | undefined,
+  dbLastName: string | null | undefined
+): boolean {
+  const csvFirst = normalizeName(csvFirstName);
+  const csvLast = normalizeName(csvLastName);
+  const dbFirst = normalizeName(dbFirstName);
+  const dbLast = normalizeName(dbLastName);
+
+  // Need at least one name to compare
+  if (!csvFirst && !csvLast) return false;
+
+  // If both names provided, both must match
+  if (csvFirst && csvLast) {
+    return csvFirst === dbFirst && csvLast === dbLast;
+  }
+
+  // If only first name, match on first
+  if (csvFirst) return csvFirst === dbFirst;
+
+  // If only last name, match on last
+  return csvLast === dbLast;
+}
+
+/**
+ * Format a name string for display in match reasons
+ */
+function formatName(firstName?: string, lastName?: string): string {
+  return [firstName, lastName].filter(Boolean).join(' ').trim() || 'Unknown';
+}
+
+/**
  * Auto-detect column mappings from CSV headers
  */
 export function autoDetectColumns(headers: string[]): Record<string, string | null> {
@@ -93,12 +139,11 @@ export function autoDetectColumns(headers: string[]): Record<string, string | nu
     opened: null,
     clicked: null,
     replied: null,
-    sent: null, // Boolean "was email sent" vs sentAt timestamp
+    sent: null,
+    firstName: null,
+    lastName: null,
   };
 
-  // Prefer the most-specific match when multiple headers could match a field.
-  // Example: Apollo exports include both "Sent" (boolean) and "Sent At (PST)" (timestamp).
-  // We should prefer the longer/more-specific variation ("sent at (pst)") over "sent".
   for (const [field, variations] of Object.entries(APOLLO_COLUMN_MAPPINGS)) {
     let bestIndex = -1;
     let bestScore = -1;
@@ -124,7 +169,6 @@ export function autoDetectColumns(headers: string[]): Record<string, string | nu
 
 /**
  * Parse CSV rows into OpenedEmailRow objects
- * Supports both timestamp-based "Opened At" columns AND boolean "Open" columns
  */
 export function parseOpenedEmails(
   rows: Record<string, string>[],
@@ -136,39 +180,30 @@ export function parseOpenedEmails(
     const email = columnMapping.email ? row[columnMapping.email]?.trim() : null;
     if (!email) continue;
 
-    // Check for boolean "Open" column first (Apollo's actual format)
     const openedBooleanValue = columnMapping.opened ? row[columnMapping.opened]?.toLowerCase().trim() : null;
     const openedAtValue = columnMapping.openedAt ? row[columnMapping.openedAt]?.trim() : null;
     const sentAtValue = columnMapping.sentAt ? row[columnMapping.sentAt]?.trim() : null;
 
-    // Determine if this email was opened
     let isOpened = false;
     let openedTimestamp: string | null = null;
 
     if (openedBooleanValue !== null) {
-      // Boolean column format (Apollo export)
       isOpened = parseBoolean(openedBooleanValue);
-      // Use sentAt (timestamp) if available; otherwise fallback to now.
       openedTimestamp = firstTimestampCandidate(sentAtValue, openedAtValue) ?? new Date().toISOString();
     } else if (openedAtValue) {
       if (isBooleanLike(openedAtValue)) {
-        // Some users accidentally map the boolean "Open" column into "Opened At".
-        // Treat it as a boolean open indicator and use sentAt/now for timestamp.
         isOpened = parseBoolean(openedAtValue);
         openedTimestamp = firstTimestampCandidate(sentAtValue) ?? new Date().toISOString();
       } else {
-        // Timestamp column format (legacy support)
         isOpened = true;
         openedTimestamp = openedAtValue;
       }
     } else {
-      // No open indicator - skip this row
       continue;
     }
 
     if (!isOpened) continue;
 
-    // Parse click and reply status
     const clickedValue = columnMapping.clicked ? row[columnMapping.clicked]?.toLowerCase().trim() : null;
     const repliedValue = columnMapping.replied ? row[columnMapping.replied]?.toLowerCase().trim() : null;
 
@@ -184,6 +219,8 @@ export function parseOpenedEmails(
       sentAt: sentAtValue || undefined,
       clicked: isClicked || undefined,
       replied: isReplied || undefined,
+      firstName: columnMapping.firstName ? row[columnMapping.firstName]?.trim() : undefined,
+      lastName: columnMapping.lastName ? row[columnMapping.lastName]?.trim() : undefined,
     });
   }
 
@@ -199,10 +236,13 @@ export async function matchOpenedEmails(
   const matched: MatchedRecord[] = [];
   const unmatched: OpenedEmailRow[] = [];
 
-  // Fetch all apollo_email_activities records
+  // Fetch all apollo_email_activities records with contact name data via join
   const { data: dbRecords, error } = await supabase
     .from('apollo_email_activities')
-    .select('id, apollo_activity_id, subject, apollo_contact_email, sent_at, company_id, contact_id');
+    .select(`
+      id, apollo_activity_id, subject, apollo_contact_email, sent_at, company_id, contact_id,
+      contacts:contact_id (first_name, last_name)
+    `);
 
   if (error) {
     console.error('Error fetching apollo_email_activities:', error);
@@ -217,33 +257,56 @@ export async function matchOpenedEmails(
     };
   }
 
-  // Create lookup maps for efficient matching
-  const byApolloId = new Map<string, typeof dbRecords[0]>();
-  const byEmailSubject = new Map<string, typeof dbRecords[0][]>();
-  const byEmailOnly = new Map<string, typeof dbRecords[0][]>();
+  // Flatten contact name into the record
+  type DbRecord = {
+    id: string;
+    apollo_activity_id: string | null;
+    subject: string | null;
+    apollo_contact_email: string | null;
+    sent_at: string | null;
+    company_id: string | null;
+    contact_id: string | null;
+    contact_first_name: string | null;
+    contact_last_name: string | null;
+  };
 
-  for (const record of dbRecords) {
+  const flatRecords: DbRecord[] = dbRecords.map((r: any) => ({
+    id: r.id,
+    apollo_activity_id: r.apollo_activity_id,
+    subject: r.subject,
+    apollo_contact_email: r.apollo_contact_email,
+    sent_at: r.sent_at,
+    company_id: r.company_id,
+    contact_id: r.contact_id,
+    contact_first_name: r.contacts?.first_name ?? null,
+    contact_last_name: r.contacts?.last_name ?? null,
+  }));
+
+  // Create lookup maps for efficient matching
+  const byApolloId = new Map<string, DbRecord>();
+  const byEmailSubject = new Map<string, DbRecord[]>();
+  const byEmailOnly = new Map<string, DbRecord[]>();
+
+  for (const record of flatRecords) {
     if (record.apollo_activity_id) {
       byApolloId.set(record.apollo_activity_id.toLowerCase(), record);
     }
 
     if (record.apollo_contact_email) {
-      const email = record.apollo_contact_email.toLowerCase();
+      const emailKey = record.apollo_contact_email.toLowerCase();
       
-      // Email + Subject map
       if (record.subject) {
-        const key = `${email}|${record.subject.toLowerCase()}`;
+        const key = `${emailKey}|${record.subject.toLowerCase()}`;
         if (!byEmailSubject.has(key)) {
           byEmailSubject.set(key, []);
         }
         byEmailSubject.get(key)!.push(record);
       }
 
-      // Email only map
-      if (!byEmailOnly.has(email)) {
-        byEmailOnly.set(email, []);
+      if (!byEmailOnly.has(emailKey)) {
+        byEmailOnly.set(emailKey, []);
       }
-      byEmailOnly.get(email)!.push(record);
+      byEmailOnly.get(emailKey)!.push(record);
     }
   }
 
@@ -251,7 +314,7 @@ export async function matchOpenedEmails(
   for (const csvRow of parsedRows) {
     let matchedRecord: MatchedRecord | null = null;
 
-    // Priority 1: Match by Apollo ID
+    // Priority 1: Match by Apollo ID (100%)
     if (csvRow.apolloId) {
       const dbRecord = byApolloId.get(csvRow.apolloId.toLowerCase());
       if (dbRecord) {
@@ -259,31 +322,31 @@ export async function matchOpenedEmails(
           csvRow,
           dbRecord,
           matchType: 'apollo_id',
+          matchReason: 'Exact Apollo ID match',
           confidence: 100,
         };
       }
     }
 
-    // Priority 2: Match by Email + Subject
+    // Priority 2: Match by Email + Subject (85%)
     if (!matchedRecord && csvRow.email && csvRow.subject) {
       const key = `${csvRow.email.toLowerCase()}|${csvRow.subject.toLowerCase()}`;
       const candidates = byEmailSubject.get(key);
       if (candidates && candidates.length > 0) {
-        // Take the first match (could add date matching for better precision)
         matchedRecord = {
           csvRow,
           dbRecord: candidates[0],
           matchType: 'email_subject',
+          matchReason: 'Email and subject line match',
           confidence: 85,
         };
       }
     }
 
-    // Priority 3: Match by Email + filter candidates by subject (for multi-email contacts)
+    // Priority 3: Match by Email + Subject fuzzy (75%)
     if (!matchedRecord && csvRow.email && csvRow.subject) {
       const candidates = byEmailOnly.get(csvRow.email.toLowerCase());
       if (candidates && candidates.length > 1) {
-        // Try to find the one with matching subject
         const subjectLower = csvRow.subject.toLowerCase();
         const matchingCandidate = candidates.find(c => 
           c.subject?.toLowerCase() === subjectLower
@@ -293,23 +356,64 @@ export async function matchOpenedEmails(
             csvRow,
             dbRecord: matchingCandidate,
             matchType: 'email_subject',
-            confidence: 75, // Slightly lower than direct map lookup
+            matchReason: 'Email and subject line match (multiple candidates)',
+            confidence: 75,
           };
         }
       }
     }
 
-    // Priority 4: Match by Email only (least precise) - only when exactly one email to contact
+    // Priority 4: Email + Name match (70%) - NEW
+    if (!matchedRecord && csvRow.email && (csvRow.firstName || csvRow.lastName)) {
+      const candidates = byEmailOnly.get(csvRow.email.toLowerCase());
+      if (candidates && candidates.length >= 1) {
+        const nameCandidate = candidates.find(c =>
+          namesMatch(csvRow.firstName, csvRow.lastName, c.contact_first_name, c.contact_last_name)
+        );
+        if (nameCandidate) {
+          const displayName = formatName(csvRow.firstName, csvRow.lastName);
+          matchedRecord = {
+            csvRow,
+            dbRecord: nameCandidate,
+            matchType: 'email_name',
+            matchReason: `Email matches; contact name '${displayName}' confirms identity`,
+            confidence: 70,
+          };
+        }
+      }
+    }
+
+    // Priority 5: Match by Email only, single candidate (60%)
     if (!matchedRecord && csvRow.email) {
       const candidates = byEmailOnly.get(csvRow.email.toLowerCase());
       if (candidates && candidates.length === 1) {
-        // Only match if there's exactly one email to that contact
         matchedRecord = {
           csvRow,
           dbRecord: candidates[0],
           matchType: 'email_only',
+          matchReason: 'Email matches single database record',
           confidence: 60,
         };
+      }
+    }
+
+    // Priority 6: Email + Name disambiguates multiple candidates (55%) - NEW
+    if (!matchedRecord && csvRow.email && (csvRow.firstName || csvRow.lastName)) {
+      const candidates = byEmailOnly.get(csvRow.email.toLowerCase());
+      if (candidates && candidates.length > 1) {
+        const nameCandidate = candidates.find(c =>
+          namesMatch(csvRow.firstName, csvRow.lastName, c.contact_first_name, c.contact_last_name)
+        );
+        if (nameCandidate) {
+          const displayName = formatName(csvRow.firstName, csvRow.lastName);
+          matchedRecord = {
+            csvRow,
+            dbRecord: nameCandidate,
+            matchType: 'email_name_disambiguate',
+            matchReason: `Email matches multiple records; name '${displayName}' used to disambiguate`,
+            confidence: 55,
+          };
+        }
       }
     }
 
@@ -336,21 +440,17 @@ export async function updateOpenedEmails(
   const errors: string[] = [];
   let updated = 0;
 
-  // Get current user for logging
   const { data: userData } = await supabase.auth.getUser();
   const userId = userData.user?.id;
 
-  // Batch update apollo_email_activities
   for (const match of matchedRecords) {
     try {
-      // Parse the opened timestamp
       const openedAt = parseTimestamp(match.csvRow.openedAt);
       if (!openedAt) {
         errors.push(`Invalid timestamp for email to ${match.csvRow.email}: ${match.csvRow.openedAt}`);
         continue;
       }
 
-      // Build update object
       const updateData: Record<string, any> = {
         opened_at: openedAt.toISOString(),
         open_count: Math.max(match.csvRow.openCount || 1, 1),
@@ -358,20 +458,17 @@ export async function updateOpenedEmails(
         updated_at: new Date().toISOString(),
       };
 
-      // Add click data if present
       if (match.csvRow.clicked) {
-        updateData.clicked_at = openedAt.toISOString(); // Use same timestamp as best estimate
+        updateData.clicked_at = openedAt.toISOString();
         updateData.click_count = 1;
       }
 
-      // Add reply data if present
       if (match.csvRow.replied) {
         updateData.replied_at = openedAt.toISOString();
         updateData.reply_count = 1;
-        updateData.status = 'replied'; // Override status if replied
+        updateData.status = 'replied';
       }
 
-      // Update apollo_email_activities
       const { error: updateError } = await supabase
         .from('apollo_email_activities')
         .update(updateData)
@@ -382,7 +479,6 @@ export async function updateOpenedEmails(
         continue;
       }
 
-      // Also update company_communications if linked
       if (match.dbRecord.company_id && match.dbRecord.contact_id) {
         const commUpdateData: Record<string, any> = {
           email_opened_at: openedAt.toISOString(),
@@ -398,11 +494,10 @@ export async function updateOpenedEmails(
           .eq('company_id', match.dbRecord.company_id)
           .eq('contact_id', match.dbRecord.contact_id)
           .ilike('subject', match.dbRecord.subject || '')
-          .is('email_opened_at', null); // Only update if not already set
+          .is('email_opened_at', null);
         
         if (commError) {
           console.warn(`Could not update company_communications: ${commError.message}`);
-          // Don't count as error since main update succeeded
         }
       }
 
@@ -412,7 +507,6 @@ export async function updateOpenedEmails(
     }
   }
 
-  // Log the import activity
   if (userId && updated > 0) {
     try {
       await supabase.from('import_export_logs').insert({
@@ -443,21 +537,17 @@ export async function updateOpenedEmails(
 function parseTimestamp(value: string): Date | null {
   if (!value) return null;
 
-  // Apollo exports often include timezone markers like "(PST)" or "PST".
-  // Strip those before parsing.
   const cleaned = value
     .trim()
     .replace(/\s*\(([^)]+)\)\s*/g, ' ')
     .replace(/\b(PST|PDT|EST|EDT|UTC)\b/gi, '')
     .trim();
 
-  // Try parsing as ISO date
   let date = new Date(cleaned);
   if (!isNaN(date.getTime())) {
     return date;
   }
 
-  // Try Apollo's format: "January 09, 2026 07:32"
   const apolloFormatMatch = cleaned.match(/^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
   if (apolloFormatMatch) {
     const [, month, day, year, hour, minute, second] = apolloFormatMatch;
@@ -477,7 +567,6 @@ function parseTimestamp(value: string): Date | null {
     }
   }
 
-  // Common Apollo export format: MM/DD/YYYY HH:MM (optionally seconds, optionally AM/PM)
   const mmddMatch = cleaned.match(
     /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM|am|pm)?)?$/
   );
@@ -495,20 +584,15 @@ function parseTimestamp(value: string): Date | null {
     if (!isNaN(date.getTime())) return date;
   }
 
-  // Try common formats
   const formats = [
-    // MM/DD/YYYY HH:MM:SS
     /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):?(\d{2})?/,
-    // YYYY-MM-DD HH:MM:SS
     /^(\d{4})-(\d{2})-(\d{2})\s+(\d{1,2}):(\d{2}):?(\d{2})?/,
-    // DD/MM/YYYY HH:MM:SS
     /^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):?(\d{2})?/,
   ];
 
   for (const format of formats) {
     const match = cleaned.match(format);
     if (match) {
-      // Attempt to parse
       date = new Date(cleaned);
       if (!isNaN(date.getTime())) {
         return date;
@@ -516,7 +600,6 @@ function parseTimestamp(value: string): Date | null {
     }
   }
 
-  // Last resort: try Date.parse
   const parsed = Date.parse(cleaned);
   if (!isNaN(parsed)) {
     return new Date(parsed);
