@@ -177,6 +177,9 @@ export function useSessionMonitor() {
     showWarning,
     timeRemaining,
     extendSession,
-    handleTimeout
+    handleTimeout,
+    pauseTimeout,
+    resumeTimeout,
+    isPaused: paused
   };
 }
