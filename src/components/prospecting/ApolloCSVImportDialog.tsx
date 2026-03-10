@@ -37,6 +37,7 @@ export function ApolloCSVImportDialog({
   const [importProgress, setImportProgress] = useState(0);
   const [importResults, setImportResults] = useState<ImportResult | null>(null);
   const { toast } = useToast();
+  const { pauseTimeout, resumeTimeout } = useSessionTimeout();
 
   const handleFileUpload = async (uploadedFile: File) => {
     // Validate file size (10MB max)

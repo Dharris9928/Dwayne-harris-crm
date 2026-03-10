@@ -120,6 +120,7 @@ const getEmailStatus = (email: ApolloEmail): EmailStatus => {
 
 export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }: ApolloEmailImportDialogProps) {
   const { toast } = useToast();
+  const { pauseTimeout, resumeTimeout } = useSessionTimeout();
   const [step, setStep] = useState<Step>('config');
   const [loading, setLoading] = useState(false);
   

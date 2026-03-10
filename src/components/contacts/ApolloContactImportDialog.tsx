@@ -43,6 +43,7 @@ interface ApolloContactRow {
 
 export function ApolloContactImportDialog({ onSuccess }: { onSuccess?: () => void }) {
   const { toast } = useToast();
+  const { pauseTimeout, resumeTimeout } = useSessionTimeout();
   const [open, setOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
