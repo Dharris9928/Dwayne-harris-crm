@@ -12,12 +12,29 @@ interface SessionConfig {
 export function useSessionMonitor() {
   const [showWarning, setShowWarning] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [paused, setPaused] = useState(false);
   const lastActivityRef = useRef<number>(Date.now());
   const sessionTokenRef = useRef<string>('');
   const warningTimerRef = useRef<NodeJS.Timeout>();
   const activityTimerRef = useRef<NodeJS.Timeout>();
+  const pausedRef = useRef(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Keep ref in sync for use in interval callbacks
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
+
+  // Pause/resume idle timeout (e.g. during long uploads)
+  const pauseTimeout = () => {
+    setPaused(true);
+  };
+
+  const resumeTimeout = () => {
+    setPaused(false);
+    updateActivity(); // Reset idle clock when resuming
+  };
 
   // Generate or retrieve session token
   useEffect(() => {
