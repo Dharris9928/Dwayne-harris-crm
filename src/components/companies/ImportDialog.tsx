@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSessionTimeout } from '@/contexts/SessionTimeoutContext';
 import {
   Dialog,
   DialogContent,
@@ -50,6 +51,12 @@ export function ImportDialog({ open, onClose, onImportComplete }: ImportDialogPr
   const [currentRelationshipIndex, setCurrentRelationshipIndex] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
+  const { pauseTimeout, resumeTimeout } = useSessionTimeout();
+
+  useEffect(() => {
+    if (step === 'importing') pauseTimeout();
+    else resumeTimeout();
+  }, [step]);
 
   const handleFileUpload = async (uploadedFile: File) => {
     // Validate file size (10MB max)

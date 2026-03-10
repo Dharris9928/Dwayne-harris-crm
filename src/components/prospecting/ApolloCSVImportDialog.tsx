@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSessionTimeout } from '@/contexts/SessionTimeoutContext';
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,12 @@ export function ApolloCSVImportDialog({
   const [importProgress, setImportProgress] = useState(0);
   const [importResults, setImportResults] = useState<ImportResult | null>(null);
   const { toast } = useToast();
+  const { pauseTimeout, resumeTimeout } = useSessionTimeout();
+
+  useEffect(() => {
+    if (step === 'importing') pauseTimeout();
+    else resumeTimeout();
+  }, [step]);
 
   const handleFileUpload = async (uploadedFile: File) => {
     // Validate file size (10MB max)

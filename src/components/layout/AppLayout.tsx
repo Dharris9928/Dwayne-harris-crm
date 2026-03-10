@@ -7,6 +7,7 @@ import type { User, Session } from "@supabase/supabase-js";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { SessionTimeoutWarning } from "@/components/settings/SessionTimeoutWarning";
 import { NotificationBell } from "./NotificationBell";
+import { SessionTimeoutContext } from "@/contexts/SessionTimeoutContext";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -18,7 +19,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [approvalStatus, setApprovalStatus] = useState<string | null>(null);
-  const { showWarning, timeRemaining, extendSession, handleTimeout } = useSessionMonitor();
+  const { showWarning, timeRemaining, extendSession, handleTimeout, pauseTimeout, resumeTimeout, isPaused } = useSessionMonitor();
 
   useEffect(() => {
     // Set up auth state listener
@@ -125,7 +126,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   }
 
   return (
-    <>
+    <SessionTimeoutContext.Provider value={{ pauseTimeout, resumeTimeout, isPaused }}>
       <SidebarProvider>
         <div className="min-h-screen flex w-full bg-background">
           <AppSidebar />
@@ -147,6 +148,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         onExtend={extendSession}
         onTimeout={handleTimeout}
       />
-    </>
+    </SessionTimeoutContext.Provider>
   );
 }

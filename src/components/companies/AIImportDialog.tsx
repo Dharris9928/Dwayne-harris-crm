@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSessionTimeout } from '@/contexts/SessionTimeoutContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +53,12 @@ export function AIImportDialog({ open, onClose, onImportComplete, targetTable }:
   const [importProgress, setImportProgress] = useState(0);
   const [importStats, setImportStats] = useState({ success: 0, failed: 0 });
   const { toast } = useToast();
+  const { pauseTimeout, resumeTimeout } = useSessionTimeout();
+
+  useEffect(() => {
+    if (step === 'importing' || step === 'analyzing') pauseTimeout();
+    else resumeTimeout();
+  }, [step]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];

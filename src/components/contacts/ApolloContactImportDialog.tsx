@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSessionTimeout } from '@/contexts/SessionTimeoutContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -42,11 +43,17 @@ interface ApolloContactRow {
 
 export function ApolloContactImportDialog({ onSuccess }: { onSuccess?: () => void }) {
   const { toast } = useToast();
+  const { pauseTimeout, resumeTimeout } = useSessionTimeout();
   const [open, setOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [dragActive, setDragActive] = useState(false);
+
+  useEffect(() => {
+    if (importing) pauseTimeout();
+    else resumeTimeout();
+  }, [importing]);
 
   const cleanPhoneNumber = (phone: string): string => {
     if (!phone) return '';

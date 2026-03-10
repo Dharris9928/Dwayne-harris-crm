@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useSessionTimeout } from '@/contexts/SessionTimeoutContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ interface ImportResult {
 
 export function ImportContactsDialogEnhanced({ onSuccess }: { onSuccess?: () => void }) {
   const { toast } = useToast();
+  const { pauseTimeout, resumeTimeout } = useSessionTimeout();
   const [open, setOpen] = useState(false);
   const [importing, setImporting] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -42,6 +44,11 @@ export function ImportContactsDialogEnhanced({ onSuccess }: { onSuccess?: () => 
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showReport, setShowReport] = useState(false);
+
+  useEffect(() => {
+    if (importing) pauseTimeout();
+    else resumeTimeout();
+  }, [importing]);
 
   const handleDownloadTemplate = () => {
     const template = `first_name,last_name,title,email,phone,mobile,linkedin_url,company_name,industry_type,city,state,website_url,annual_revenue_range

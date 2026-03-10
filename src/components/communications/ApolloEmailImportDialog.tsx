@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSessionTimeout } from '@/contexts/SessionTimeoutContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -119,6 +120,7 @@ const getEmailStatus = (email: ApolloEmail): EmailStatus => {
 
 export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }: ApolloEmailImportDialogProps) {
   const { toast } = useToast();
+  const { pauseTimeout, resumeTimeout } = useSessionTimeout();
   const [step, setStep] = useState<Step>('config');
   const [loading, setLoading] = useState(false);
   
@@ -251,6 +253,7 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
 
   const fetchEmails = async () => {
     setLoading(true);
+    pauseTimeout();
     try {
       const { data, error } = await supabase.functions.invoke('apollo-email-import', {
         body: {
@@ -315,6 +318,7 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
       });
     } finally {
       setLoading(false);
+      resumeTimeout();
     }
   };
 
@@ -349,6 +353,7 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
 
   const importEmails = async () => {
     setStep('importing');
+    pauseTimeout();
     setImportProgress(0);
 
     const selectedEmailsList = emails.filter(e => selectedEmails.has(e.apolloId));
@@ -635,6 +640,7 @@ export function ApolloEmailImportDialog({ open, onOpenChange, onImportComplete }
 
     setImportResult(result);
     setStep('results');
+    resumeTimeout();
 
     if (result.communicationsCreated > 0) {
       onImportComplete?.();
