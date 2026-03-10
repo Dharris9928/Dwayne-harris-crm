@@ -7,6 +7,7 @@ import type { User, Session } from "@supabase/supabase-js";
 import { useSessionMonitor } from "@/hooks/useSessionMonitor";
 import { SessionTimeoutWarning } from "@/components/settings/SessionTimeoutWarning";
 import { NotificationBell } from "./NotificationBell";
+import { SessionTimeoutContext } from "@/contexts/SessionTimeoutContext";
 
 interface AppLayoutProps {
   children: ReactNode;
