@@ -5,7 +5,7 @@ import { Bold, Italic, List, ListOrdered, Heading1, Heading2, Heading3, Undo, Re
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
-const SANITIZE_CONFIG: DOMPurify.Config = {
+const SANITIZE_CONFIG = {
   ALLOWED_TAGS: ['h1', 'h2', 'h3', 'p', 'ul', 'ol', 'li', 'br', 'strong', 'em', 'b', 'i'],
   ALLOWED_ATTR: [],
   KEEP_CONTENT: true,
