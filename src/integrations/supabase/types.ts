@@ -6186,9 +6186,8 @@ export type Database = {
       cleanup_old_records: {
         Args: never
         Returns: {
-          cleaned_table: string
-          records_deleted: number
-          retention_days: number
+          rows_deleted: number
+          table_cleaned: string
         }[]
       }
       cleanup_old_sync_logs: {
