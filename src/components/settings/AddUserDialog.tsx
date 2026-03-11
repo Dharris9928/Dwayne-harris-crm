@@ -57,23 +57,55 @@ export function AddUserDialog({ open, onOpenChange, onUserAdded }: AddUserDialog
         throw new Error('Your session has expired. Please sign in again.');
       }
 
-      // Call edge function to create user (requires admin privileges)
-      const { data, error } = await supabase.functions.invoke('admin-create-user', {
+      const payload = {
+        email: form.email,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        password: form.password,
+        role: form.role,
+        useTemporaryPassword: form.useTemporaryPassword,
+      };
+
+      let data: any;
+
+      // Primary path: SDK invoke
+      const { data: invokeData, error } = await supabase.functions.invoke('admin-create-user', {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: {
-          email: form.email,
-          firstName: form.firstName,
-          lastName: form.lastName,
-          password: form.password,
-          role: form.role,
-          useTemporaryPassword: form.useTemporaryPassword
-        }
+        body: payload,
       });
 
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      if (error) {
+        // Fallback path: direct fetch (handles occasional invoke transport issues)
+        if ((error as Error).name === 'FunctionsFetchError') {
+          const response = await fetch(
+            `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/admin-create-user`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+              },
+              body: JSON.stringify(payload),
+            }
+          );
+
+          const fallbackData = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(fallbackData?.error || 'Failed to create user');
+          }
+
+          data = fallbackData;
+        } else {
+          throw error;
+        }
+      } else {
+        data = invokeData;
+      }
+
+      if (data?.error) throw new Error(data.error);
 
       // Show success message with temp password if generated
       if (form.useTemporaryPassword && data.temporaryPassword) {
