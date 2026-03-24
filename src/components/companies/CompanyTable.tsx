@@ -262,7 +262,7 @@ export function CompanyTable({
                     onCheckedChange={handleSelectAll}
                   />
                 </ResizableHeader>
-                <ResizableHeader field="favorite" sortable={false}></ResizableHeader>
+                <ResizableHeader field="favorite" sortable={false}>{""}</ResizableHeader>
                 {columnVisibility.companyName && <ResizableHeader field="company_name">Company Name</ResizableHeader>}
                 <ResizableHeader field="ai_status" sortable={false}>AI Status</ResizableHeader>
                 {columnVisibility.type && <ResizableHeader field="industry_type">Type</ResizableHeader>}
