@@ -78,6 +78,24 @@ export type { PipelineMetrics, EmailedCompany, ResponseDetail, HandoffDetail };
 // Re-export for convenience
 export { WEST_STATES, EAST_STATES };
 
+// Helper to fetch all rows by paginating through results
+async function paginatedFetch(buildQuery: () => any): Promise<any[]> {
+  const PAGE_SIZE = 1000;
+  let allRows: any[] = [];
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await buildQuery().range(offset, offset + PAGE_SIZE - 1);
+    if (error) throw error;
+    const rows = data || [];
+    allRows = allRows.concat(rows);
+    if (rows.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  return allRows;
+}
+
 export function usePipelineAnalytics(
   dateRange: DateRange,
   perspective: Perspective,
@@ -107,26 +125,25 @@ export function usePipelineAnalytics(
         return query;
       };
 
-      // Fetch communications data with contact info
-      let commsQuery = supabase
-        .from("company_communications")
-        .select(`
-          id, sent_at, email_opened_at, email_responded_at, company_id, contact_id,
-          companies!company_communications_company_id_fkey(id, company_name),
-          contacts(id, first_name, last_name)
-        `)
-        .gte("sent_at", fromDate)
-        .lte("sent_at", toDate);
-      
-      commsQuery = buildPerspectiveFilter(commsQuery);
-      const { data: commsDataRaw, error: commsError } = await commsQuery;
-      
-      if (commsError) throw commsError;
+      // Fetch communications data with contact info (paginated)
+      const buildCommsQuery = () => {
+        let q = supabase
+          .from("company_communications")
+          .select(`
+            id, sent_at, email_opened_at, email_responded_at, company_id, contact_id,
+            companies!company_communications_company_id_fkey(id, company_name),
+            contacts(id, first_name, last_name)
+          `)
+          .gte("sent_at", fromDate)
+          .lte("sent_at", toDate);
+        return buildPerspectiveFilter(q);
+      };
+      const commsDataRaw = await paginatedFetch(buildCommsQuery);
 
       // Filter by region if needed
       let commsData = commsDataRaw || [];
       if (filterStates && commsData.length > 0) {
-        const companyIds = [...new Set(commsData.map(c => c.company_id).filter(Boolean))];
+        const companyIds = [...new Set(commsData.map((c: any) => c.company_id).filter(Boolean))];
         if (companyIds.length > 0) {
           const { data: companies } = await supabase
             .from("companies")
@@ -134,24 +151,24 @@ export function usePipelineAnalytics(
             .in("id", companyIds)
             .in("state", filterStates);
           const validCompanyIds = new Set(companies?.map(c => c.id) || []);
-          commsData = commsData.filter(c => validCompanyIds.has(c.company_id));
+          commsData = commsData.filter((c: any) => validCompanyIds.has(c.company_id));
         }
       }
 
-      // Fetch Apollo email activities for additional opened/replied tracking
-      // Use activity_date for filtering since sent_at may not always be populated
-      let apolloQuery = supabase
-        .from("apollo_email_activities")
-        .select("id, sent_at, opened_at, replied_at, status, company_id, contact_id, open_count, click_count, reply_count, activity_date")
-        .gte("activity_date", fromDate)
-        .lte("activity_date", toDate);
-      
-      apolloQuery = buildPerspectiveFilter(apolloQuery);
-      const { data: apolloDataRaw } = await apolloQuery;
+      // Fetch Apollo email activities (paginated)
+      const buildApolloQuery = () => {
+        let q = supabase
+          .from("apollo_email_activities")
+          .select("id, sent_at, opened_at, replied_at, status, company_id, contact_id, open_count, click_count, reply_count, activity_date")
+          .gte("activity_date", fromDate)
+          .lte("activity_date", toDate);
+        return buildPerspectiveFilter(q);
+      };
+      const apolloDataRaw = await paginatedFetch(buildApolloQuery);
       
       let apolloData = apolloDataRaw || [];
       if (filterStates && apolloData.length > 0) {
-        const companyIds = [...new Set(apolloData.map(a => a.company_id).filter(Boolean))];
+        const companyIds = [...new Set(apolloData.map((a: any) => a.company_id).filter(Boolean))];
         if (companyIds.length > 0) {
           const { data: companies } = await supabase
             .from("companies")
@@ -159,23 +176,24 @@ export function usePipelineAnalytics(
             .in("id", companyIds)
             .in("state", filterStates);
           const validCompanyIds = new Set(companies?.map(c => c.id) || []);
-          apolloData = apolloData.filter(a => validCompanyIds.has(a.company_id));
+          apolloData = apolloData.filter((a: any) => validCompanyIds.has(a.company_id));
         }
       }
 
-      // Fetch previous period Apollo data
-      let prevApolloQuery = supabase
-        .from("apollo_email_activities")
-        .select("id, sent_at, opened_at, replied_at, status, company_id, open_count, click_count, reply_count, activity_date")
-        .gte("activity_date", prevFrom)
-        .lte("activity_date", prevTo);
-      
-      prevApolloQuery = buildPerspectiveFilter(prevApolloQuery);
-      const { data: prevApolloDataRaw } = await prevApolloQuery;
+      // Fetch previous period Apollo data (paginated)
+      const buildPrevApolloQuery = () => {
+        let q = supabase
+          .from("apollo_email_activities")
+          .select("id, sent_at, opened_at, replied_at, status, company_id, open_count, click_count, reply_count, activity_date")
+          .gte("activity_date", prevFrom)
+          .lte("activity_date", prevTo);
+        return buildPerspectiveFilter(q);
+      };
+      const prevApolloDataRaw = await paginatedFetch(buildPrevApolloQuery);
       
       let prevApolloData = prevApolloDataRaw || [];
       if (filterStates && prevApolloData.length > 0) {
-        const companyIds = [...new Set(prevApolloData.map(a => a.company_id).filter(Boolean))];
+        const companyIds = [...new Set(prevApolloData.map((a: any) => a.company_id).filter(Boolean))];
         if (companyIds.length > 0) {
           const { data: companies } = await supabase
             .from("companies")
@@ -183,23 +201,24 @@ export function usePipelineAnalytics(
             .in("id", companyIds)
             .in("state", filterStates);
           const validCompanyIds = new Set(companies?.map(c => c.id) || []);
-          prevApolloData = prevApolloData.filter(a => validCompanyIds.has(a.company_id));
+          prevApolloData = prevApolloData.filter((a: any) => validCompanyIds.has(a.company_id));
         }
       }
 
-      // Fetch previous period communications
-      let prevCommsQuery = supabase
-        .from("company_communications")
-        .select("id, sent_at, email_opened_at, email_responded_at, company_id")
-        .gte("sent_at", prevFrom)
-        .lte("sent_at", prevTo);
-      
-      prevCommsQuery = buildPerspectiveFilter(prevCommsQuery);
-      const { data: prevCommsDataRaw } = await prevCommsQuery;
+      // Fetch previous period communications (paginated)
+      const buildPrevCommsQuery = () => {
+        let q = supabase
+          .from("company_communications")
+          .select("id, sent_at, email_opened_at, email_responded_at, company_id")
+          .gte("sent_at", prevFrom)
+          .lte("sent_at", prevTo);
+        return buildPerspectiveFilter(q);
+      };
+      const prevCommsDataRaw = await paginatedFetch(buildPrevCommsQuery);
       
       let prevCommsData = prevCommsDataRaw || [];
       if (filterStates && prevCommsData.length > 0) {
-        const companyIds = [...new Set(prevCommsData.map(c => c.company_id).filter(Boolean))];
+        const companyIds = [...new Set(prevCommsData.map((c: any) => c.company_id).filter(Boolean))];
         if (companyIds.length > 0) {
           const { data: companies } = await supabase
             .from("companies")
@@ -207,20 +226,19 @@ export function usePipelineAnalytics(
             .in("id", companyIds)
             .in("state", filterStates);
           const validCompanyIds = new Set(companies?.map(c => c.id) || []);
-          prevCommsData = prevCommsData.filter(c => validCompanyIds.has(c.company_id));
+          prevCommsData = prevCommsData.filter((c: any) => validCompanyIds.has(c.company_id));
         }
       }
 
-      // Fetch all activities (Meeting, Demo, Phone) - include upcoming regardless of date range
-      let activitiesQuery = supabase
-        .from("outreach_activities")
-        .select("id, activity_type, outcome, scheduled_date, completed_date, created_at, company_id")
-        .in("activity_type", ["Meeting", "Demo", "Phone"]);
-      
-      activitiesQuery = buildPerspectiveFilter(activitiesQuery);
-      const { data: activitiesDataRaw, error: activitiesError } = await activitiesQuery;
-      
-      if (activitiesError) throw activitiesError;
+      // Fetch all activities (Meeting, Demo, Phone) - paginated
+      const buildActivitiesQuery = () => {
+        let q = supabase
+          .from("outreach_activities")
+          .select("id, activity_type, outcome, scheduled_date, completed_date, created_at, company_id")
+          .in("activity_type", ["Meeting", "Demo", "Phone"]);
+        return buildPerspectiveFilter(q);
+      };
+      const activitiesDataRaw = await paginatedFetch(buildActivitiesQuery);
 
       let activitiesData = activitiesDataRaw || [];
       const currentDate = new Date();
@@ -276,33 +294,34 @@ export function usePipelineAnalytics(
         return true;
       });
 
-      // Fetch previous period activities
-      let prevActivitiesQuery = supabase
-        .from("outreach_activities")
-        .select("id, activity_type, outcome, scheduled_date, completed_date, created_at, company_id")
-        .in("activity_type", ["Meeting", "Demo", "Phone"])
-        .or(`scheduled_date.gte.${prevFrom},completed_date.gte.${prevFrom},created_at.gte.${prevFrom}`)
-        .or(`scheduled_date.lte.${prevTo},completed_date.lte.${prevTo},created_at.lte.${prevTo}`);
-      
-      prevActivitiesQuery = buildPerspectiveFilter(prevActivitiesQuery);
-      const { data: prevActivitiesDataRaw } = await prevActivitiesQuery;
+      // Fetch previous period activities (paginated)
+      const buildPrevActivitiesQuery = () => {
+        let q = supabase
+          .from("outreach_activities")
+          .select("id, activity_type, outcome, scheduled_date, completed_date, created_at, company_id")
+          .in("activity_type", ["Meeting", "Demo", "Phone"])
+          .or(`scheduled_date.gte.${prevFrom},completed_date.gte.${prevFrom},created_at.gte.${prevFrom}`)
+          .or(`scheduled_date.lte.${prevTo},completed_date.lte.${prevTo},created_at.lte.${prevTo}`);
+        return buildPerspectiveFilter(q);
+      };
+      const prevActivitiesDataRaw = await paginatedFetch(buildPrevActivitiesQuery);
       
       let prevActivitiesData = prevActivitiesDataRaw || [];
-      prevActivitiesData = prevActivitiesData.filter(a => {
+      prevActivitiesData = prevActivitiesData.filter((a: any) => {
         const schedDate = a.scheduled_date ? new Date(a.scheduled_date) : null;
         const compDate = a.completed_date ? new Date(a.completed_date) : null;
         const createdDate = a.created_at ? new Date(a.created_at) : null;
         const from = new Date(prevFrom);
         from.setHours(0, 0, 0, 0);
         const to = new Date(prevTo);
-        to.setHours(23, 59, 59, 999); // Include full end day
+        to.setHours(23, 59, 59, 999);
         return (schedDate && schedDate >= from && schedDate <= to) || 
                (compDate && compDate >= from && compDate <= to) ||
                (createdDate && createdDate >= from && createdDate <= to);
       });
 
       if (filterStates && prevActivitiesData.length > 0) {
-        const companyIds = [...new Set(prevActivitiesData.map(m => m.company_id).filter(Boolean))];
+        const companyIds = [...new Set(prevActivitiesData.map((m: any) => m.company_id).filter(Boolean))];
         if (companyIds.length > 0) {
           const { data: companies } = await supabase
             .from("companies")
@@ -310,41 +329,38 @@ export function usePipelineAnalytics(
             .in("id", companyIds)
             .in("state", filterStates);
           const validCompanyIds = new Set(companies?.map(c => c.id) || []);
-          prevActivitiesData = prevActivitiesData.filter(m => validCompanyIds.has(m.company_id));
+          prevActivitiesData = prevActivitiesData.filter((m: any) => validCompanyIds.has(m.company_id));
         }
       }
 
-      const prevMeetingsData = prevActivitiesData.filter(a => a.activity_type === "Meeting");
-      const prevDemosData = prevActivitiesData.filter(a => a.activity_type === "Demo");
-      const prevPhoneData = prevActivitiesData.filter(a => a.activity_type === "Phone");
+      const prevMeetingsData = prevActivitiesData.filter((a: any) => a.activity_type === "Meeting");
+      const prevDemosData = prevActivitiesData.filter((a: any) => a.activity_type === "Demo");
+      const prevPhoneData = prevActivitiesData.filter((a: any) => a.activity_type === "Phone");
       
-      // Previous period upcoming meetings (for comparison) - exclude completed
-      const prevUpcomingMeetingsData = prevActivitiesData.filter(a => {
+      const prevUpcomingMeetingsData = prevActivitiesData.filter((a: any) => {
         if (!["Meeting", "Demo"].includes(a.activity_type)) return false;
         if (!a.scheduled_date) return false;
-        // Exclude completed meetings
         if (a.outcome === "Completed" || a.completed_date) return false;
         return true;
       });
 
-      // Fetch opportunities (leads assigned / handoffs) with company and assignee info
-      let oppsQuery = supabase
-        .from("opportunities")
-        .select(`
-          id, assigned_to, assigned_to_sales_rep_id, amount, created_at, stage, closed_date, company_id, notes,
-          companies!opportunities_company_id_fkey(id, company_name),
-          profiles!opportunities_assigned_to_fkey(first_name, last_name),
-          sales_reps!opportunities_assigned_to_sales_rep_id_fkey(first_name, last_name),
-          opportunity_name
-        `)
-        .gte("created_at", fromDate)
-        .lte("created_at", toDate)
-        .or("assigned_to.not.is.null,assigned_to_sales_rep_id.not.is.null,opportunity_name.ilike.Lead from%,opportunity_name.ilike.Handoff:%");
-      
-      oppsQuery = buildPerspectiveFilter(oppsQuery);
-      const { data: oppsDataRaw, error: oppsError } = await oppsQuery;
-      
-      if (oppsError) throw oppsError;
+      // Fetch opportunities (paginated)
+      const buildOppsQuery = () => {
+        let q = supabase
+          .from("opportunities")
+          .select(`
+            id, assigned_to, assigned_to_sales_rep_id, amount, created_at, stage, closed_date, company_id, notes,
+            companies!opportunities_company_id_fkey(id, company_name),
+            profiles!opportunities_assigned_to_fkey(first_name, last_name),
+            sales_reps!opportunities_assigned_to_sales_rep_id_fkey(first_name, last_name),
+            opportunity_name
+          `)
+          .gte("created_at", fromDate)
+          .lte("created_at", toDate)
+          .or("assigned_to.not.is.null,assigned_to_sales_rep_id.not.is.null,opportunity_name.ilike.Lead from%,opportunity_name.ilike.Handoff:%");
+        return buildPerspectiveFilter(q);
+      };
+      const oppsDataRaw = await paginatedFetch(buildOppsQuery);
 
       let oppsData = oppsDataRaw || [];
       if (filterStates && oppsData.length > 0) {
@@ -390,16 +406,17 @@ export function usePipelineAnalytics(
         }
       }
 
-      // Fetch previous period opportunities
-      let prevOppsQuery = supabase
-        .from("opportunities")
-        .select("id, assigned_to, stage, company_id, opportunity_name")
-        .gte("created_at", prevFrom)
-        .lte("created_at", prevTo)
-        .or("assigned_to.not.is.null,opportunity_name.ilike.Lead from%,opportunity_name.ilike.Handoff:%");
-      
-      prevOppsQuery = buildPerspectiveFilter(prevOppsQuery);
-      const { data: prevOppsDataRaw } = await prevOppsQuery;
+      // Fetch previous period opportunities (paginated)
+      const buildPrevOppsQuery = () => {
+        let q = supabase
+          .from("opportunities")
+          .select("id, assigned_to, stage, company_id, opportunity_name")
+          .gte("created_at", prevFrom)
+          .lte("created_at", prevTo)
+          .or("assigned_to.not.is.null,opportunity_name.ilike.Lead from%,opportunity_name.ilike.Handoff:%");
+        return buildPerspectiveFilter(q);
+      };
+      const prevOppsDataRaw = await paginatedFetch(buildPrevOppsQuery);
       
       let prevOppsData = prevOppsDataRaw || [];
       if (filterStates && prevOppsData.length > 0) {
