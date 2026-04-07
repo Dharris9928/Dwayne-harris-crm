@@ -125,19 +125,20 @@ export function usePipelineAnalytics(
         return query;
       };
 
-      // Fetch communications data with contact info
-      let commsQuery = supabase
-        .from("company_communications")
-        .select(`
-          id, sent_at, email_opened_at, email_responded_at, company_id, contact_id,
-          companies!company_communications_company_id_fkey(id, company_name),
-          contacts(id, first_name, last_name)
-        `)
-        .gte("sent_at", fromDate)
-        .lte("sent_at", toDate);
-      
-      commsQuery = buildPerspectiveFilter(commsQuery);
-      const { data: commsDataRaw, error: commsError } = await commsQuery;
+      // Fetch communications data with contact info (paginated)
+      const buildCommsQuery = () => {
+        let q = supabase
+          .from("company_communications")
+          .select(`
+            id, sent_at, email_opened_at, email_responded_at, company_id, contact_id,
+            companies!company_communications_company_id_fkey(id, company_name),
+            contacts(id, first_name, last_name)
+          `)
+          .gte("sent_at", fromDate)
+          .lte("sent_at", toDate);
+        return buildPerspectiveFilter(q);
+      };
+      const commsDataRaw = await paginatedFetch(buildCommsQuery);
       
       if (commsError) throw commsError;
 
