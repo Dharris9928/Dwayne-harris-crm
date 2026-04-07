@@ -139,13 +139,11 @@ export function usePipelineAnalytics(
         return buildPerspectiveFilter(q);
       };
       const commsDataRaw = await paginatedFetch(buildCommsQuery);
-      
-      if (commsError) throw commsError;
 
       // Filter by region if needed
       let commsData = commsDataRaw || [];
       if (filterStates && commsData.length > 0) {
-        const companyIds = [...new Set(commsData.map(c => c.company_id).filter(Boolean))];
+        const companyIds = [...new Set(commsData.map((c: any) => c.company_id).filter(Boolean))];
         if (companyIds.length > 0) {
           const { data: companies } = await supabase
             .from("companies")
@@ -153,24 +151,24 @@ export function usePipelineAnalytics(
             .in("id", companyIds)
             .in("state", filterStates);
           const validCompanyIds = new Set(companies?.map(c => c.id) || []);
-          commsData = commsData.filter(c => validCompanyIds.has(c.company_id));
+          commsData = commsData.filter((c: any) => validCompanyIds.has(c.company_id));
         }
       }
 
-      // Fetch Apollo email activities for additional opened/replied tracking
-      // Use activity_date for filtering since sent_at may not always be populated
-      let apolloQuery = supabase
-        .from("apollo_email_activities")
-        .select("id, sent_at, opened_at, replied_at, status, company_id, contact_id, open_count, click_count, reply_count, activity_date")
-        .gte("activity_date", fromDate)
-        .lte("activity_date", toDate);
-      
-      apolloQuery = buildPerspectiveFilter(apolloQuery);
-      const { data: apolloDataRaw } = await apolloQuery;
+      // Fetch Apollo email activities (paginated)
+      const buildApolloQuery = () => {
+        let q = supabase
+          .from("apollo_email_activities")
+          .select("id, sent_at, opened_at, replied_at, status, company_id, contact_id, open_count, click_count, reply_count, activity_date")
+          .gte("activity_date", fromDate)
+          .lte("activity_date", toDate);
+        return buildPerspectiveFilter(q);
+      };
+      const apolloDataRaw = await paginatedFetch(buildApolloQuery);
       
       let apolloData = apolloDataRaw || [];
       if (filterStates && apolloData.length > 0) {
-        const companyIds = [...new Set(apolloData.map(a => a.company_id).filter(Boolean))];
+        const companyIds = [...new Set(apolloData.map((a: any) => a.company_id).filter(Boolean))];
         if (companyIds.length > 0) {
           const { data: companies } = await supabase
             .from("companies")
@@ -178,23 +176,24 @@ export function usePipelineAnalytics(
             .in("id", companyIds)
             .in("state", filterStates);
           const validCompanyIds = new Set(companies?.map(c => c.id) || []);
-          apolloData = apolloData.filter(a => validCompanyIds.has(a.company_id));
+          apolloData = apolloData.filter((a: any) => validCompanyIds.has(a.company_id));
         }
       }
 
-      // Fetch previous period Apollo data
-      let prevApolloQuery = supabase
-        .from("apollo_email_activities")
-        .select("id, sent_at, opened_at, replied_at, status, company_id, open_count, click_count, reply_count, activity_date")
-        .gte("activity_date", prevFrom)
-        .lte("activity_date", prevTo);
-      
-      prevApolloQuery = buildPerspectiveFilter(prevApolloQuery);
-      const { data: prevApolloDataRaw } = await prevApolloQuery;
+      // Fetch previous period Apollo data (paginated)
+      const buildPrevApolloQuery = () => {
+        let q = supabase
+          .from("apollo_email_activities")
+          .select("id, sent_at, opened_at, replied_at, status, company_id, open_count, click_count, reply_count, activity_date")
+          .gte("activity_date", prevFrom)
+          .lte("activity_date", prevTo);
+        return buildPerspectiveFilter(q);
+      };
+      const prevApolloDataRaw = await paginatedFetch(buildPrevApolloQuery);
       
       let prevApolloData = prevApolloDataRaw || [];
       if (filterStates && prevApolloData.length > 0) {
-        const companyIds = [...new Set(prevApolloData.map(a => a.company_id).filter(Boolean))];
+        const companyIds = [...new Set(prevApolloData.map((a: any) => a.company_id).filter(Boolean))];
         if (companyIds.length > 0) {
           const { data: companies } = await supabase
             .from("companies")
@@ -202,23 +201,24 @@ export function usePipelineAnalytics(
             .in("id", companyIds)
             .in("state", filterStates);
           const validCompanyIds = new Set(companies?.map(c => c.id) || []);
-          prevApolloData = prevApolloData.filter(a => validCompanyIds.has(a.company_id));
+          prevApolloData = prevApolloData.filter((a: any) => validCompanyIds.has(a.company_id));
         }
       }
 
-      // Fetch previous period communications
-      let prevCommsQuery = supabase
-        .from("company_communications")
-        .select("id, sent_at, email_opened_at, email_responded_at, company_id")
-        .gte("sent_at", prevFrom)
-        .lte("sent_at", prevTo);
-      
-      prevCommsQuery = buildPerspectiveFilter(prevCommsQuery);
-      const { data: prevCommsDataRaw } = await prevCommsQuery;
+      // Fetch previous period communications (paginated)
+      const buildPrevCommsQuery = () => {
+        let q = supabase
+          .from("company_communications")
+          .select("id, sent_at, email_opened_at, email_responded_at, company_id")
+          .gte("sent_at", prevFrom)
+          .lte("sent_at", prevTo);
+        return buildPerspectiveFilter(q);
+      };
+      const prevCommsDataRaw = await paginatedFetch(buildPrevCommsQuery);
       
       let prevCommsData = prevCommsDataRaw || [];
       if (filterStates && prevCommsData.length > 0) {
-        const companyIds = [...new Set(prevCommsData.map(c => c.company_id).filter(Boolean))];
+        const companyIds = [...new Set(prevCommsData.map((c: any) => c.company_id).filter(Boolean))];
         if (companyIds.length > 0) {
           const { data: companies } = await supabase
             .from("companies")
@@ -226,7 +226,7 @@ export function usePipelineAnalytics(
             .in("id", companyIds)
             .in("state", filterStates);
           const validCompanyIds = new Set(companies?.map(c => c.id) || []);
-          prevCommsData = prevCommsData.filter(c => validCompanyIds.has(c.company_id));
+          prevCommsData = prevCommsData.filter((c: any) => validCompanyIds.has(c.company_id));
         }
       }
 
