@@ -134,7 +134,7 @@ export function usePipelineAnalytics(
           `)
           .gte("sent_at", fromDate)
           .lte("sent_at", toDate);
-        return buildPerspectiveFilter(q);
+        return buildPerspectiveFilter(q, "user_id");
       };
       const commsDataRaw = await paginatedFetch(buildCommsQuery);
 
@@ -210,7 +210,7 @@ export function usePipelineAnalytics(
           .select("id, sent_at, email_opened_at, email_responded_at, company_id")
           .gte("sent_at", prevFrom)
           .lte("sent_at", prevTo);
-        return buildPerspectiveFilter(q);
+        return buildPerspectiveFilter(q, "user_id");
       };
       const prevCommsDataRaw = await paginatedFetch(buildPrevCommsQuery);
       
