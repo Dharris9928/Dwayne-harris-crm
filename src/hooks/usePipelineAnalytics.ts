@@ -137,10 +137,11 @@ export function usePipelineAnalytics(
       };
 
       const runApolloCount = async (from: string, to: string, filter: string, companyIds?: string[]) => {
-        const buildCountQuery = (ids?: string[]) => {
+        // Fetch IDs and dedupe by apollo_activity_id to avoid inflation from re-imports
+        const buildQuery = (ids?: string[]) => {
           let q = supabase
             .from("apollo_email_activities")
-            .select("id", { count: "exact", head: true })
+            .select("apollo_activity_id, id")
             .gte("activity_date", from)
             .lte("activity_date", to)
             .or(filter);
@@ -148,14 +149,29 @@ export function usePipelineAnalytics(
           return buildPerspectiveFilter(q);
         };
 
-        if (!companyIds) return countRows(buildCountQuery());
+        const dedupe = (rows: any[]) => {
+          const seen = new Set<string>();
+          for (const r of rows) {
+            const key = r.apollo_activity_id || `row_${r.id}`;
+            seen.add(key);
+          }
+          return seen.size;
+        };
+
+        if (!companyIds) {
+          const rows = await paginatedFetch(() => buildQuery());
+          return dedupe(rows);
+        }
         if (companyIds.length === 0) return 0;
 
-        let total = 0;
+        const seen = new Set<string>();
         for (let i = 0; i < companyIds.length; i += 200) {
-          total += await countRows(buildCountQuery(companyIds.slice(i, i + 200)));
+          const rows = await paginatedFetch(() => buildQuery(companyIds.slice(i, i + 200)));
+          for (const r of rows) {
+            seen.add(r.apollo_activity_id || `row_${r.id}`);
+          }
         }
-        return total;
+        return seen.size;
       };
 
       let regionalCompanyIds: string[] | undefined;
