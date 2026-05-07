@@ -145,12 +145,20 @@ const Auth = () => {
       if (factors?.totp && factors.totp.length > 0) {
         const totpFactor = factors.totp.find(f => f.status === 'verified');
         if (totpFactor) {
-          // User has MFA enrolled - keep session and require MFA verification
-          setPendingMFAFactorId(totpFactor.id);
-          setShowMFAVerification(true);
-          toast.info('Please verify your identity with two-factor authentication');
-          setLoading(false);
-          return;
+          // Trusted device window: skip MFA if verified within the last hour on this device
+          const TRUST_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+          const trustKey = `mfa_trusted_until_${data.user?.id}`;
+          const trustedUntil = parseInt(localStorage.getItem(trustKey) || '0', 10);
+          if (trustedUntil && Date.now() < trustedUntil) {
+            // Within trust window - skip MFA prompt
+          } else {
+            // User has MFA enrolled - keep session and require MFA verification
+            setPendingMFAFactorId(totpFactor.id);
+            setShowMFAVerification(true);
+            toast.info('Please verify your identity with two-factor authentication');
+            setLoading(false);
+            return;
+          }
         }
       }
 
@@ -182,6 +190,12 @@ const Auth = () => {
     
     // Session is already established and upgraded to aal2 after MFA verification
     const { data: { user } } = await supabase.auth.getUser();
+
+    // Mark this device as trusted for 1 hour to skip MFA on subsequent logins
+    if (user) {
+      const TRUST_WINDOW_MS = 60 * 60 * 1000;
+      localStorage.setItem(`mfa_trusted_until_${user.id}`, String(Date.now() + TRUST_WINDOW_MS));
+    }
 
     // Log successful login after MFA
     if (user) {
