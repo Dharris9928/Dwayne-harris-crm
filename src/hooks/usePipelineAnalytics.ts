@@ -376,10 +376,12 @@ export function usePipelineAnalytics(
       const demosScheduled = demosData.filter(d => d.outcome === "Scheduled" || d.outcome === "Completed").length;
       const demosCompleted = demosData.filter(d => d.outcome === "Completed").length;
       
-      // Phone calls — combine outreach_activities (Phone) + company_communications (call_script)
+      // Phone calls — every phone call writes BOTH an outreach_activities row (Phone)
+      // AND a company_communications row (call_script) at the same timestamp.
+      // Use the max to avoid double-counting (in case one side is missing for older records).
       const phoneCallsFromActivities = phoneData.filter(p => p.outcome === "Completed" || p.completed_date).length;
       const phoneCallsFromComms = commsData.filter((c: any) => c.communication_type === "call_script").length;
-      const phoneCalls = phoneCallsFromActivities + phoneCallsFromComms;
+      const phoneCalls = Math.max(phoneCallsFromActivities, phoneCallsFromComms);
       
       // Upcoming meetings count (scheduled for future)
       const upcomingMeetings = upcomingMeetingsData.length;
@@ -415,8 +417,10 @@ export function usePipelineAnalytics(
       const prevMeetingsCompleted = prevMeetingsData.filter(m => m.outcome === "Completed").length;
       const prevDemosScheduled = prevDemosData.filter(d => d.outcome === "Scheduled" || d.outcome === "Completed").length;
       const prevDemosCompleted = prevDemosData.filter(d => d.outcome === "Completed").length;
-      const prevPhoneCalls = prevPhoneData.filter(p => p.outcome === "Completed" || p.completed_date).length +
-                            prevCommsData.filter((c: any) => c.communication_type === "call_script").length;
+      const prevPhoneCalls = Math.max(
+        prevPhoneData.filter(p => p.outcome === "Completed" || p.completed_date).length,
+        prevCommsData.filter((c: any) => c.communication_type === "call_script").length
+      );
       const prevUpcomingMeetings = prevUpcomingMeetingsData.length;
       const prevMeetingsConducted = prevMeetingsData.filter(m => m.outcome === "Completed" || m.completed_date).length +
                                     prevDemosData.filter(d => d.outcome === "Completed" || d.completed_date).length;
