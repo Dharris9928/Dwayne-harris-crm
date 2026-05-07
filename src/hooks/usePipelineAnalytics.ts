@@ -220,7 +220,7 @@ export function usePipelineAnalytics(
       const buildPrevCommsQuery = () => {
         let q = supabase
           .from("company_communications")
-          .select("id, sent_at, email_opened_at, email_responded_at, company_id")
+          .select("id, sent_at, email_opened_at, email_responded_at, company_id, communication_type")
           .gte("sent_at", prevFrom)
           .lte("sent_at", prevTo);
         return buildPerspectiveFilter(q, "user_id");
