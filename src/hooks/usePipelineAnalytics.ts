@@ -465,19 +465,17 @@ export function usePipelineAnalytics(
       }
 
       // Calculate current period metrics
-      // Combine comms sent from both company_communications and apollo_email_activities
-      // Count Apollo records as sent if they have sent_at OR a sent/not_opened/opened/bounced status
-      const commsSent = commsData.filter(c => c.sent_at).length + 
-        apolloMetrics.sent;
-      
-      // Combine opened/responded from both tables
-      const commsOpened = commsData.filter(c => c.email_opened_at).length;
-      const apolloOpened = apolloMetrics.opened;
-      const emailsOpened = commsOpened + apolloOpened;
-      
-      const commsResponded = commsData.filter(c => c.email_responded_at).length;
-      const apolloResponded = apolloMetrics.responded;
-      const responsesReceived = commsResponded + apolloResponded;
+      // IMPORTANT: company_communications email rows are mirrors of Apollo imports (same company+sent_at).
+      // To avoid double-counting, only count non-email comms here; Apollo is the source of truth for emails.
+      const commsEmailRows = commsData.filter(c => c.communication_type === "email");
+      const commsSent = apolloMetrics.sent;
+
+      const commsOpened = commsEmailRows.filter(c => c.email_opened_at).length;
+      // Use max() instead of sum to avoid double-counting opens that exist in both tables
+      const emailsOpened = Math.max(commsOpened, apolloMetrics.opened);
+
+      const commsResponded = commsEmailRows.filter(c => c.email_responded_at).length;
+      const responsesReceived = Math.max(commsResponded, apolloMetrics.responded);
       
       // Meetings (Scheduled or Completed outcome)
       const meetingsScheduled = meetingsData.filter(m => m.outcome === "Scheduled" || m.outcome === "Completed").length;
