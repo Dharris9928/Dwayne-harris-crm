@@ -48,8 +48,10 @@ export default function JobQuotes() {
     },
   });
 
+  const quarterOptions = getQuarterOptions();
+
   const { data: quotes = [], isLoading } = useQuery({
-    queryKey: ["job-quotes", statusFilter, quarterFilter],
+    queryKey: ["job-quotes", statusFilter, datePreset, customRange.from?.toISOString(), customRange.to?.toISOString()],
     queryFn: async () => {
       let query = supabase
         .from("job_quotes")
@@ -72,23 +74,29 @@ export default function JobQuotes() {
         query = query.eq("status", statusFilter);
       }
 
-      // Apply quarterly filter
-      if (quarterFilter !== "all") {
-        const year = new Date().getFullYear();
-        const quarterMap: Record<string, [string, string]> = {
-          Q1: [`${year}-01-01`, `${year}-03-31`],
-          Q2: [`${year}-04-01`, `${year}-06-30`],
-          Q3: [`${year}-07-01`, `${year}-09-30`],
-          Q4: [`${year}-10-01`, `${year}-12-31`],
-          "Q1-prev": [`${year - 1}-01-01`, `${year - 1}-03-31`],
-          "Q2-prev": [`${year - 1}-04-01`, `${year - 1}-06-30`],
-          "Q3-prev": [`${year - 1}-07-01`, `${year - 1}-09-30`],
-          "Q4-prev": [`${year - 1}-10-01`, `${year - 1}-12-31`],
-        };
-        const range = quarterMap[quarterFilter];
-        if (range) {
-          query = query.gte("date_received", range[0]).lte("date_received", range[1]);
+      // Apply date filter
+      if (datePreset !== "all") {
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+
+        if (datePreset === "30" || datePreset === "60" || datePreset === "90") {
+          const days = parseInt(datePreset);
+          const from = subDays(today, days);
+          query = query.gte("date_received", from.toISOString()).lte("date_received", today.toISOString());
+        } else {
+          // Check quarter presets
+          const quarterMatch = quarterOptions.find(q => q.value === datePreset);
+          if (quarterMatch) {
+            query = query.gte("date_received", quarterMatch.from.toISOString()).lte("date_received", quarterMatch.to.toISOString());
+          }
         }
+      }
+
+      // Apply custom date range
+      if (customRange.from && customRange.to) {
+        const to = new Date(customRange.to);
+        to.setHours(23, 59, 59, 999);
+        query = query.gte("date_received", customRange.from.toISOString()).lte("date_received", to.toISOString());
       }
 
       const { data, error } = await query;
