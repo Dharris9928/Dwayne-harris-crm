@@ -186,6 +186,12 @@ export default function JobQuotes() {
     ? (wonCount / (wonCount + lostCount) * 100).toFixed(1)
     : null;
 
+  // Average Quote Size
+  const quotesWithPrice = quotes.filter((q: any) => q.price !== null && q.price !== undefined);
+  const avgQuoteSize = quotesWithPrice.length > 0
+    ? quotesWithPrice.reduce((sum: number, q: any) => sum + (parseFloat(q.price) || 0), 0) / quotesWithPrice.length
+    : null;
+
   return (
     <div className="container mx-auto py-6 space-y-6">
       {/* Header */}
@@ -272,7 +278,7 @@ export default function JobQuotes() {
       </div>
 
       {/* Secondary Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -306,6 +312,20 @@ export default function JobQuotes() {
           <CardContent>
             <p className="text-2xl font-bold text-success">
               {winLossRatio !== null ? `${winLossRatio}%` : "—"}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Avg Quote Size
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">
+              {avgQuoteSize !== null
+                ? new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(avgQuoteSize)
+                : "—"}
             </p>
           </CardContent>
         </Card>
