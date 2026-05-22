@@ -122,6 +122,7 @@ export function EditJobQuoteDialog({ open, onOpenChange, quote }: EditJobQuoteDi
       } else {
         setAssignee("");
       }
+      setPoFileUrl(quote.po_file_url || null);
     }
   }, [quote, form]);
 
