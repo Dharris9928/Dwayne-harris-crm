@@ -399,7 +399,12 @@ export function JobQuotesTable({
                         : "-"}
                     </div>
                   </TableCell>
-                  <TableCell style={{ width: columnWidths.actions, maxWidth: columnWidths.actions }} onClick={(e) => e.stopPropagation()}>
+                  <TableCell style={{ width: columnWidths.po_number, maxWidth: columnWidths.po_number }}>
+                    <div className="truncate font-medium" title={quote.po_number || ''}>
+                      {quote.po_number || "-"}
+                    </div>
+                  </TableCell>
+                  <TableCell style={{ width: columnWidths.actions, maxWidth: columnWidths.actions }} onClick={(e) => e.stopPropagation()>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
