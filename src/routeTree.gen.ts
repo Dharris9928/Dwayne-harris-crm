@@ -13,6 +13,21 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedProspectingRouteImport } from './routes/_authenticated/prospecting'
+import { Route as AuthenticatedPresentationRouteImport } from './routes/_authenticated/presentation'
+import { Route as AuthenticatedPipelineAnalyticsRouteImport } from './routes/_authenticated/pipeline-analytics'
+import { Route as AuthenticatedPermitsRouteImport } from './routes/_authenticated/permits'
+import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
+import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
+import { Route as AuthenticatedJobQuotesRouteImport } from './routes/_authenticated/job-quotes'
+import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
+import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
+import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated/companies'
+import { Route as AuthenticatedCommunicationsRouteImport } from './routes/_authenticated/communications'
+import { Route as AuthenticatedAiFeaturesRouteImport } from './routes/_authenticated/ai-features'
+import { Route as AuthenticatedActivitiesRouteImport } from './routes/_authenticated/activities'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -33,15 +48,126 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedProspectingRoute =
+  AuthenticatedProspectingRouteImport.update({
+    id: '/prospecting',
+    path: '/prospecting',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPresentationRoute =
+  AuthenticatedPresentationRouteImport.update({
+    id: '/presentation',
+    path: '/presentation',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPipelineAnalyticsRoute =
+  AuthenticatedPipelineAnalyticsRouteImport.update({
+    id: '/pipeline-analytics',
+    path: '/pipeline-analytics',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPermitsRoute = AuthenticatedPermitsRouteImport.update({
+  id: '/permits',
+  path: '/permits',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedOpportunitiesRoute =
+  AuthenticatedOpportunitiesRouteImport.update({
+    id: '/opportunities',
+    path: '/opportunities',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedNotificationsRoute =
+  AuthenticatedNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedJobQuotesRoute = AuthenticatedJobQuotesRouteImport.update({
+  id: '/job-quotes',
+  path: '/job-quotes',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
+  id: '/contacts',
+  path: '/contacts',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCompaniesRoute = AuthenticatedCompaniesRouteImport.update({
+  id: '/companies',
+  path: '/companies',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedCommunicationsRoute =
+  AuthenticatedCommunicationsRouteImport.update({
+    id: '/communications',
+    path: '/communications',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAiFeaturesRoute = AuthenticatedAiFeaturesRouteImport.update({
+  id: '/ai-features',
+  path: '/ai-features',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedActivitiesRoute = AuthenticatedActivitiesRouteImport.update({
+  id: '/activities',
+  path: '/activities',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/activities': typeof AuthenticatedActivitiesRoute
+  '/ai-features': typeof AuthenticatedAiFeaturesRoute
+  '/communications': typeof AuthenticatedCommunicationsRoute
+  '/companies': typeof AuthenticatedCompaniesRoute
+  '/contacts': typeof AuthenticatedContactsRoute
+  '/help': typeof AuthenticatedHelpRoute
+  '/job-quotes': typeof AuthenticatedJobQuotesRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/opportunities': typeof AuthenticatedOpportunitiesRoute
+  '/permits': typeof AuthenticatedPermitsRoute
+  '/pipeline-analytics': typeof AuthenticatedPipelineAnalyticsRoute
+  '/presentation': typeof AuthenticatedPresentationRoute
+  '/prospecting': typeof AuthenticatedProspectingRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/activities': typeof AuthenticatedActivitiesRoute
+  '/ai-features': typeof AuthenticatedAiFeaturesRoute
+  '/communications': typeof AuthenticatedCommunicationsRoute
+  '/companies': typeof AuthenticatedCompaniesRoute
+  '/contacts': typeof AuthenticatedContactsRoute
+  '/help': typeof AuthenticatedHelpRoute
+  '/job-quotes': typeof AuthenticatedJobQuotesRoute
+  '/notifications': typeof AuthenticatedNotificationsRoute
+  '/opportunities': typeof AuthenticatedOpportunitiesRoute
+  '/permits': typeof AuthenticatedPermitsRoute
+  '/pipeline-analytics': typeof AuthenticatedPipelineAnalyticsRoute
+  '/presentation': typeof AuthenticatedPresentationRoute
+  '/prospecting': typeof AuthenticatedProspectingRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/': typeof AuthenticatedIndexRoute
 }
 export interface FileRoutesById {
@@ -49,14 +175,85 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/_authenticated/activities': typeof AuthenticatedActivitiesRoute
+  '/_authenticated/ai-features': typeof AuthenticatedAiFeaturesRoute
+  '/_authenticated/communications': typeof AuthenticatedCommunicationsRoute
+  '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
+  '/_authenticated/contacts': typeof AuthenticatedContactsRoute
+  '/_authenticated/help': typeof AuthenticatedHelpRoute
+  '/_authenticated/job-quotes': typeof AuthenticatedJobQuotesRoute
+  '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
+  '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
+  '/_authenticated/permits': typeof AuthenticatedPermitsRoute
+  '/_authenticated/pipeline-analytics': typeof AuthenticatedPipelineAnalyticsRoute
+  '/_authenticated/presentation': typeof AuthenticatedPresentationRoute
+  '/_authenticated/prospecting': typeof AuthenticatedProspectingRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/signup'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/activities'
+    | '/ai-features'
+    | '/communications'
+    | '/companies'
+    | '/contacts'
+    | '/help'
+    | '/job-quotes'
+    | '/notifications'
+    | '/opportunities'
+    | '/permits'
+    | '/pipeline-analytics'
+    | '/presentation'
+    | '/prospecting'
+    | '/reports'
+    | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/signup' | '/'
-  id: '__root__' | '/_authenticated' | '/login' | '/signup' | '/_authenticated/'
+  to:
+    | '/login'
+    | '/signup'
+    | '/activities'
+    | '/ai-features'
+    | '/communications'
+    | '/companies'
+    | '/contacts'
+    | '/help'
+    | '/job-quotes'
+    | '/notifications'
+    | '/opportunities'
+    | '/permits'
+    | '/pipeline-analytics'
+    | '/presentation'
+    | '/prospecting'
+    | '/reports'
+    | '/settings'
+    | '/'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/login'
+    | '/signup'
+    | '/_authenticated/activities'
+    | '/_authenticated/ai-features'
+    | '/_authenticated/communications'
+    | '/_authenticated/companies'
+    | '/_authenticated/contacts'
+    | '/_authenticated/help'
+    | '/_authenticated/job-quotes'
+    | '/_authenticated/notifications'
+    | '/_authenticated/opportunities'
+    | '/_authenticated/permits'
+    | '/_authenticated/pipeline-analytics'
+    | '/_authenticated/presentation'
+    | '/_authenticated/prospecting'
+    | '/_authenticated/reports'
+    | '/_authenticated/settings'
+    | '/_authenticated/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,14 +292,149 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/prospecting': {
+      id: '/_authenticated/prospecting'
+      path: '/prospecting'
+      fullPath: '/prospecting'
+      preLoaderRoute: typeof AuthenticatedProspectingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/presentation': {
+      id: '/_authenticated/presentation'
+      path: '/presentation'
+      fullPath: '/presentation'
+      preLoaderRoute: typeof AuthenticatedPresentationRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/pipeline-analytics': {
+      id: '/_authenticated/pipeline-analytics'
+      path: '/pipeline-analytics'
+      fullPath: '/pipeline-analytics'
+      preLoaderRoute: typeof AuthenticatedPipelineAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/permits': {
+      id: '/_authenticated/permits'
+      path: '/permits'
+      fullPath: '/permits'
+      preLoaderRoute: typeof AuthenticatedPermitsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/opportunities': {
+      id: '/_authenticated/opportunities'
+      path: '/opportunities'
+      fullPath: '/opportunities'
+      preLoaderRoute: typeof AuthenticatedOpportunitiesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/notifications': {
+      id: '/_authenticated/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof AuthenticatedNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/job-quotes': {
+      id: '/_authenticated/job-quotes'
+      path: '/job-quotes'
+      fullPath: '/job-quotes'
+      preLoaderRoute: typeof AuthenticatedJobQuotesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/help': {
+      id: '/_authenticated/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof AuthenticatedHelpRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/contacts': {
+      id: '/_authenticated/contacts'
+      path: '/contacts'
+      fullPath: '/contacts'
+      preLoaderRoute: typeof AuthenticatedContactsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/companies': {
+      id: '/_authenticated/companies'
+      path: '/companies'
+      fullPath: '/companies'
+      preLoaderRoute: typeof AuthenticatedCompaniesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/communications': {
+      id: '/_authenticated/communications'
+      path: '/communications'
+      fullPath: '/communications'
+      preLoaderRoute: typeof AuthenticatedCommunicationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/ai-features': {
+      id: '/_authenticated/ai-features'
+      path: '/ai-features'
+      fullPath: '/ai-features'
+      preLoaderRoute: typeof AuthenticatedAiFeaturesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/activities': {
+      id: '/_authenticated/activities'
+      path: '/activities'
+      fullPath: '/activities'
+      preLoaderRoute: typeof AuthenticatedActivitiesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedActivitiesRoute: typeof AuthenticatedActivitiesRoute
+  AuthenticatedAiFeaturesRoute: typeof AuthenticatedAiFeaturesRoute
+  AuthenticatedCommunicationsRoute: typeof AuthenticatedCommunicationsRoute
+  AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
+  AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
+  AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
+  AuthenticatedJobQuotesRoute: typeof AuthenticatedJobQuotesRoute
+  AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
+  AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
+  AuthenticatedPermitsRoute: typeof AuthenticatedPermitsRoute
+  AuthenticatedPipelineAnalyticsRoute: typeof AuthenticatedPipelineAnalyticsRoute
+  AuthenticatedPresentationRoute: typeof AuthenticatedPresentationRoute
+  AuthenticatedProspectingRoute: typeof AuthenticatedProspectingRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedActivitiesRoute: AuthenticatedActivitiesRoute,
+  AuthenticatedAiFeaturesRoute: AuthenticatedAiFeaturesRoute,
+  AuthenticatedCommunicationsRoute: AuthenticatedCommunicationsRoute,
+  AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
+  AuthenticatedContactsRoute: AuthenticatedContactsRoute,
+  AuthenticatedHelpRoute: AuthenticatedHelpRoute,
+  AuthenticatedJobQuotesRoute: AuthenticatedJobQuotesRoute,
+  AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
+  AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
+  AuthenticatedPermitsRoute: AuthenticatedPermitsRoute,
+  AuthenticatedPipelineAnalyticsRoute: AuthenticatedPipelineAnalyticsRoute,
+  AuthenticatedPresentationRoute: AuthenticatedPresentationRoute,
+  AuthenticatedProspectingRoute: AuthenticatedProspectingRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 
