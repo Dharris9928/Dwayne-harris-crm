@@ -20,6 +20,7 @@ import { Route as AuthenticatedJobQuotesRouteImport } from './routes/_authentica
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
 import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated/companies'
 import { Route as AuthenticatedCommunicationsRouteImport } from './routes/_authenticated/communications'
+import { Route as AuthenticatedAiFeaturesRouteImport } from './routes/_authenticated/ai-features'
 import { Route as AuthenticatedActivitiesRouteImport } from './routes/_authenticated/activities'
 
 const SignupRoute = SignupRouteImport.update({
@@ -79,6 +80,11 @@ const AuthenticatedCommunicationsRoute =
     path: '/communications',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAiFeaturesRoute = AuthenticatedAiFeaturesRouteImport.update({
+  id: '/ai-features',
+  path: '/ai-features',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedActivitiesRoute = AuthenticatedActivitiesRouteImport.update({
   id: '/activities',
   path: '/activities',
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/activities': typeof AuthenticatedActivitiesRoute
+  '/ai-features': typeof AuthenticatedAiFeaturesRoute
   '/communications': typeof AuthenticatedCommunicationsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/contacts': typeof AuthenticatedContactsRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/activities': typeof AuthenticatedActivitiesRoute
+  '/ai-features': typeof AuthenticatedAiFeaturesRoute
   '/communications': typeof AuthenticatedCommunicationsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/contacts': typeof AuthenticatedContactsRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/_authenticated/activities': typeof AuthenticatedActivitiesRoute
+  '/_authenticated/ai-features': typeof AuthenticatedAiFeaturesRoute
   '/_authenticated/communications': typeof AuthenticatedCommunicationsRoute
   '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/activities'
+    | '/ai-features'
     | '/communications'
     | '/companies'
     | '/contacts'
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/activities'
+    | '/ai-features'
     | '/communications'
     | '/companies'
     | '/contacts'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/_authenticated/activities'
+    | '/_authenticated/ai-features'
     | '/_authenticated/communications'
     | '/_authenticated/companies'
     | '/_authenticated/contacts'
@@ -254,6 +266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCommunicationsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/ai-features': {
+      id: '/_authenticated/ai-features'
+      path: '/ai-features'
+      fullPath: '/ai-features'
+      preLoaderRoute: typeof AuthenticatedAiFeaturesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/activities': {
       id: '/_authenticated/activities'
       path: '/activities'
@@ -266,6 +285,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedActivitiesRoute: typeof AuthenticatedActivitiesRoute
+  AuthenticatedAiFeaturesRoute: typeof AuthenticatedAiFeaturesRoute
   AuthenticatedCommunicationsRoute: typeof AuthenticatedCommunicationsRoute
   AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
@@ -278,6 +298,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedActivitiesRoute: AuthenticatedActivitiesRoute,
+  AuthenticatedAiFeaturesRoute: AuthenticatedAiFeaturesRoute,
   AuthenticatedCommunicationsRoute: AuthenticatedCommunicationsRoute,
   AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
