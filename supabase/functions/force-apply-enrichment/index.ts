@@ -100,7 +100,7 @@ serve(async (req) => {
       return out;
     };
 
-    let updates = sanitize(fieldsEnriched);
+    const updates = sanitize(fieldsEnriched);
 
     if (Object.keys(updates).length === 0) {
       return new Response(
@@ -123,7 +123,7 @@ serve(async (req) => {
     };
 
     let { data: updatedCompany, error: updateError } = await tryUpdate();
-    let failedFields: string[] = [];
+    const failedFields: string[] = [];
 
     // Handle constraint failures by iteratively removing problematic fields
     const maxRetries = Object.keys(updates).length;

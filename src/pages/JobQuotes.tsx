@@ -105,7 +105,7 @@ export default function JobQuotes() {
       
       // Enrich with sales rep names for those assigned to external reps
       const repIds = (data || []).map((q: any) => q.assigned_to_sales_rep_id).filter(Boolean);
-      let repMap: Record<string, any> = {};
+      const repMap: Record<string, any> = {};
       if (repIds.length > 0) {
         const { data: reps } = await supabase
           .from("sales_reps" as any)
@@ -146,7 +146,7 @@ export default function JobQuotes() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["job-quotes"] });
+      void queryClient.invalidateQueries({ queryKey: ["job-quotes"] });
       toast({ title: "Quote deleted successfully" });
     },
     onError: (error: any) => {

@@ -232,7 +232,7 @@ export function usePipelineAnalytics(
       };
 
       const buildActivitiesQuery = () => {
-        let q = supabase
+        const q = supabase
           .from("outreach_activities")
           .select("id, activity_type, outcome, scheduled_date, completed_date, created_at, company_id")
           .in("activity_type", ["Meeting", "Demo", "Phone"])
@@ -242,7 +242,7 @@ export function usePipelineAnalytics(
       };
 
       const buildPrevActivitiesQuery = () => {
-        let q = supabase
+        const q = supabase
           .from("outreach_activities")
           .select("id, activity_type, outcome, scheduled_date, completed_date, created_at, company_id")
           .in("activity_type", ["Meeting", "Demo", "Phone"])
@@ -252,7 +252,7 @@ export function usePipelineAnalytics(
       };
 
       const buildOppsQuery = () => {
-        let q = supabase
+        const q = supabase
           .from("opportunities")
           .select(`
             id, assigned_to, assigned_to_sales_rep_id, amount, created_at, stage, closed_date, company_id, notes,
@@ -268,7 +268,7 @@ export function usePipelineAnalytics(
       };
 
       const buildPrevOppsQuery = () => {
-        let q = supabase
+        const q = supabase
           .from("opportunities")
           .select("id, assigned_to, stage, company_id, opportunity_name")
           .gte("created_at", prevFrom)
@@ -367,8 +367,8 @@ export function usePipelineAnalytics(
         return true;
       });
 
-      let oppsData = filterByRegion((oppsDataRaw || []) as any[]);
-      let prevOppsData = filterByRegion((prevOppsDataRaw || []) as any[]);
+      const oppsData = filterByRegion((oppsDataRaw || []) as any[]);
+      const prevOppsData = filterByRegion((prevOppsDataRaw || []) as any[]);
 
       // Fetch assignee names (from sales_reps or profiles) — parallel
       const assigneeIds = [...new Set(oppsData.map((o: any) => o.assigned_to).filter(Boolean))] as string[];

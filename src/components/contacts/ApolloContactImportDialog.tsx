@@ -254,8 +254,8 @@ export function ApolloContactImportDialog({ onSuccess }: { onSuccess?: () => voi
               }
 
               // Determine best phone number
-              let phone = cleanPhoneNumber(row['Work Direct Phone'] || row['Corporate Phone']);
-              let mobile = cleanPhoneNumber(row['Mobile Phone']);
+              const phone = cleanPhoneNumber(row['Work Direct Phone'] || row['Corporate Phone']);
+              const mobile = cleanPhoneNumber(row['Mobile Phone']);
 
               // Create contact using the createContact function for proper scoring
               const contactData: any = {

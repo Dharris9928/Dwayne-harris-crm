@@ -407,7 +407,7 @@ const AIFeatures = () => {
           {/* Smart Enrichment */}
           <TabsContent value="enrichment" className="space-y-6">
             <SmartEnrichmentRecommendations
-              onEnrichCompany={(companyId) => console.log("Enrich:", companyId)}
+              onEnrichCompany={() => {}}
             />
           </TabsContent>
         </Tabs>
