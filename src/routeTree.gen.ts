@@ -17,6 +17,7 @@ import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authen
 import { Route as AuthenticatedJobQuotesRouteImport } from './routes/_authenticated/job-quotes'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
 import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated/companies'
+import { Route as AuthenticatedCommunicationsRouteImport } from './routes/_authenticated/communications'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -58,11 +59,18 @@ const AuthenticatedCompaniesRoute = AuthenticatedCompaniesRouteImport.update({
   path: '/companies',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCommunicationsRoute =
+  AuthenticatedCommunicationsRouteImport.update({
+    id: '/communications',
+    path: '/communications',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/communications': typeof AuthenticatedCommunicationsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/job-quotes': typeof AuthenticatedJobQuotesRoute
@@ -71,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/communications': typeof AuthenticatedCommunicationsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/contacts': typeof AuthenticatedContactsRoute
   '/job-quotes': typeof AuthenticatedJobQuotesRoute
@@ -82,6 +91,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/_authenticated/communications': typeof AuthenticatedCommunicationsRoute
   '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
   '/_authenticated/job-quotes': typeof AuthenticatedJobQuotesRoute
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/signup'
+    | '/communications'
     | '/companies'
     | '/contacts'
     | '/job-quotes'
@@ -102,6 +113,7 @@ export interface FileRouteTypes {
   to:
     | '/login'
     | '/signup'
+    | '/communications'
     | '/companies'
     | '/contacts'
     | '/job-quotes'
@@ -112,6 +124,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/login'
     | '/signup'
+    | '/_authenticated/communications'
     | '/_authenticated/companies'
     | '/_authenticated/contacts'
     | '/_authenticated/job-quotes'
@@ -183,10 +196,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCompaniesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/communications': {
+      id: '/_authenticated/communications'
+      path: '/communications'
+      fullPath: '/communications'
+      preLoaderRoute: typeof AuthenticatedCommunicationsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedCommunicationsRoute: typeof AuthenticatedCommunicationsRoute
   AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
   AuthenticatedJobQuotesRoute: typeof AuthenticatedJobQuotesRoute
@@ -195,6 +216,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedCommunicationsRoute: AuthenticatedCommunicationsRoute,
   AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
   AuthenticatedJobQuotesRoute: AuthenticatedJobQuotesRoute,
