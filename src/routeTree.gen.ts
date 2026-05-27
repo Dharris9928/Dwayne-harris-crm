@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
+import { Route as AuthenticatedJobQuotesRouteImport } from './routes/_authenticated/job-quotes'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
 import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated/companies'
 
@@ -42,6 +43,11 @@ const AuthenticatedOpportunitiesRoute =
     path: '/opportunities',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedJobQuotesRoute = AuthenticatedJobQuotesRouteImport.update({
+  id: '/job-quotes',
+  path: '/job-quotes',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
   id: '/contacts',
   path: '/contacts',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/contacts': typeof AuthenticatedContactsRoute
+  '/job-quotes': typeof AuthenticatedJobQuotesRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
 }
 export interface FileRoutesByTo {
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/contacts': typeof AuthenticatedContactsRoute
+  '/job-quotes': typeof AuthenticatedJobQuotesRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/': typeof AuthenticatedIndexRoute
 }
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
+  '/_authenticated/job-quotes': typeof AuthenticatedJobQuotesRoute
   '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
 }
@@ -87,9 +96,17 @@ export interface FileRouteTypes {
     | '/signup'
     | '/companies'
     | '/contacts'
+    | '/job-quotes'
     | '/opportunities'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/signup' | '/companies' | '/contacts' | '/opportunities' | '/'
+  to:
+    | '/login'
+    | '/signup'
+    | '/companies'
+    | '/contacts'
+    | '/job-quotes'
+    | '/opportunities'
+    | '/'
   id:
     | '__root__'
     | '/_authenticated'
@@ -97,6 +114,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_authenticated/companies'
     | '/_authenticated/contacts'
+    | '/_authenticated/job-quotes'
     | '/_authenticated/opportunities'
     | '/_authenticated/'
   fileRoutesById: FileRoutesById
@@ -144,6 +162,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedOpportunitiesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/job-quotes': {
+      id: '/_authenticated/job-quotes'
+      path: '/job-quotes'
+      fullPath: '/job-quotes'
+      preLoaderRoute: typeof AuthenticatedJobQuotesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/contacts': {
       id: '/_authenticated/contacts'
       path: '/contacts'
@@ -164,6 +189,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteChildren {
   AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
+  AuthenticatedJobQuotesRoute: typeof AuthenticatedJobQuotesRoute
   AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
@@ -171,6 +197,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
+  AuthenticatedJobQuotesRoute: AuthenticatedJobQuotesRoute,
   AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
