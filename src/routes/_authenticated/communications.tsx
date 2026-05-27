@@ -208,12 +208,13 @@ function CommunicationsPage() {
     field: "opened_at" | "replied_at" | "meeting_scheduled_at",
   ) {
     const next = { ...c, [field]: c[field] ? null : new Date().toISOString() };
+    const patch: any = {
+      [field]: next[field],
+      engagement_score: calcScore(next),
+    };
     const { error } = await supabase
       .from("communications")
-      .update({
-        [field]: next[field],
-        engagement_score: calcScore(next),
-      })
+      .update(patch)
       .eq("id", c.id);
     if (error) toast.error(error.message);
     else load();
