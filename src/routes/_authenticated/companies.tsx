@@ -57,7 +57,7 @@ export const Route = createFileRoute("/_authenticated/companies")({
 });
 
 type CompanyStatus = "Lead" | "Contacted" | "Engaged" | "Pilot" | "Active" | "Churned";
-type Industry = "Builder" | "Contractor" | "Architect" | "Developer" | "Other";
+type Industry = "Builder" | "Contractor" | "Energy Implementer" | "Engineer/Architect" | "Partner/Other";
 type Region = "Northeast" | "Southeast" | "Midwest" | "Southwest" | "West";
 
 interface Company {
@@ -77,7 +77,7 @@ interface Company {
 }
 
 const STATUSES: CompanyStatus[] = ["Lead", "Contacted", "Engaged", "Pilot", "Active", "Churned"];
-const INDUSTRIES: Industry[] = ["Builder", "Contractor", "Architect", "Developer", "Other"];
+const INDUSTRIES: Industry[] = ["Builder", "Contractor", "Energy Implementer", "Engineer/Architect", "Partner/Other"];
 const REGIONS: Region[] = ["Northeast", "Southeast", "Midwest", "Southwest", "West"];
 const PRIORITIES = ["P1", "P2", "P3", "P4"];
 
