@@ -169,7 +169,7 @@ export function UserManagement() {
         last_sign_in_at: loginStatusMap[profile.id] || null,
       } as UserProfile));
 
-      console.log('All users loaded:', allUsers);
+      
 
       // Separate users into categories based on approval status AND login status
       // Active users: approved AND have logged in (regardless of temp_password)
