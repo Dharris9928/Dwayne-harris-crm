@@ -81,7 +81,7 @@ function SignupPage() {
           <h1 className="mb-2 font-mono text-2xl font-bold tracking-tight">Create your account</h1>
           <p className="mb-6 text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link to="/login" className="font-medium text-primary hover:underline">
+            <Link to="/login" search={{}} className="font-medium text-primary hover:underline">
               Sign in
             </Link>
           </p>

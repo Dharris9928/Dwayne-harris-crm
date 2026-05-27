@@ -131,7 +131,7 @@ export const seedDatabase = createServerFn({ method: "POST" })
     }
 
     // 3. Seed companies
-    const companyRows: Record<string, unknown>[] = [];
+    const companyRows: any[] = [];
     for (let i = 0; i < 75; i++) {
       const industry = pick(industries);
       const state = pick(states);
@@ -163,7 +163,7 @@ export const seedDatabase = createServerFn({ method: "POST" })
     if (companyErr) throw companyErr;
 
     // 4. Seed contacts
-    const contactRows: Record<string, unknown>[] = [];
+    const contactRows: any[] = [];
     for (let i = 0; i < 200; i++) {
       const company = pick(createdCompanies || []);
       contactRows.push({
@@ -187,7 +187,7 @@ export const seedDatabase = createServerFn({ method: "POST" })
     if (contactErr) throw contactErr;
 
     // 5. Seed opportunities
-    const oppRows: Record<string, unknown>[] = [];
+    const oppRows: any[] = [];
     const stages = ["Open", "Proposal", "Committed", "Purchased", "Declined"];
     for (let i = 0; i < 50; i++) {
       const company = pick(createdCompanies || []);
@@ -209,7 +209,7 @@ export const seedDatabase = createServerFn({ method: "POST" })
     await supabaseAdmin.from("opportunities").insert(oppRows);
 
     // 6. Seed activities
-    const actRows: Record<string, unknown>[] = [];
+    const actRows: any[] = [];
     const types = ["Call", "Email", "Meeting", "Demo", "Follow-up"];
     const outcomes = ["Scheduled", "Completed", "Cancelled"];
     for (let i = 0; i < 300; i++) {
@@ -234,7 +234,7 @@ export const seedDatabase = createServerFn({ method: "POST" })
     await supabaseAdmin.from("activities").insert(actRows);
 
     // 7. Seed communications
-    const commRows: Record<string, unknown>[] = [];
+    const commRows: any[] = [];
     for (let i = 0; i < 150; i++) {
       const company = pick(createdCompanies || []);
       const contact = pick(createdContacts || []);
@@ -260,7 +260,7 @@ export const seedDatabase = createServerFn({ method: "POST" })
     await supabaseAdmin.from("communications").insert(commRows);
 
     // 8. Seed job quotes
-    const quoteRows: Record<string, unknown>[] = [];
+    const quoteRows: any[] = [];
     for (let i = 0; i < 40; i++) {
       const company = pick(createdCompanies || []);
       quoteRows.push({
@@ -280,7 +280,7 @@ export const seedDatabase = createServerFn({ method: "POST" })
     await supabaseAdmin.from("job_quotes").insert(quoteRows);
 
     // 9. Seed building permits
-    const permitRows: Record<string, unknown>[] = [];
+    const permitRows: any[] = [];
     const projectTypes = ["Residential","Commercial","Industrial","Mixed-Use","Renovation"];
     for (let i = 0; i < 100; i++) {
       const state = pick(states);
