@@ -20,6 +20,7 @@ import { Route as AuthenticatedPipelineAnalyticsRouteImport } from './routes/_au
 import { Route as AuthenticatedPermitsRouteImport } from './routes/_authenticated/permits'
 import { Route as AuthenticatedOpportunitiesRouteImport } from './routes/_authenticated/opportunities'
 import { Route as AuthenticatedJobQuotesRouteImport } from './routes/_authenticated/job-quotes'
+import { Route as AuthenticatedHelpRouteImport } from './routes/_authenticated/help'
 import { Route as AuthenticatedContactsRouteImport } from './routes/_authenticated/contacts'
 import { Route as AuthenticatedCompaniesRouteImport } from './routes/_authenticated/companies'
 import { Route as AuthenticatedCommunicationsRouteImport } from './routes/_authenticated/communications'
@@ -84,6 +85,11 @@ const AuthenticatedJobQuotesRoute = AuthenticatedJobQuotesRouteImport.update({
   path: '/job-quotes',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedHelpRoute = AuthenticatedHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedContactsRoute = AuthenticatedContactsRouteImport.update({
   id: '/contacts',
   path: '/contacts',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/communications': typeof AuthenticatedCommunicationsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/contacts': typeof AuthenticatedContactsRoute
+  '/help': typeof AuthenticatedHelpRoute
   '/job-quotes': typeof AuthenticatedJobQuotesRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/permits': typeof AuthenticatedPermitsRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByTo {
   '/communications': typeof AuthenticatedCommunicationsRoute
   '/companies': typeof AuthenticatedCompaniesRoute
   '/contacts': typeof AuthenticatedContactsRoute
+  '/help': typeof AuthenticatedHelpRoute
   '/job-quotes': typeof AuthenticatedJobQuotesRoute
   '/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/permits': typeof AuthenticatedPermitsRoute
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   '/_authenticated/communications': typeof AuthenticatedCommunicationsRoute
   '/_authenticated/companies': typeof AuthenticatedCompaniesRoute
   '/_authenticated/contacts': typeof AuthenticatedContactsRoute
+  '/_authenticated/help': typeof AuthenticatedHelpRoute
   '/_authenticated/job-quotes': typeof AuthenticatedJobQuotesRoute
   '/_authenticated/opportunities': typeof AuthenticatedOpportunitiesRoute
   '/_authenticated/permits': typeof AuthenticatedPermitsRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
     | '/communications'
     | '/companies'
     | '/contacts'
+    | '/help'
     | '/job-quotes'
     | '/opportunities'
     | '/permits'
@@ -191,6 +201,7 @@ export interface FileRouteTypes {
     | '/communications'
     | '/companies'
     | '/contacts'
+    | '/help'
     | '/job-quotes'
     | '/opportunities'
     | '/permits'
@@ -209,6 +220,7 @@ export interface FileRouteTypes {
     | '/_authenticated/communications'
     | '/_authenticated/companies'
     | '/_authenticated/contacts'
+    | '/_authenticated/help'
     | '/_authenticated/job-quotes'
     | '/_authenticated/opportunities'
     | '/_authenticated/permits'
@@ -304,6 +316,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedJobQuotesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/help': {
+      id: '/_authenticated/help'
+      path: '/help'
+      fullPath: '/help'
+      preLoaderRoute: typeof AuthenticatedHelpRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/contacts': {
       id: '/_authenticated/contacts'
       path: '/contacts'
@@ -348,6 +367,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCommunicationsRoute: typeof AuthenticatedCommunicationsRoute
   AuthenticatedCompaniesRoute: typeof AuthenticatedCompaniesRoute
   AuthenticatedContactsRoute: typeof AuthenticatedContactsRoute
+  AuthenticatedHelpRoute: typeof AuthenticatedHelpRoute
   AuthenticatedJobQuotesRoute: typeof AuthenticatedJobQuotesRoute
   AuthenticatedOpportunitiesRoute: typeof AuthenticatedOpportunitiesRoute
   AuthenticatedPermitsRoute: typeof AuthenticatedPermitsRoute
@@ -364,6 +384,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedCommunicationsRoute: AuthenticatedCommunicationsRoute,
   AuthenticatedCompaniesRoute: AuthenticatedCompaniesRoute,
   AuthenticatedContactsRoute: AuthenticatedContactsRoute,
+  AuthenticatedHelpRoute: AuthenticatedHelpRoute,
   AuthenticatedJobQuotesRoute: AuthenticatedJobQuotesRoute,
   AuthenticatedOpportunitiesRoute: AuthenticatedOpportunitiesRoute,
   AuthenticatedPermitsRoute: AuthenticatedPermitsRoute,
