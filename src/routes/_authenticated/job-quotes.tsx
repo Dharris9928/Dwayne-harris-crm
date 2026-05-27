@@ -256,7 +256,7 @@ function QuotesPage() {
       status: form.status,
       valid_until: form.valid_until || null,
       po_filename: form.po_filename || null,
-      line_items: form.line_items,
+      line_items: form.line_items as unknown as any,
       total_amount: formTotal,
     };
     if (editing) {
