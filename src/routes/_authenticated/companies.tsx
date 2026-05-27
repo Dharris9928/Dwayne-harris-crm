@@ -402,13 +402,13 @@ function CompanyDialog({
     }
     setSaving(true);
     const { data: auth } = await supabase.auth.getUser();
-    const payload: Record<string, unknown> = {
+    const payload = {
       name: form.name.trim(),
       website: form.website || null,
       city: form.city || null,
       state: form.state || null,
-      region: form.region || null,
-      industry: form.industry || null,
+      region: (form.region || null) as Region | null,
+      industry: (form.industry || null) as Industry | null,
       segment: form.segment || null,
       status: form.status,
       annual_volume: form.annual_volume ? parseInt(form.annual_volume) : null,
