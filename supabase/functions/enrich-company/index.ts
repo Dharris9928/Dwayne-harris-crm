@@ -111,7 +111,7 @@ serve(async (req) => {
 
     let enrichmentResult;
     let provider = 'none';
-    let fallbackUsed = false;
+    const fallbackUsed = false;
     const providerErrors: Record<string, string> = {}; // Track errors from each provider
 
     // First, try Apollo for accurate business data (if enabled)
@@ -429,7 +429,7 @@ serve(async (req) => {
       return out;
     };
 
-    let updates = sanitize(enrichmentResult.companyUpdates);
+    const updates = sanitize(enrichmentResult.companyUpdates);
     
     // Auto-assign segment based on enriched data
     const segmentResult = determineSegment(company, updates);
@@ -464,7 +464,7 @@ serve(async (req) => {
 
     // Attempt update with graceful degradation for constraint failures
     let persistedRow: any = null;
-    let failedFields: string[] = [];
+    const failedFields: string[] = [];
     const tryUpdate = async () => {
       const { data, error } = await supabase
         .from('companies')

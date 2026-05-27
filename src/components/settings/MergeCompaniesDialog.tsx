@@ -83,7 +83,7 @@ export function MergeCompaniesDialog({ open, onOpenChange, onSuccess }: MergeCom
   }, [sourceCompanyId, targetCompanyId]);
 
   const loadCompanies = async () => {
-    let query = supabase
+    const query = supabase
       .from("companies")
       .select("id, company_name, industry_type, segment, status, lead_score")
       .order("company_name");
