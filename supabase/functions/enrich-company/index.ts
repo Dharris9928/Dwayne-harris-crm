@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkRateLimit } from '../_shared/rateLimiting.ts';
 import { enrichWithDeepseek } from "./enrichWithDeepseek.ts";
 import { determineSegment } from "./segmentLogic.ts";
+import { buildEnrichmentSystemPrompt, V2_STRATEGIC_TOOL_PROPERTIES, extractV2Fields } from "../_shared/enrichmentDirectives.ts";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
@@ -956,7 +957,7 @@ Research the company thoroughly using the website and LinkedIn URLs provided. Be
     body: JSON.stringify({
       model: 'google/gemini-2.5-flash',
       messages: [
-        { role: 'system', content: 'You are a B2B data enrichment specialist. Extract and structure company information accurately.' },
+        { role: 'system', content: buildEnrichmentSystemPrompt(company.industry_type) },
         { role: 'user', content: prompt }
       ],
       tools: [{
@@ -1026,7 +1027,8 @@ Research the company thoroughly using the website and LinkedIn URLs provided. Be
               growth_indicators: { type: 'array', items: { type: 'string' } },
               smart_home_readiness_score: { type: 'integer', minimum: 0, maximum: 100 },
               recommended_approach: { type: 'string', description: 'Recommended sales approach' },
-              confidence_level: { type: 'string', enum: ['high', 'medium', 'low'] }
+              confidence_level: { type: 'string', enum: ['high', 'medium', 'low'] },
+              ...V2_STRATEGIC_TOOL_PROPERTIES,
             }
           }
         }
@@ -1108,6 +1110,11 @@ Research the company thoroughly using the website and LinkedIn URLs provided. Be
   if (enrichedData.primary_email) companyUpdates.primary_email = enrichedData.primary_email;
   if (enrichedData.contractor_specialty) companyUpdates.contractor_specialty = enrichedData.contractor_specialty;
   if (enrichedData.service_area_type) companyUpdates.service_area_type = enrichedData.service_area_type;
+
+  // v2.0 strategic signals
+  Object.assign(companyUpdates, extractV2Fields(enrichedData));
+
+
 
   return {
     companyUpdates,
@@ -1269,11 +1276,13 @@ Fill as many fields as possible with accurate data.`;
             growth_indicators: { type: 'array', items: { type: 'string' } },
             smart_home_readiness_score: { type: 'integer', minimum: 0, maximum: 100 },
             recommended_approach: { type: 'string' },
-            confidence_level: { type: 'string', enum: ['high', 'medium', 'low'] }
+            confidence_level: { type: 'string', enum: ['high', 'medium', 'low'] },
+            ...V2_STRATEGIC_TOOL_PROPERTIES,
           }
         }
       }],
       tool_choice: { type: 'tool', name: 'enrich_company_data' },
+      system: buildEnrichmentSystemPrompt(company.industry_type),
       messages: [{ role: 'user', content: prompt }]
     }),
   });
@@ -1351,6 +1360,11 @@ Fill as many fields as possible with accurate data.`;
   if (enrichedData.primary_email) companyUpdates.primary_email = enrichedData.primary_email;
   if (enrichedData.contractor_specialty) companyUpdates.contractor_specialty = enrichedData.contractor_specialty;
   if (enrichedData.service_area_type) companyUpdates.service_area_type = enrichedData.service_area_type;
+
+  // v2.0 strategic signals
+  Object.assign(companyUpdates, extractV2Fields(enrichedData));
+
+
 
   return {
     companyUpdates,

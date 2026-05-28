@@ -1,3 +1,5 @@
+import { buildEnrichmentSystemPrompt, V2_STRATEGIC_TOOL_PROPERTIES, extractV2Fields } from "../_shared/enrichmentDirectives.ts";
+
 // Deepseek enrichment function
 export async function enrichWithDeepseek(company: any, deepEnrich: boolean) {
   const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY');
@@ -79,7 +81,7 @@ Fill as many fields as possible with accurate data.`;
       messages: [
         {
           role: 'system',
-          content: 'You are a B2B data enrichment specialist. Extract and structure company information accurately using the provided tool.'
+          content: buildEnrichmentSystemPrompt(company.industry_type)
         },
         {
           role: 'user',
@@ -154,7 +156,8 @@ Fill as many fields as possible with accurate data.`;
               growth_indicators: { type: 'array', items: { type: 'string' } },
               smart_home_readiness_score: { type: 'integer', minimum: 0, maximum: 100 },
               recommended_approach: { type: 'string' },
-              confidence_level: { type: 'string', enum: ['high', 'medium', 'low'] }
+              confidence_level: { type: 'string', enum: ['high', 'medium', 'low'] },
+              ...V2_STRATEGIC_TOOL_PROPERTIES,
             }
           }
         }
@@ -252,6 +255,11 @@ Fill as many fields as possible with accurate data.`;
   if (enrichedData.primary_email) companyUpdates.primary_email = enrichedData.primary_email;
   if (enrichedData.contractor_specialty) companyUpdates.contractor_specialty = enrichedData.contractor_specialty;
   if (enrichedData.service_area_type) companyUpdates.service_area_type = enrichedData.service_area_type;
+
+  // v2.0 strategic signals
+  Object.assign(companyUpdates, extractV2Fields(enrichedData));
+
+
 
   return {
     companyUpdates,
