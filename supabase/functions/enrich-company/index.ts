@@ -1276,11 +1276,13 @@ Fill as many fields as possible with accurate data.`;
             growth_indicators: { type: 'array', items: { type: 'string' } },
             smart_home_readiness_score: { type: 'integer', minimum: 0, maximum: 100 },
             recommended_approach: { type: 'string' },
-            confidence_level: { type: 'string', enum: ['high', 'medium', 'low'] }
+            confidence_level: { type: 'string', enum: ['high', 'medium', 'low'] },
+            ...V2_STRATEGIC_TOOL_PROPERTIES,
           }
         }
       }],
       tool_choice: { type: 'tool', name: 'enrich_company_data' },
+      system: buildEnrichmentSystemPrompt(company.industry_type),
       messages: [{ role: 'user', content: prompt }]
     }),
   });
