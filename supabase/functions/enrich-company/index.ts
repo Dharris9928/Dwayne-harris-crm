@@ -957,7 +957,7 @@ Research the company thoroughly using the website and LinkedIn URLs provided. Be
     body: JSON.stringify({
       model: 'google/gemini-2.5-flash',
       messages: [
-        { role: 'system', content: 'You are a B2B data enrichment specialist. Extract and structure company information accurately.' },
+        { role: 'system', content: buildEnrichmentSystemPrompt(company.industry_type) },
         { role: 'user', content: prompt }
       ],
       tools: [{
