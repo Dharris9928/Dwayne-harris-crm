@@ -94,7 +94,7 @@ function AuthenticatedLayout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-emerald-950 text-emerald-50 transition-all duration-300 lg:static ${
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r bg-emerald-700 text-white transition-all duration-300 lg:static ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         } ${collapsed ? "w-16" : "w-64"} lg:translate-x-0`}
       >
