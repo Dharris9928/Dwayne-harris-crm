@@ -81,7 +81,7 @@ Fill as many fields as possible with accurate data.`;
       messages: [
         {
           role: 'system',
-          content: 'You are a B2B data enrichment specialist. Extract and structure company information accurately using the provided tool.'
+          content: buildEnrichmentSystemPrompt(company.industry_type)
         },
         {
           role: 'user',
