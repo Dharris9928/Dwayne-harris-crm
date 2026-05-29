@@ -43,8 +43,8 @@ export function UserApprovalPanel() {
 
       const allProfiles = profiles || [];
 
-      // Only sign-up requests: pending status AND no temp password (invites use temp_password)
-      const pendingProfiles = allProfiles.filter(p => p.approval_status === 'pending' && !p.temp_password);
+      // Only organic sign-up requests: pending status (admin invites are auto-approved)
+      const pendingProfiles = allProfiles.filter(p => p.approval_status === 'pending');
 
       // Fetch emails via edge function
       const { data: emailsData, error: emailsError } = await supabase.functions.invoke('get-user-emails', {
