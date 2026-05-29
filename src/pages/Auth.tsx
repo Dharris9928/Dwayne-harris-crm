@@ -22,6 +22,44 @@ const passwordSchema = z.string()
 
 const ADMIN_EXCEPTION = (import.meta.env.VITE_ADMIN_EMAIL ?? '').toLowerCase().trim();
 
+const getMfaTrustWindowMs = async (userId: string) => {
+  const { data: isAdmin } = await supabase.rpc('has_role', {
+    _user_id: userId,
+    _role: 'admin',
+  });
+
+  return (isAdmin ? 8 : 2) * 60 * 60 * 1000;
+};
+
+const isWithinMfaTrustWindow = async (userId: string, trustWindowMs: number) => {
+  const trustKey = `mfa_trusted_until_${userId}`;
+  const trustedUntil = parseInt(localStorage.getItem(trustKey) || '0', 10);
+  if (trustedUntil && Date.now() < trustedUntil) return true;
+
+  const { data: mfaStatus, error } = await supabase
+    .from('user_mfa_status')
+    .select('last_prompted_at')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (error || !mfaStatus?.last_prompted_at) return false;
+
+  return Date.now() - new Date(mfaStatus.last_prompted_at).getTime() < trustWindowMs;
+};
+
+const markMfaTrusted = async (userId: string, trustWindowMs: number) => {
+  localStorage.setItem(`mfa_trusted_until_${userId}`, String(Date.now() + trustWindowMs));
+
+  const { error } = await supabase
+    .from('user_mfa_status')
+    .update({ last_prompted_at: new Date().toISOString() })
+    .eq('user_id', userId);
+
+  if (error) {
+    console.error('Failed to persist MFA trust window:', error);
+  }
+};
+
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -146,25 +184,19 @@ const Auth = () => {
         const totpFactor = factors.totp.find(f => f.status === 'verified');
         if (totpFactor) {
           // Trusted device window: admins re-verify every 8h, others every 2h
-          let trustWindowMs = 2 * 60 * 60 * 1000;
           if (data.user?.id) {
-            const { data: isAdmin } = await supabase.rpc('has_role', {
-              _user_id: data.user.id,
-              _role: 'admin',
-            });
-            if (isAdmin) trustWindowMs = 8 * 60 * 60 * 1000;
-          }
-          const trustKey = `mfa_trusted_until_${data.user?.id}`;
-          const trustedUntil = parseInt(localStorage.getItem(trustKey) || '0', 10);
-          if (trustedUntil && Date.now() < trustedUntil) {
-            // Within trust window - skip MFA prompt
-          } else {
-            // User has MFA enrolled - keep session and require MFA verification
-            setPendingMFAFactorId(totpFactor.id);
-            setShowMFAVerification(true);
-            toast.info('Please verify your identity with two-factor authentication');
-            setLoading(false);
-            return;
+            const trustWindowMs = await getMfaTrustWindowMs(data.user.id);
+            const isTrusted = await isWithinMfaTrustWindow(data.user.id, trustWindowMs);
+            if (isTrusted) {
+              // Within trust window - skip MFA prompt
+            } else {
+              // User has MFA enrolled - keep session and require MFA verification
+              setPendingMFAFactorId(totpFactor.id);
+              setShowMFAVerification(true);
+              toast.info('Please verify your identity with two-factor authentication');
+              setLoading(false);
+              return;
+            }
           }
         }
       }
@@ -200,12 +232,8 @@ const Auth = () => {
 
     // Mark this device as trusted to skip MFA on subsequent logins (admins: 8h, others: 2h)
     if (user) {
-      const { data: isAdmin } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'admin',
-      });
-      const TRUST_WINDOW_MS = (isAdmin ? 8 : 2) * 60 * 60 * 1000;
-      localStorage.setItem(`mfa_trusted_until_${user.id}`, String(Date.now() + TRUST_WINDOW_MS));
+      const trustWindowMs = await getMfaTrustWindowMs(user.id);
+      await markMfaTrusted(user.id, trustWindowMs);
     }
 
     // Log successful login after MFA
