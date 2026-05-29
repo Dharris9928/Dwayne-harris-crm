@@ -30,7 +30,22 @@ interface ContactScore {
 export function ContactsScoringReport() {
   const [contactScores, setContactScores] = useState<ContactScore[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [openCompanyId, setOpenCompanyId] = useState<string | null>(null);
+  const [openContact, setOpenContact] = useState<any | null>(null);
+  const { toast } = useToast();
+
+  const handleOpenContact = async (contactId: string) => {
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('*')
+      .eq('id', contactId)
+      .maybeSingle();
+    if (error || !data) {
+      toast({ title: 'Unable to open contact', description: error?.message ?? 'Not found', variant: 'destructive' });
+      return;
+    }
+    setOpenContact(data);
+  };
 
   useEffect(() => {
     fetchContactScores();
