@@ -3,9 +3,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { AlertCircle, RefreshCw, Calendar, Building2, User, Sparkles, CheckCircle2, Coins } from 'lucide-react';
+import { AlertCircle, RefreshCw, Calendar, Building2, User, Sparkles, CheckCircle2, Coins, ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import { EditCompanyDialog } from '@/components/companies/EditCompanyDialog';
 
 interface EnrichmentLog {
   id: string;
