@@ -58,7 +58,7 @@ import { AccessPatternMonitor } from "@/components/settings/AccessPatternMonitor
 import { AccessExpirationManager } from "@/components/settings/AccessExpirationManager";
 import { DatabaseManagementImproved } from "@/components/settings/DatabaseManagementImproved";
 import { AIErrorHelper } from "@/components/settings/AIErrorHelper";
-import { UserImpersonation } from "@/components/settings/UserImpersonation";
+
 import { UploadLogViewer } from "@/components/settings/UploadLogViewer";
 
 const Settings = () => {
@@ -259,8 +259,7 @@ const Settings = () => {
         {/* Automation Kill Switch (admin-only, self-gates) */}
         <AutomationKillSwitch />
 
-        {/* Admin Impersonation Tool */}
-        {userData?.role === 'admin' && <UserImpersonation />}
+        {/* Admin impersonation is now inline in the Users tab (next to each user's name) */}
         </TabsContent>
 
         {/* Security Settings */}

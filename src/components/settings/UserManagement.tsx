@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from "sonner";
-import { Shield, ShieldAlert, ShieldCheck, Eye, Key, Pencil, Plus, Mail, Ban, UserX, CheckCircle } from "lucide-react";
+import { Shield, ShieldAlert, ShieldCheck, Eye, Key, Pencil, Plus, Mail, Ban, UserX, CheckCircle, UserCog } from "lucide-react";
+import { useImpersonation } from "@/hooks/useImpersonation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Tooltip,
@@ -39,6 +40,7 @@ interface UserProfile {
 }
 
 export function UserManagement() {
+  const { startImpersonation } = useImpersonation();
   const [approvedUsers, setApprovedUsers] = useState<UserProfile[]>([]);
   const [invitedUsers, setInvitedUsers] = useState<UserProfile[]>([]);
   const [pendingSignups, setPendingSignups] = useState<UserProfile[]>([]);
@@ -777,6 +779,31 @@ export function UserManagement() {
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
+                            {currentUser?.role === 'admin' && user.id !== currentUser?.id && (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={async () => {
+                                        await startImpersonation({
+                                          userId: user.id,
+                                          userEmail: user.email,
+                                          userRole: user.role,
+                                        });
+                                        toast.success(`Now viewing as ${user.first_name || user.email}`);
+                                      }}
+                                    >
+                                      <UserCog className="h-4 w-4" />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Impersonate user</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            )}
                             <TooltipProvider>
                               <Tooltip>
                                 <TooltipTrigger asChild>
