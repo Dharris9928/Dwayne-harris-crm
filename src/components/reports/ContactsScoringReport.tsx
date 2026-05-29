@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,6 +7,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
 import { logBulkContactView } from '@/lib/contacts/logContactAccess';
+import { EditCompanyDialog } from '@/components/companies/EditCompanyDialog';
+import { EditContactDialog } from '@/components/contacts/EditContactDialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface ContactScore {
   id: string;
@@ -28,7 +30,22 @@ interface ContactScore {
 export function ContactsScoringReport() {
   const [contactScores, setContactScores] = useState<ContactScore[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [openCompanyId, setOpenCompanyId] = useState<string | null>(null);
+  const [openContact, setOpenContact] = useState<any | null>(null);
+  const { toast } = useToast();
+
+  const handleOpenContact = async (contactId: string) => {
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('*')
+      .eq('id', contactId)
+      .maybeSingle();
+    if (error || !data) {
+      toast({ title: 'Unable to open contact', description: error?.message ?? 'Not found', variant: 'destructive' });
+      return;
+    }
+    setOpenContact(data);
+  };
 
   useEffect(() => {
     fetchContactScores();
@@ -204,7 +221,7 @@ export function ContactsScoringReport() {
                     <Button
                       variant="link"
                       className="p-0 h-auto font-medium text-primary hover:underline"
-                      onClick={() => navigate('/contacts', { state: { editContactId: contact.id } })}
+                      onClick={() => handleOpenContact(contact.id)}
                     >
                       {contact.first_name} {contact.last_name}
                     </Button>
@@ -213,7 +230,7 @@ export function ContactsScoringReport() {
                     <Button
                       variant="link"
                       className="p-0 h-auto text-primary hover:underline"
-                      onClick={() => navigate('/companies', { state: { editCompanyId: contact.company_id } })}
+                      onClick={() => setOpenCompanyId(contact.company_id)}
                     >
                       {contact.company_name}
                     </Button>
@@ -275,6 +292,23 @@ export function ContactsScoringReport() {
         </div>
         )}
       </CardContent>
+      {openCompanyId && (
+        <EditCompanyDialog
+          open={!!openCompanyId}
+          companyId={openCompanyId}
+          onOpenChange={(o) => { if (!o) setOpenCompanyId(null); }}
+          onClose={() => setOpenCompanyId(null)}
+          onSuccess={() => { setOpenCompanyId(null); fetchContactScores(); }}
+        />
+      )}
+      {openContact && (
+        <EditContactDialog
+          open={!!openContact}
+          contact={openContact}
+          onOpenChange={(o) => { if (!o) setOpenContact(null); }}
+          onSuccess={() => { setOpenContact(null); fetchContactScores(); }}
+        />
+      )}
     </Card>
   );
 }

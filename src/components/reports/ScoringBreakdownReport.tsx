@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { EditCompanyDialog } from '@/components/companies/EditCompanyDialog';
 
 interface CompanyScoring {
   company_id: string;
@@ -36,7 +36,7 @@ interface CompanyScoring {
 export function ScoringBreakdownReport() {
   const [scoringData, setScoringData] = useState<CompanyScoring[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [openCompanyId, setOpenCompanyId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchScoringData();
@@ -199,7 +199,7 @@ export function ScoringBreakdownReport() {
                     <Button
                       variant="link"
                       className="p-0 h-auto font-medium text-primary hover:underline"
-                      onClick={() => navigate('/companies', { state: { editCompanyId: company.company_id } })}
+                      onClick={() => setOpenCompanyId(company.company_id)}
                     >
                       {company.company_name}
                     </Button>
@@ -263,6 +263,15 @@ export function ScoringBreakdownReport() {
         </div>
         )}
       </CardContent>
+      {openCompanyId && (
+        <EditCompanyDialog
+          open={!!openCompanyId}
+          companyId={openCompanyId}
+          onOpenChange={(o) => { if (!o) setOpenCompanyId(null); }}
+          onClose={() => setOpenCompanyId(null)}
+          onSuccess={() => { setOpenCompanyId(null); fetchScoringData(); }}
+        />
+      )}
     </Card>
   );
 }
