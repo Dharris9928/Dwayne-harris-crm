@@ -36,7 +36,7 @@ interface CompanyScoring {
 export function ScoringBreakdownReport() {
   const [scoringData, setScoringData] = useState<CompanyScoring[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [openCompanyId, setOpenCompanyId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchScoringData();
