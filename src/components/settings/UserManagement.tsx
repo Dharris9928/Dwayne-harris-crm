@@ -31,7 +31,7 @@ interface UserProfile {
   first_name: string | null;
   last_name: string | null;
   created_at: string;
-  temp_password?: string | null;
+  // temp_password removed — plaintext passwords are never stored.
   invitation_email_sent_at?: string | null;
   invitation_email_opened_at?: string | null;
   invitation_email_status?: string | null;
@@ -110,7 +110,7 @@ export function UserManagement() {
         // Fallback: direct query (RLS may limit results)
       const { data: fallbackProfiles, error: fallbackError } = await supabase
           .from('profiles')
-          .select('id, first_name, last_name, approval_status, created_at, temp_password, invitation_email_sent_at, invitation_email_delivered_at, invitation_email_opened_at, invitation_email_status, approved_at, approved_by, account_status');
+          .select('id, first_name, last_name, approval_status, created_at, invitation_email_sent_at, invitation_email_delivered_at, invitation_email_opened_at, invitation_email_status, approved_at, approved_by, account_status');
         if (fallbackError) {
           throw fallbackError;
         }
@@ -164,7 +164,7 @@ export function UserManagement() {
         last_name: profile.last_name,
         created_at: profile.created_at,
         role: rolesMap[profile.id] || 'sales_rep',
-        temp_password: profile.temp_password,
+        // temp_password removed — never persisted
         invitation_email_sent_at: profile.invitation_email_sent_at,
         invitation_email_opened_at: profile.invitation_email_opened_at,
         invitation_email_status: profile.invitation_email_status,
@@ -181,16 +181,15 @@ export function UserManagement() {
         u.approval_status === 'approved' && u.last_sign_in_at !== null
       );
       
-      // Invited users (pending login): approved with temp_password but haven't logged in yet
-      const invited = allUsers.filter(u => 
-        u.temp_password && 
-        u.approval_status === 'approved' && 
-        u.last_sign_in_at === null
+      // Invited users (pending login): approved, an invite email was sent, but they haven't logged in yet
+      const invited = allUsers.filter(u =>
+        u.approval_status === 'approved' &&
+        u.last_sign_in_at === null &&
+        !!u.invitation_email_sent_at
       );
-      
-      // Sign-up requests: no temp_password AND pending approval (organic sign-ups)
-      const signups = allUsers.filter(u => 
-        !u.temp_password && 
+
+      // Sign-up requests: pending approval (organic sign-ups — admin invites are auto-approved)
+      const signups = allUsers.filter(u =>
         u.approval_status === 'pending'
       );
 
@@ -344,7 +343,11 @@ export function UserManagement() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success('Invitation reminder sent successfully!');
+      if (data?.temporaryPassword) {
+        toast.success(`Invitation resent. New temporary password: ${data.temporaryPassword}`, { duration: 30000 });
+      } else {
+        toast.success('Invitation reminder sent successfully!');
+      }
       loadUsers();
     } catch (error) {
       console.error('Error resending invitation:', error);
@@ -563,7 +566,7 @@ export function UserManagement() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Temp Password</TableHead>
+                <TableHead>Invited</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -584,10 +587,10 @@ export function UserManagement() {
                         : 'N/A'}
                     </TableCell>
                     <TableCell className="font-mono text-sm">{user.email}</TableCell>
-                    <TableCell>
-                      <code className="px-2 py-1 bg-muted rounded text-xs">
-                        {user.temp_password || 'N/A'}
-                      </code>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {user.invitation_email_sent_at
+                        ? new Date(user.invitation_email_sent_at).toLocaleString()
+                        : '—'}
                     </TableCell>
                     <TableCell>
                       {user.invitation_email_opened_at ? (

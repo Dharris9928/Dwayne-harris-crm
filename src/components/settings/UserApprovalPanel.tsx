@@ -15,7 +15,7 @@ interface PendingUser {
   email?: string;
   created_at: string;
   approval_status: string;
-  temp_password?: string | null;
+  // temp_password removed — passwords are never stored in the DB.
   invitation_email_sent_at?: string | null;
   invitation_email_delivered_at?: string | null;
   invitation_email_opened_at?: string | null;
@@ -35,7 +35,7 @@ export function UserApprovalPanel() {
       // Load profiles directly and enrich with emails via edge function
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, created_at, approval_status, temp_password, invitation_email_sent_at, invitation_email_delivered_at, invitation_email_opened_at, invitation_email_status');
+        .select('id, first_name, last_name, created_at, approval_status, invitation_email_sent_at, invitation_email_delivered_at, invitation_email_opened_at, invitation_email_status');
 
       if (profilesError) {
         throw profilesError;
@@ -43,8 +43,8 @@ export function UserApprovalPanel() {
 
       const allProfiles = profiles || [];
 
-      // Only sign-up requests: pending status AND no temp password (invites use temp_password)
-      const pendingProfiles = allProfiles.filter(p => p.approval_status === 'pending' && !p.temp_password);
+      // Only organic sign-up requests: pending status (admin invites are auto-approved)
+      const pendingProfiles = allProfiles.filter(p => p.approval_status === 'pending');
 
       // Fetch emails via edge function
       const { data: emailsData, error: emailsError } = await supabase.functions.invoke('get-user-emails', {
@@ -62,7 +62,6 @@ export function UserApprovalPanel() {
         created_at: profile.created_at,
         approval_status: profile.approval_status,
         email: emailsMap[profile.id] || 'No email',
-        temp_password: profile.temp_password || null,
         invitation_email_sent_at: profile.invitation_email_sent_at || null,
         invitation_email_delivered_at: profile.invitation_email_delivered_at || null,
         invitation_email_opened_at: profile.invitation_email_opened_at || null,
@@ -226,59 +225,7 @@ export function UserApprovalPanel() {
                     <div className="text-xs text-muted-foreground">
                       Requested: {new Date(user.created_at).toLocaleDateString()}
                     </div>
-                    
-                    {user.temp_password && (
-                      <>
-                        <Separator className="my-2" />
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Key className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">Temp Password:</span>
-                            <code className="bg-muted px-2 py-0.5 rounded text-xs font-mono">
-                              {user.temp_password}
-                            </code>
-                          </div>
-                          
-                          <div className="text-xs space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Mail className="h-3 w-3" />
-                              <span>
-                                Sent: {user.invitation_email_sent_at 
-                                  ? new Date(user.invitation_email_sent_at).toLocaleString()
-                                  : 'Not sent'}
-                              </span>
-                            </div>
-                            {user.invitation_email_delivered_at && (
-                              <div className="flex items-center gap-2 text-green-600">
-                                <MailCheck className="h-3 w-3" />
-                                <span>
-                                  Delivered: {new Date(user.invitation_email_delivered_at).toLocaleString()}
-                                </span>
-                              </div>
-                            )}
-                            {user.invitation_email_opened_at && (
-                              <div className="flex items-center gap-2 text-blue-600">
-                                <MailOpen className="h-3 w-3" />
-                                <span>
-                                  Opened: {new Date(user.invitation_email_opened_at).toLocaleString()}
-                                </span>
-                              </div>
-                            )}
-                            <div className="flex items-center gap-2">
-                              <Badge variant={
-                                user.invitation_email_status === 'opened' ? 'default' :
-                                user.invitation_email_status === 'delivered' ? 'secondary' :
-                                user.invitation_email_status === 'sent' ? 'outline' :
-                                'destructive'
-                              } className="text-xs">
-                                {user.invitation_email_status || 'pending'}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                    </div>
                   <div className="flex gap-2">
                     <Button
                       size="sm"
