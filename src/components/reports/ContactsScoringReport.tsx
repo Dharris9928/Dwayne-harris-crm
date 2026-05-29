@@ -230,7 +230,7 @@ export function ContactsScoringReport() {
                     <Button
                       variant="link"
                       className="p-0 h-auto text-primary hover:underline"
-                      onClick={() => navigate('/companies', { state: { editCompanyId: contact.company_id } })}
+                      onClick={() => setOpenCompanyId(contact.company_id)}
                     >
                       {contact.company_name}
                     </Button>
