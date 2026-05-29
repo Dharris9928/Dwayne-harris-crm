@@ -133,18 +133,34 @@ const Contacts = () => {
   // Server-side filtering handles search; no need for client-side re-filter
   const filteredContacts = useMemo(() => contacts || [], [contacts]);
 
-  // Handle navigation from reports with editContactId
+  // Handle navigation from other pages with editContactId.
+  // Opens the contact profile dialog even if it's outside the current filtered list.
   useEffect(() => {
     const state = location.state as { editContactId?: string };
-    if (state?.editContactId && contacts) {
-      const contact = contacts.find(c => c.id === state.editContactId);
-      if (contact) {
-        setSelectedContact(contact);
+    if (!state?.editContactId) return;
+    const targetId = state.editContactId;
+
+    const openContact = async () => {
+      const inList = contacts?.find(c => c.id === targetId);
+      if (inList) {
+        setSelectedContact(inList);
         setIsEditDialogOpen(true);
-        // Clear the state
+        window.history.replaceState({}, document.title);
+        return;
+      }
+      const { data } = await supabase
+        .from('contacts')
+        .select('*, companies(id, company_name)')
+        .eq('id', targetId)
+        .maybeSingle();
+      if (data) {
+        setSelectedContact(data as any);
+        setIsEditDialogOpen(true);
         window.history.replaceState({}, document.title);
       }
-    }
+    };
+
+    openContact();
   }, [location.state, contacts]);
 
   return (
