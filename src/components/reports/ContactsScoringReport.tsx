@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,6 +7,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
 import { logBulkContactView } from '@/lib/contacts/logContactAccess';
+import { EditCompanyDialog } from '@/components/companies/EditCompanyDialog';
+import { EditContactDialog } from '@/components/contacts/EditContactDialog';
+import { useToast } from '@/hooks/use-toast';
 
 interface ContactScore {
   id: string;
