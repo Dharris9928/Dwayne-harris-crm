@@ -15,7 +15,7 @@ interface PendingUser {
   email?: string;
   created_at: string;
   approval_status: string;
-  temp_password?: string | null;
+  // temp_password removed — passwords are never stored in the DB.
   invitation_email_sent_at?: string | null;
   invitation_email_delivered_at?: string | null;
   invitation_email_opened_at?: string | null;
