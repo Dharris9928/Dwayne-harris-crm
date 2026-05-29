@@ -343,7 +343,11 @@ export function UserManagement() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast.success('Invitation reminder sent successfully!');
+      if (data?.temporaryPassword) {
+        toast.success(`Invitation resent. New temporary password: ${data.temporaryPassword}`, { duration: 30000 });
+      } else {
+        toast.success('Invitation reminder sent successfully!');
+      }
       loadUsers();
     } catch (error) {
       console.error('Error resending invitation:', error);
