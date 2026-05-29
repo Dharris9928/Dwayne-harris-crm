@@ -35,7 +35,7 @@ export function UserApprovalPanel() {
       // Load profiles directly and enrich with emails via edge function
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, created_at, approval_status, temp_password, invitation_email_sent_at, invitation_email_delivered_at, invitation_email_opened_at, invitation_email_status');
+        .select('id, first_name, last_name, created_at, approval_status, invitation_email_sent_at, invitation_email_delivered_at, invitation_email_opened_at, invitation_email_status');
 
       if (profilesError) {
         throw profilesError;
