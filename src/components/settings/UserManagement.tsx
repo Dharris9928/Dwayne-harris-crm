@@ -41,7 +41,8 @@ interface UserProfile {
 }
 
 export function UserManagement() {
-  const { startImpersonation } = useImpersonation();
+  const { startImpersonation, isImpersonating } = useImpersonation();
+  const { data: effectiveRole } = useUserRole();
   const [approvedUsers, setApprovedUsers] = useState<UserProfile[]>([]);
   const [invitedUsers, setInvitedUsers] = useState<UserProfile[]>([]);
   const [pendingSignups, setPendingSignups] = useState<UserProfile[]>([]);
