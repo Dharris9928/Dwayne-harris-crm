@@ -139,7 +139,8 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true,
           message: "Invitation reminder sent successfully",
-          emailId: emailResponse.data?.id
+          emailId: emailResponse.data?.id,
+          temporaryPassword: newTempPassword
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
