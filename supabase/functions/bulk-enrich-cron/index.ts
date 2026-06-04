@@ -73,13 +73,12 @@ serve(async (req) => {
     if (!rows || rows.length === 0) {
       // Log queue-empty ticks too so the Activity Log shows the cron is alive
       // Include diagnostic counts so the user can see WHY the queue is empty.
+      const segmentMissing = (q: any) => q.is('builder_segment', null).is('segment', null);
       const [{ count: missingSegment }, { count: missingWithSource }, { count: attemptedRecently }] = await Promise.all([
-        supabase.from('companies').select('id', { count: 'exact', head: true }).is('builder_segment', null),
-        supabase.from('companies').select('id', { count: 'exact', head: true })
-          .is('builder_segment', null)
+        segmentMissing(supabase.from('companies').select('id', { count: 'exact', head: true })),
+        segmentMissing(supabase.from('companies').select('id', { count: 'exact', head: true }))
           .or('website_url.not.is.null,linkedin_company_url.not.is.null,primary_email.not.is.null'),
-        supabase.from('companies').select('id', { count: 'exact', head: true })
-          .is('builder_segment', null)
+        segmentMissing(supabase.from('companies').select('id', { count: 'exact', head: true }))
           .gte('last_enrichment_attempt_at', retryThreshold),
       ]);
       await supabase.from('enrichment_logs').insert({
