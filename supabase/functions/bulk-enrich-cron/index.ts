@@ -144,19 +144,22 @@ serve(async (req) => {
             });
           } else {
             success++;
-            // Check whether enrichment actually produced a segment
+            // Check whether enrichment actually produced a segment. Builders use
+            // `builder_segment`; all other industries use the generic `segment` field.
             const { data: c } = await supabase
               .from('companies')
-              .select('builder_segment')
+              .select('builder_segment, segment, industry_type')
               .eq('id', row.id)
               .maybeSingle();
-            const gotSegment = !!c?.builder_segment;
+            const isBuilder = (c?.industry_type ?? row.industry_type) === 'Builder';
+            const effectiveSegment = isBuilder ? c?.builder_segment : c?.segment;
+            const gotSegment = !!effectiveSegment;
             await supabase.from('enrichment_logs').insert({
               company_id: row.id,
               provider: 'bulk_cron',
               enrichment_type: 'bulk',
               status: gotSegment ? 'success' : 'no_segment',
-              error_message: gotSegment ? null : `enrich-company returned 200 but builder_segment is still null. Response: ${bodyText?.slice(0, 300)}`,
+              error_message: gotSegment ? null : `enrich-company returned 200 but ${isBuilder ? 'builder_segment' : 'segment'} is still null. Response: ${bodyText?.slice(0, 300)}`,
               fields_enriched: gotSegment ? { builder_segment: c.builder_segment } : [],
             });
           }
