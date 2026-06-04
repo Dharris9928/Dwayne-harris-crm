@@ -53,12 +53,16 @@ serve(async (req) => {
 
     const retryThreshold = new Date(Date.now() - retryDays * 24 * 60 * 60 * 1000).toISOString();
 
-    // Pick next batch: missing builder_segment, has at least one enrichable source,
-    // and either never attempted OR last attempt older than retryDays
+    // Pick next batch: missing BOTH builder_segment (for Builders) and segment (for
+    // Contractors/Energy/Engineer/Partner), has at least one enrichable source,
+    // and either never attempted OR last attempt older than retryDays.
+    // Without the segment-is-null clause, every contractor gets re-picked forever
+    // because builder_segment is only written for industry_type = 'Builder'.
     const { data: rows, error } = await supabase
       .from('companies')
-      .select('id, company_name')
+      .select('id, company_name, industry_type')
       .is('builder_segment', null)
+      .is('segment', null)
       .or(`website_url.not.is.null,linkedin_company_url.not.is.null,primary_email.not.is.null`)
       .or(`last_enrichment_attempt_at.is.null,last_enrichment_attempt_at.lt.${retryThreshold}`)
       .order('last_enrichment_attempt_at', { ascending: true, nullsFirst: true })
@@ -69,13 +73,12 @@ serve(async (req) => {
     if (!rows || rows.length === 0) {
       // Log queue-empty ticks too so the Activity Log shows the cron is alive
       // Include diagnostic counts so the user can see WHY the queue is empty.
+      const segmentMissing = (q: any) => q.is('builder_segment', null).is('segment', null);
       const [{ count: missingSegment }, { count: missingWithSource }, { count: attemptedRecently }] = await Promise.all([
-        supabase.from('companies').select('id', { count: 'exact', head: true }).is('builder_segment', null),
-        supabase.from('companies').select('id', { count: 'exact', head: true })
-          .is('builder_segment', null)
+        segmentMissing(supabase.from('companies').select('id', { count: 'exact', head: true })),
+        segmentMissing(supabase.from('companies').select('id', { count: 'exact', head: true }))
           .or('website_url.not.is.null,linkedin_company_url.not.is.null,primary_email.not.is.null'),
-        supabase.from('companies').select('id', { count: 'exact', head: true })
-          .is('builder_segment', null)
+        segmentMissing(supabase.from('companies').select('id', { count: 'exact', head: true }))
           .gte('last_enrichment_attempt_at', retryThreshold),
       ]);
       await supabase.from('enrichment_logs').insert({
@@ -141,20 +144,23 @@ serve(async (req) => {
             });
           } else {
             success++;
-            // Check whether enrichment actually produced a segment
+            // Check whether enrichment actually produced a segment. Builders use
+            // `builder_segment`; all other industries use the generic `segment` field.
             const { data: c } = await supabase
               .from('companies')
-              .select('builder_segment')
+              .select('builder_segment, segment, industry_type')
               .eq('id', row.id)
               .maybeSingle();
-            const gotSegment = !!c?.builder_segment;
+            const isBuilder = (c?.industry_type ?? row.industry_type) === 'Builder';
+            const effectiveSegment = isBuilder ? c?.builder_segment : c?.segment;
+            const gotSegment = !!effectiveSegment;
             await supabase.from('enrichment_logs').insert({
               company_id: row.id,
               provider: 'bulk_cron',
               enrichment_type: 'bulk',
               status: gotSegment ? 'success' : 'no_segment',
-              error_message: gotSegment ? null : `enrich-company returned 200 but builder_segment is still null. Response: ${bodyText?.slice(0, 300)}`,
-              fields_enriched: gotSegment ? { builder_segment: c.builder_segment } : [],
+              error_message: gotSegment ? null : `enrich-company returned 200 but ${isBuilder ? 'builder_segment' : 'segment'} is still null. Response: ${bodyText?.slice(0, 300)}`,
+              fields_enriched: gotSegment ? { [isBuilder ? 'builder_segment' : 'segment']: effectiveSegment } : [],
             });
           }
         } catch (e) {
