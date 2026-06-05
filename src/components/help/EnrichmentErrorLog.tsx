@@ -369,6 +369,16 @@ export function EnrichmentErrorLog() {
                           {fieldsCount} fields enriched
                         </Badge>
                       )}
+                      {log.company_segment && (
+                        <Badge variant="outline" className="text-xs bg-primary/10 border-primary/30">
+                          {log.company_segment}
+                        </Badge>
+                      )}
+                      {typeof log.company_confidence === 'number' && (
+                        <Badge variant="outline" className="text-xs">
+                          {log.company_confidence}% confidence
+                        </Badge>
+                      )}
                       <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground">
                         {costInfo.tokens > 0 && (
                           <span>{costInfo.tokens.toLocaleString()} tokens</span>
