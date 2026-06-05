@@ -348,7 +348,7 @@ serve(async (req) => {
         status: 'failed',
         error_message: technicalDetails,
         fields_enriched: {},
-        created_by: user.id
+        created_by: loggedBy
       });
       
       if (logError) {
@@ -461,7 +461,7 @@ serve(async (req) => {
         status: 'success',
         confidence_score: enrichmentResult.confidence,
         fields_enriched: {},
-        created_by: user.id
+        created_by: loggedBy
       });
       
       if (logError) {
@@ -557,7 +557,7 @@ serve(async (req) => {
         confidence_score: enrichmentResult.confidence,
         fields_enriched: attemptedFields,
         error_message: (updateError as any).message || 'Update failed',
-        created_by: user.id
+        created_by: loggedBy
       });
       
       if (logError) {
@@ -579,7 +579,7 @@ serve(async (req) => {
         company_id: companyId,
         ...enrichmentResult.insights,
         segment_rationale: segmentRationale,
-        enriched_by: user.id,
+        enriched_by: loggedBy,
         last_enriched_at: new Date().toISOString()
       }, {
         onConflict: 'company_id'
@@ -608,7 +608,7 @@ serve(async (req) => {
       status: 'success',
       confidence_score: enrichmentResult.confidence,
       fields_enriched: enrichedDataWithValues,
-      created_by: user.id
+      created_by: loggedBy
     });
 
     if (logError) {
@@ -620,7 +620,7 @@ serve(async (req) => {
         status: 'success',
         confidence_score: enrichmentResult.confidence,
         fields_enriched: enrichedDataWithValues,
-        created_by: user.id
+        created_by: loggedBy
       });
     } else {
       console.log('Enrichment log created successfully');
