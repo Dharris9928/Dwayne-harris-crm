@@ -101,6 +101,7 @@ function DashboardPage() {
           change="+12%"
           trend="up"
           icon={Building2}
+          to="/companies"
         />
         <KPICard
           title="Active Contacts"
@@ -108,6 +109,7 @@ function DashboardPage() {
           change="+5%"
           trend="up"
           icon={Users}
+          to="/contacts"
         />
         <KPICard
           title="Open Opportunities"
@@ -115,6 +117,7 @@ function DashboardPage() {
           change="+8%"
           trend="up"
           icon={Briefcase}
+          to="/opportunities"
         />
         <KPICard
           title="Pipeline Value"
@@ -122,6 +125,7 @@ function DashboardPage() {
           change="-2%"
           trend="down"
           icon={DollarSign}
+          to="/pipeline-analytics"
         />
       </div>
 
