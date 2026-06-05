@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Professional B2B CRM color scheme */
+    --background: 210 17% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Navy blue primary */
+    --primary: 222 47% 11%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Slate secondary */
+    --secondary: 215 16% 47%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 210 15% 95%;
+    --muted-foreground: 215 16% 40%; /* Darkened for WCAG AA 4.5:1 contrast */
+
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 20% 88%;
+    --input: 214 20% 88%;
+    --ring: 222 47% 11%;
+
+    --radius: 0.5rem;
+
+    /* Priority tier colors */
+    --priority-p1: 0 84% 60%; /* Red for high priority */
+    --priority-p1-foreground: 0 0% 100%;
+    --priority-p2: 38 92% 50%; /* Yellow/Orange for medium priority */
+    --priority-p2-foreground: 0 0% 100%;
+    --priority-p3: 142 76% 36%; /* Green for standard priority */
+    --priority-p3-foreground: 0 0% 100%;
+
+    /* Sidebar colors */
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 210 40% 98%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 222 47% 15%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 222 47% 15%;
+    --sidebar-ring: 221 83% 53%;
+
+    /* Status colors */
+    --status-lead: 217 91% 60%;
+    --status-contacted: 142 76% 36%;
+    --status-engaged: 262 83% 58%;
+    --status-pilot: 38 92% 50%;
+    --status-active: 142 71% 45%;
+    --status-inactive: 215 14% 65%;
+    --status-lost: 0 84% 60%;
+  }
+  
+  --google-blue: 214 89% 60%;
+  --google-red: 4 90% 58%;
+  --google-yellow: 45 100% 51%;
+  --google-green: 142 69% 49%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

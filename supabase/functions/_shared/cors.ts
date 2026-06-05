@@ -1,0 +1,57 @@
+const ALLOWED_ORIGINS = [
+  'https://nestproconnector.lovable.app',
+  'https://id-preview--fecf655d-278f-48e9-a0cd-40927fe3377c.lovable.app',
+  'https://nestproconnector.com',
+  'https://www.nestproconnector.com',
+  'http://localhost:5173',
+  'http://localhost:3000',
+];
+
+function isAllowedOrigin(origin: string): boolean {
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  // Allow all Lovable preview/project domains
+  if (/^https:\/\/.*\.lovableproject\.com$/.test(origin)) return true;
+  if (/^https:\/\/.*\.lovable\.app$/.test(origin)) return true;
+  return false;
+}
+
+/**
+ * Returns CORS headers scoped to allowed origins.
+ * If no origin header is present (e.g. server-to-server), allows the request.
+ */
+export function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('origin');
+
+  if (origin && isAllowedOrigin(origin)) {
+    return {
+      'Access-Control-Allow-Origin': origin,
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+      'Access-Control-Allow-Credentials': 'true',
+      'Vary': 'Origin',
+    };
+  }
+
+  // No origin header (server-to-server / curl) – allow without CORS
+  if (!origin) {
+    return {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+    };
+  }
+
+  // Unknown browser origin – deny
+  return {
+    'Access-Control-Allow-Origin': 'null',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+}
+
+/** @deprecated Use getCorsHeaders(req) instead */
+export const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};

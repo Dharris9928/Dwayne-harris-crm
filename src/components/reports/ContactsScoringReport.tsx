@@ -1,0 +1,314 @@
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { ExternalLink } from 'lucide-react';
+import { logBulkContactView } from '@/lib/contacts/logContactAccess';
+import { EditCompanyDialog } from '@/components/companies/EditCompanyDialog';
+import { EditContactDialog } from '@/components/contacts/EditContactDialog';
+import { useToast } from '@/hooks/use-toast';
+
+interface ContactScore {
+  id: string;
+  first_name: string;
+  last_name: string;
+  title: string | null;
+  decision_tier: string | null;
+  linkedin_url: string | null;
+  linkedin_connections: number | null;
+  linkedin_activity_score: number | null;
+  company_id: string;
+  company_name: string;
+  authority_score: number;
+  linkedin_score: number;
+  total_contribution: number;
+}
+
+export function ContactsScoringReport() {
+  const [contactScores, setContactScores] = useState<ContactScore[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [openCompanyId, setOpenCompanyId] = useState<string | null>(null);
+  const [openContact, setOpenContact] = useState<any | null>(null);
+  const { toast } = useToast();
+
+  const handleOpenContact = async (contactId: string) => {
+    const { data, error } = await supabase
+      .from('contacts')
+      .select('*')
+      .eq('id', contactId)
+      .maybeSingle();
+    if (error || !data) {
+      toast({ title: 'Unable to open contact', description: error?.message ?? 'Not found', variant: 'destructive' });
+      return;
+    }
+    setOpenContact(data);
+  };
+
+  useEffect(() => {
+    fetchContactScores();
+  }, []);
+
+  const fetchContactScores = async () => {
+    try {
+      // Fetch all contacts with their company info
+      const { data: contacts, error } = await supabase
+        .from('contacts')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          title,
+          decision_tier,
+          linkedin_url,
+          linkedin_connections,
+          linkedin_activity_score,
+          company_id,
+          companies!inner(company_name)
+        `)
+        .order('first_name');
+
+      if (error) throw error;
+
+      // Calculate scores for each contact
+      const scoredContacts = contacts?.map((contact: any) => {
+        const authorityScore = calculateAuthorityScore(contact.title);
+        const linkedinScore = calculateContactLinkedInScore(contact);
+        
+        return {
+          id: contact.id,
+          first_name: contact.first_name,
+          last_name: contact.last_name,
+          title: contact.title,
+          decision_tier: contact.decision_tier,
+          linkedin_url: contact.linkedin_url,
+          linkedin_connections: contact.linkedin_connections,
+          linkedin_activity_score: contact.linkedin_activity_score,
+          company_id: contact.company_id,
+          company_name: contact.companies.company_name,
+          authority_score: authorityScore,
+          linkedin_score: linkedinScore,
+          total_contribution: authorityScore + linkedinScore
+        };
+      }) || [];
+
+      // Sort by total contribution descending
+      scoredContacts.sort((a, b) => b.total_contribution - a.total_contribution);
+
+      setContactScores(scoredContacts);
+      
+      // Log bulk contact view for audit trail
+      if (scoredContacts.length > 0) {
+        logBulkContactView(scoredContacts.map(c => c.id));
+      }
+    } catch (error) {
+      console.error('Error fetching contact scores:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateAuthorityScore = (title: string | null): number => {
+    if (!title) return 0;
+
+    const titleUpper = title.toUpperCase();
+    const titleScores: Record<string, number> = {
+      'CEO': 10, 'PRESIDENT': 10, 'OWNER': 10, 'FOUNDER': 10,
+      'COO': 10, 'CFO': 10, 'CMO': 10, 'CTO': 10,
+      'VP': 8, 'VICE PRESIDENT': 8,
+      'DIRECTOR': 6,
+      'MANAGER': 4
+    };
+
+    for (const [keyword, score] of Object.entries(titleScores)) {
+      if (titleUpper.includes(keyword)) {
+        return score;
+      }
+    }
+
+    return 0;
+  };
+
+  const calculateContactLinkedInScore = (contact: any): number => {
+    if (!contact.linkedin_url) return 0;
+
+    let score = 0;
+
+    // Connection count scoring
+    if (contact.linkedin_connections) {
+      if (contact.linkedin_connections >= 1000) score += 4;
+      else if (contact.linkedin_connections >= 500) score += 3;
+      else if (contact.linkedin_connections >= 200) score += 2;
+      else score += 1;
+    }
+
+    // Activity score
+    if (contact.linkedin_activity_score) {
+      if (contact.linkedin_activity_score >= 80) score += 3;
+      else if (contact.linkedin_activity_score >= 50) score += 2;
+      else if (contact.linkedin_activity_score >= 20) score += 1;
+    }
+
+    return Math.min(score, 10);
+  };
+
+  const getDecisionTierColor = (tier: string | null) => {
+    switch (tier) {
+      case 'Decision Maker': return 'bg-green-500';
+      case 'Influencer': return 'bg-blue-500';
+      case 'User': return 'bg-gray-500';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  const getScoreColor = (score: number, max: number) => {
+    const percentage = (score / max) * 100;
+    if (percentage >= 80) return 'text-green-600 font-semibold';
+    if (percentage >= 50) return 'text-orange-600 font-semibold';
+    return 'text-red-600';
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Contact Scoring Report</CardTitle>
+          <CardDescription>Loading contact data...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-[400px] w-full" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Contact Scoring Report</CardTitle>
+        <CardDescription>
+          Individual contact scoring breakdown ({contactScores.length} total contacts)
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {contactScores.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            No contacts found. Add contacts to companies to see their scoring breakdown.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="min-w-[150px]">Contact Name</TableHead>
+                <TableHead className="min-w-[150px]">Company</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead>Decision Tier</TableHead>
+                <TableHead className="text-right">Authority Score</TableHead>
+                <TableHead className="text-right">LinkedIn Score</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead>LinkedIn</TableHead>
+                <TableHead className="text-right">Connections</TableHead>
+                <TableHead className="text-right">Activity</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {contactScores.map((contact) => (
+                <TableRow key={contact.id}>
+                  <TableCell className="font-medium">
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto font-medium text-primary hover:underline"
+                      onClick={() => handleOpenContact(contact.id)}
+                    >
+                      {contact.first_name} {contact.last_name}
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="link"
+                      className="p-0 h-auto text-primary hover:underline"
+                      onClick={() => setOpenCompanyId(contact.company_id)}
+                    >
+                      {contact.company_name}
+                    </Button>
+                  </TableCell>
+                  <TableCell className="max-w-[200px]">
+                    <span className="text-sm">{contact.title || '—'}</span>
+                  </TableCell>
+                  <TableCell>
+                    {contact.decision_tier ? (
+                      <Badge className={getDecisionTierColor(contact.decision_tier)}>
+                        {contact.decision_tier}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className={`text-right ${getScoreColor(contact.authority_score, 10)}`}>
+                    {contact.authority_score}/10
+                  </TableCell>
+                  <TableCell className={`text-right ${getScoreColor(contact.linkedin_score, 10)}`}>
+                    {contact.linkedin_score}/10
+                  </TableCell>
+                  <TableCell className="text-right font-bold">
+                    {contact.total_contribution}/20
+                  </TableCell>
+                  <TableCell>
+                    {contact.linkedin_url ? (
+                      <a
+                        href={contact.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline inline-flex items-center gap-1"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        View
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {contact.linkedin_connections ? (
+                      <span className="text-sm">{contact.linkedin_connections.toLocaleString()}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {contact.linkedin_activity_score ? (
+                      <span className="text-sm">{contact.linkedin_activity_score}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        )}
+      </CardContent>
+      {openCompanyId && (
+        <EditCompanyDialog
+          open={!!openCompanyId}
+          companyId={openCompanyId}
+          onOpenChange={(o) => { if (!o) setOpenCompanyId(null); }}
+          onClose={() => setOpenCompanyId(null)}
+          onSuccess={() => { setOpenCompanyId(null); fetchContactScores(); }}
+        />
+      )}
+      {openContact && (
+        <EditContactDialog
+          open={!!openContact}
+          contact={openContact}
+          onOpenChange={(o) => { if (!o) setOpenContact(null); }}
+          onSuccess={() => { setOpenContact(null); fetchContactScores(); }}
+        />
+      )}
+    </Card>
+  );
+}
