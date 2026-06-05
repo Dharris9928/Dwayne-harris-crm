@@ -99,6 +99,12 @@ serve(async (req) => {
       }
     }
 
+    // For audit/log columns with FK to auth.users, use null when running as
+    // service-role (cron) — the zero-UUID sentinel violates the FK constraint
+    // and silently drops enrichment_logs / company_ai_insights rows.
+    const loggedBy: string | null = isServiceRole ? null : user.id;
+
+
     // Check company access
     const { data: company, error: companyError } = await supabase
       .from('companies')
