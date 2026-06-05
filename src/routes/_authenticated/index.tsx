@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -101,6 +101,7 @@ function DashboardPage() {
           change="+12%"
           trend="up"
           icon={Building2}
+          to="/companies"
         />
         <KPICard
           title="Active Contacts"
@@ -108,6 +109,7 @@ function DashboardPage() {
           change="+5%"
           trend="up"
           icon={Users}
+          to="/contacts"
         />
         <KPICard
           title="Open Opportunities"
@@ -115,6 +117,7 @@ function DashboardPage() {
           change="+8%"
           trend="up"
           icon={Briefcase}
+          to="/opportunities"
         />
         <KPICard
           title="Pipeline Value"
@@ -122,6 +125,7 @@ function DashboardPage() {
           change="-2%"
           trend="down"
           icon={DollarSign}
+          to="/pipeline-analytics"
         />
       </div>
 
@@ -182,15 +186,17 @@ function KPICard({
   change,
   trend,
   icon: Icon,
+  to,
 }: {
   title: string;
   value: string | number;
   change: string;
   trend: "up" | "down";
   icon: React.ElementType;
+  to?: string;
 }) {
-  return (
-    <Card>
+  const inner = (
+    <Card className={to ? "transition-all hover:shadow-md hover:border-emerald-500/50 cursor-pointer" : ""}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
         <Icon className="h-4 w-4 text-muted-foreground" />
@@ -208,6 +214,8 @@ function KPICard({
       </CardContent>
     </Card>
   );
+  if (to) return <Link to={to}>{inner}</Link>;
+  return inner;
 }
 
 function PriorityDistribution() {
